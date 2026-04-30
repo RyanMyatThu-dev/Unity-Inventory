@@ -1,0 +1,91 @@
+﻿using IMS.Database.IMSDbContextModels;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace IMS.Domain.Features.Authentication.Models
+{
+    public class LoginRequest
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class RefreshTokenRequest
+    {
+        [Required]
+        public string RefreshToken { get; set; } = string.Empty;
+    }
+
+    public class TokenResponse
+    {
+        public string AccessToken { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+
+        public List<BusinessAccessDto> Businesses { get; set; } = new List<BusinessAccessDto>();
+    }
+
+    public class BusinessAccessDto
+    {
+        public int BusinessId { get; set; }
+        public string BusinessName { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty; 
+    }
+
+    public class SelectBusinessRequest
+    {
+        [Required]
+        public int BusinessId { get; set; }
+    }
+
+    public class UserRegisterRequest
+    {
+        [Required]
+        [MaxLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [MinLength(6)]
+        public string Password { get; set; } = string.Empty;
+
+    }
+
+    public class UserResponse
+    {
+        public bool IsSuccess { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public int? UserId { get; set; }
+    }
+
+    public class UserUpdateRequest
+    {
+        public string? Name { get; set; }
+        public string? Email { get; set; }
+        public string? Password { get; set; }
+    }
+
+    public class ChangePasswordRequest
+    {
+        [Required]
+        public string OldPassword { get; set; } = string.Empty;
+
+        [Required]
+        [MinLength(6)]
+        public string NewPassword { get; set; } = string.Empty;
+    }
+
+
+}
