@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - IMS Pro</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        },
+                        indigo: {
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style type="text/tailwindcss">
+        @@layer base {
+            body { @@apply text-slate-900 antialiased; }
+        }
+        @@layer components {
+            .btn-primary { @@apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all; }
+            .btn-secondary { @@apply inline-flex items-center justify-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all; }
+            .input-field { @@apply block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all; }
+            .card { @@apply bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden; }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-full">
+    <div class="min-h-full flex">
+        <!-- Sidebar -->
+        <div id="sidebar" class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-50 transition-all duration-300 ease-in-out">
+            <div class="flex flex-col flex-grow bg-slate-900 pt-5 pb-4 overflow-y-auto">
+                <div class="flex items-center flex-shrink-0 px-6 gap-3 mb-8">
+                    <div class="bg-indigo-500 p-2 rounded-lg shadow-lg shadow-indigo-500/20">
+                        <i data-lucide="package" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <span class="text-white text-xl font-bold tracking-tight">IMS Pro</span>
+                </div>
+                <nav class="mt-2 flex-1 px-3 space-y-1">
+                    <a href="/Dashboard" class="sidebar-link group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-all">
+                        <i data-lucide="layout-dashboard" class="mr-3 flex-shrink-0 h-5 w-5 text-slate-400 group-hover:text-indigo-400"></i>
+                        Dashboard
+                    </a>
+                    <a href="/Inventory" class="sidebar-link group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-all">
+                        <i data-lucide="box" class="mr-3 flex-shrink-0 h-5 w-5 text-slate-400 group-hover:text-indigo-400"></i>
+                        Inventory
+                    </a>
+                    <a href="/Customers" class="sidebar-link group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-all">
+                        <i data-lucide="users" class="mr-3 flex-shrink-0 h-5 w-5 text-slate-400 group-hover:text-indigo-400"></i>
+                        Customers
+                    </a>
+                    <a href="/Sales" class="sidebar-link group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-all">
+                        <i data-lucide="receipt" class="mr-3 flex-shrink-0 h-5 w-5 text-slate-400 group-hover:text-indigo-400"></i>
+                        Sales Reports
+                    </a>
+                    
+                    <div class="pt-6 pb-2 px-3">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Settings</span>
+                    </div>
+                    
+                    <a href="/Profile" class="sidebar-link group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-all">
+                        <i data-lucide="user-cog" class="mr-3 flex-shrink-0 h-5 w-5 text-slate-400 group-hover:text-indigo-400"></i>
+                        My Profile
+                    </a>
+                    <a href="/Business/Select" class="sidebar-link group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-all">
+                        <i data-lucide="building-2" class="mr-3 flex-shrink-0 h-5 w-5 text-slate-400 group-hover:text-indigo-400"></i>
+                        Switch Business
+                    </a>
+                </nav>
+                <div class="flex-shrink-0 flex border-t border-slate-800 p-4">
+                    <button onclick="logout()" class="group block w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all">
+                        <i data-lucide="log-out" class="mr-3 flex-shrink-0 h-5 w-5"></i>
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="md:pl-64 flex flex-col flex-1">
+            <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center gap-4">
+                    <button id="mobile-menu-toggle" class="md:hidden p-2 rounded-md text-slate-400 hover:text-slate-500 hover:bg-slate-100 focus:outline-none">
+                        <i data-lucide="menu" class="h-6 w-6"></i>
+                    </button>
+                    <nav class="flex" aria-label="Breadcrumb">
+                        <ol class="flex items-center space-x-2">
+                            <li>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-slate-400" id="breadcrumb-parent">Dashboard</span>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="flex items-center">
+                                    <i data-lucide="chevron-right" class="flex-shrink-0 h-4 w-4 text-slate-300"></i>
+                                    <span class="ml-2 text-sm font-bold text-slate-900" id="breadcrumb-current">Overview</span>
+                                </div>
+                            </li>
+                        </ol>
+                    </nav>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:flex flex-col items-end mr-2">
+                        <div id="business-badge" class="hidden">
+                            <span id="business-name" class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md mb-1 border border-indigo-100 uppercase tracking-wider">Business</span>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span id="user-name" class="text-sm font-semibold text-slate-900 leading-none">Loading...</span>
+                            <span id="user-role" class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-1">Role</span>
+                        </div>
+                    </div>
+                    <div id="user-avatar" class="h-9 w-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-indigo-600/20">
+                        U
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 py-8 px-4 sm:px-6 lg:px-8">
+                <div class="max-w-7xl mx-auto">
+                    @RenderBody()
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Notifications Container -->
+    <div id="notification-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+    <script src="~/js/api.js" asp-append-version="true"></script>
+    <script src="~/js/auth.js" asp-append-version="true"></script>
+    <script src="~/js/pagination.js" asp-append-version="true"></script>
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Active Link Highlighting
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            if (link.getAttribute('href') === window.location.pathname) {
+                link.classList.remove('text-slate-300', 'hover:bg-slate-800');
+                link.classList.add('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-600/20');
+                const icon = link.querySelector('i');
+                if (icon) icon.classList.remove('text-slate-400');
+                if (icon) icon.classList.add('text-white');
+            }
+        });
+
+        // Global Logout
+        function logout() {
+            window.api.logout();
+            window.location.href = '/Account/Login';
+        }
+
+        // Notification System
+        window.notify = {
+            show(message, type = 'success') {
+                const container = document.getElementById('notification-container');
+                const toast = document.createElement('div');
+                toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg shadow-xl border border-l-4 transition-all duration-300 translate-x-12 opacity-0
+                    ${type === 'success' ? 'bg-white border-slate-200 border-l-emerald-500' : 'bg-white border-slate-200 border-l-rose-500'}`;
+                
+                const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+                const iconColor = type === 'success' ? 'text-emerald-500' : 'text-rose-500';
+                
+                toast.innerHTML = `
+                    <i data-lucide="${icon}" class="w-5 h-5 ${iconColor}"></i>
+                    <span class="text-sm font-medium text-slate-700">${message}</span>
+                `;
+                
+                container.appendChild(toast);
+                lucide.createIcons({ props: { "stroke-width": 2.5 } });
+                
+                // Animate In
+                setTimeout(() => {
+                    toast.classList.remove('translate-x-12', 'opacity-0');
+                }, 10);
+                
+                // Remove
+                setTimeout(() => {
+                    toast.classList.add('translate-x-12', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            }
+        };
+
+        // Check Auth
+        if (!window.api.isAuthenticated() && !window.location.pathname.includes('/Account/')) {
+            window.location.href = '/Account/Login';
+        }
+
+        // Load User Info
+        const userInfo = window.auth.getUserInfo();
+        if (userInfo) {
+            document.getElementById('user-name').textContent = userInfo.name || userInfo.email.split('@@')[0];
+            document.getElementById('user-role').textContent = userInfo.role || 'Member';
+            document.getElementById('user-avatar').textContent = (userInfo.name || userInfo.email)[0].toUpperCase();
+        }
+
+        // Load Business Info
+        const currentBusiness = window.auth.getCurrentBusiness();
+        if (currentBusiness) {
+            document.getElementById('business-badge').classList.remove('hidden');
+            document.getElementById('business-name').textContent = currentBusiness.businessName || currentBusiness.BusinessName;
+            
+            // If the role in user_info is different from business role, you might want to prefer the business role
+            const businessRole = currentBusiness.role || currentBusiness.Role;
+            if (businessRole) {
+                document.getElementById('user-role').textContent = businessRole;
+            }
+        }
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

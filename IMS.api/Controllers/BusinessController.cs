@@ -1,4 +1,4 @@
-﻿using IMS.Domain.Features.Authentication.Models;
+using IMS.Domain.Features.Authentication.Models;
 using IMS.Domain.Features.Authentication.Tokens;
 using IMS.Domain.Features.Authentication.Users;
 using IMS.Domain.Features.Business;
@@ -35,12 +35,25 @@ namespace IMS.api.Controllers
             {
                 return BadRequest(ModelState);
             }
+            
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            request.OwnerUserId = userId; // Override with authenticated user ID
+
             var result = await _businessService.CreateBusiness(request);
             if (result.IsSuccess)
             {
                 return Ok(result);
             }
             return BadRequest(result);
+        }
+
+        [Authorize]
+        [HttpGet("my-businesses")]
+        public async Task<IActionResult> GetMyBusinesses()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await _businessService.GetBusinessesByUserIdAsync(userId);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         //POST : api/business/switch-business/{businessId}
@@ -61,12 +74,14 @@ namespace IMS.api.Controllers
             var accessToken = _tokenService.GenerateAccessToken(user.Data!, businessId, result.Data!.Role);
             var refreshToken = _tokenService.GenerateRefreshToken();
 
+            var businesses = await _businessService.GetBusinessesByUserIdAsync(userId);
+
             return Ok(Result<TokenResponse>.Success(new TokenResponse {
-                
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 Email = user.Data!.Email,
                 Role = result.Data!.Role,
+                Businesses = businesses.Data ?? new List<BusinessAccessDto>()
             }));
 
         }

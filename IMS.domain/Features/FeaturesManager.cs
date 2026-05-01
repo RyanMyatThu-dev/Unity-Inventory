@@ -14,6 +14,7 @@ using IMS.Domain.Features.Authentication.Users;
 using IMS.Domain.Features.Inventories;
 using IMS.Domain.Features.Customers;
 using IMS.Domain.Features.Sales;
+using IMS.Domain.Features.CustomerPrices;
 
 
 namespace IMS.Domain.Features
@@ -32,6 +33,7 @@ namespace IMS.Domain.Features
             builder.Services.AddScoped<IInventoryService, InventoryService>();
             builder.Services.AddScoped<ICustomerService, CustomerService>();
             builder.Services.AddScoped<ISalesService, SalesService>();
+            builder.Services.AddScoped<ICustomerPriceService, CustomerPriceService>();
 
         }
     }

@@ -1,6 +1,7 @@
 using IMS.Database.IMSDbContextModels;
 using IMS.Domain.Features.Inventories.Models;
 using IMS.shared;
+using IMS.Shared;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -19,27 +20,43 @@ namespace IMS.Domain.Features.Inventories
             _db = db;
         }
 
-        public async Task<Result<List<InventoriesDTO>>> GetInventoriesByBusinessIdAsync(int businessId)
+        public async Task<PagedResult<InventoriesDTO>> GetInventoriesByBusinessIdAsync(PaginationRequest paginationRequest, int businessId)
         {
             try
             {
-                var inventories = await _db.TblInventories
-                    .Where(i => i.BusinessId == businessId && i.DeleteFlag != true)
-                    .Select(i => new InventoriesDTO
-                    {
-                        Id = i.InventoryId,
-                        Name = i.InventoryName,
-                        BusinessId = i.BusinessId,
-                        Price = i.Price,
-                        DeleteFlag = i.DeleteFlag ?? false
-                    })
+                var query = _db.TblInventories
+                    .Where(i => i.BusinessId == businessId && i.DeleteFlag != true);
+
+                var totalCount = await query.CountAsync();
+
+                var items = await query
+                    .Skip((paginationRequest.PageNumber - 1) * paginationRequest.PageSize)
+                    .Take(paginationRequest.PageSize)
+                    .GroupJoin(
+                        _db.TblInventorySummaries.Where(s => s.BusinessId == businessId),
+                        inv => inv.InventoryId,
+                        sum => sum.InventoryId,
+                        (inv, sums) => new { inv, sums })
+                    .SelectMany(
+                        x => x.sums.DefaultIfEmpty(),
+                        (x, summary) => new InventoriesDTO
+                        {
+                            Id = x.inv.InventoryId,
+                            Name = x.inv.InventoryName,
+                            BusinessId = x.inv.BusinessId,
+                            Price = x.inv.Price,
+                            DeleteFlag = x.inv.DeleteFlag ?? false,
+                            CurrentStock = summary != null ? summary.CurrentStock : 0,
+                            LastUpdated = summary != null ? summary.LastUpdated : null
+                        })
                     .ToListAsync();
 
-                return Result<List<InventoriesDTO>>.Success(inventories);
+                var pagination = new Pagination(paginationRequest.PageNumber, paginationRequest.PageSize, totalCount);
+                return PagedResult<InventoriesDTO>.Success(items, pagination);
             }
             catch (Exception ex)
             {
-                return Result<List<InventoriesDTO>>.Failure(ex.Message);
+                return PagedResult<InventoriesDTO>.Failure(ex.Message);
             }
         }
 
@@ -49,14 +66,23 @@ namespace IMS.Domain.Features.Inventories
             {
                 var inventory = await _db.TblInventories
                     .Where(i => i.InventoryId == id && i.DeleteFlag != true)
-                    .Select(i => new InventoriesDTO
-                    {
-                        Id = i.InventoryId,
-                        Name = i.InventoryName,
-                        BusinessId = i.BusinessId,
-                        Price = i.Price,
-                        DeleteFlag = i.DeleteFlag ?? false
-                    })
+                    .GroupJoin(
+                        _db.TblInventorySummaries,
+                        inv => inv.InventoryId,
+                        sum => sum.InventoryId,
+                        (inv, sums) => new { inv, sums })
+                    .SelectMany(
+                        x => x.sums.DefaultIfEmpty(),
+                        (x, summary) => new InventoriesDTO
+                        {
+                            Id = x.inv.InventoryId,
+                            Name = x.inv.InventoryName,
+                            BusinessId = x.inv.BusinessId,
+                            Price = x.inv.Price,
+                            DeleteFlag = x.inv.DeleteFlag ?? false,
+                            CurrentStock = summary != null ? summary.CurrentStock : 0,
+                            LastUpdated = summary != null ? summary.LastUpdated : null
+                        })
                     .FirstOrDefaultAsync();
 
                 if (inventory == null)
@@ -139,6 +165,39 @@ namespace IMS.Domain.Features.Inventories
                 inventory.DeleteFlag = true;
                 await _db.SaveChangesAsync();
 
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(ex.Message);
+            }
+        }
+
+        public async Task<Result<bool>> UpdateStockAsync(UpdateStockRequest request)
+        {
+            try
+            {
+                var summary = await _db.TblInventorySummaries
+                    .FirstOrDefaultAsync(s => s.InventoryId == request.InventoryId && s.BusinessId == request.BusinessId);
+
+                if (summary == null)
+                {
+                    summary = new TblInventorySummary
+                    {
+                        InventoryId = request.InventoryId,
+                        BusinessId = request.BusinessId,
+                        CurrentStock = request.CurrentStock,
+                        LastUpdated = DateTime.Now
+                    };
+                    _db.TblInventorySummaries.Add(summary);
+                }
+                else
+                {
+                    summary.CurrentStock = request.CurrentStock;
+                    summary.LastUpdated = DateTime.Now;
+                }
+
+                await _db.SaveChangesAsync();
                 return Result<bool>.Success(true);
             }
             catch (Exception ex)

@@ -1,6 +1,7 @@
 using IMS.Domain.Features.Sales;
 using IMS.Domain.Features.Sales.Models;
 using IMS.shared;
+using IMS.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,12 +28,12 @@ namespace IMS.api.Controllers
         }
 
         [HttpGet("reports")]
-        public async Task<IActionResult> GetReports()
+        public async Task<IActionResult> GetReports([FromQuery] PaginationRequest request)
         {
             var businessId = GetBusinessId();
             if (businessId == 0) return BadRequest("Business not selected.");
 
-            var result = await _salesService.GetReportsByBusinessIdAsync(businessId);
+            var result = await _salesService.GetReportsByBusinessIdAsync(request, businessId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

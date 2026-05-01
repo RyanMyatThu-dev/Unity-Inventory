@@ -15,6 +15,10 @@ namespace IMS.Domain.Features.Customers.Models
         public string? Phone { get; set; }
         public string? Address { get; set; }
         public int TotalItems { get; set; }
+        // From TblCustomerSummary
+        public decimal? TotalPurchased { get; set; }
+        public decimal? OutstandingBalance { get; set; }
+        public DateTime? LastTransactionDate { get; set; }
     }
 
     public class CreateCustomerRequest

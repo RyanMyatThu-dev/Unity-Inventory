@@ -1,0 +1,180 @@
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="max-w-4xl mx-auto">
+    <div class="mb-10">
+        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Account Settings</h1>
+        <p class="mt-2 text-sm text-slate-500 font-medium">Manage your personal information, security, and preferences.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Sidebar Navigation -->
+        <div class="lg:col-span-1 space-y-2">
+            <button class="w-full flex items-center px-4 py-3 text-sm font-bold rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 transition-all">
+                <i data-lucide="user" class="w-5 h-5 mr-3"></i>
+                Personal Info
+            </button>
+            <button class="w-full flex items-center px-4 py-3 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-100 transition-all">
+                <i data-lucide="shield-check" class="w-5 h-5 mr-3"></i>
+                Security
+            </button>
+            <button class="w-full flex items-center px-4 py-3 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-100 transition-all text-rose-600">
+                <i data-lucide="trash-2" class="w-5 h-5 mr-3"></i>
+                Delete Account
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Profile Info Card -->
+            <div class="card">
+                <div class="px-6 py-5 border-b border-slate-100">
+                    <h3 class="text-base font-bold text-slate-900">Personal Information</h3>
+                </div>
+                <div class="p-8">
+                    <form id="profile-form" class="space-y-6">
+                        <div class="flex items-center gap-6 mb-8">
+                            <div id="u-avatar-large" class="h-20 w-20 rounded-2xl bg-indigo-100 flex items-center justify-center text-3xl text-indigo-600 font-black border-4 border-white shadow-xl ring-1 ring-slate-100">
+                                U
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-900">Profile Picture</h4>
+                                <p class="text-xs text-slate-400 mt-1 font-medium leading-relaxed">JPG, GIF or PNG. Max size of 2MB.</p>
+                                <div class="mt-3 flex gap-2">
+                                    <button type="button" class="btn-secondary h-8 px-3 text-xs">Upload</button>
+                                    <button type="button" class="text-rose-500 text-[11px] font-bold px-2">Remove</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                        <i data-lucide="mail" class="w-4 h-4"></i>
+                                    </div>
+                                    <input type="email" id="u-email" class="input-field pl-10 bg-slate-50 cursor-not-allowed opacity-70" disabled>
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1.5 font-bold uppercase tracking-wider">Email cannot be modified</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Full Name</label>
+                                <input type="text" id="u-name" class="input-field" placeholder="John Doe">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Account Role</label>
+                                <input type="text" id="u-role" class="input-field bg-slate-50 cursor-not-allowed" disabled>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 flex justify-end">
+                            <button type="submit" id="profile-save-btn" class="btn-primary px-8">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Password Change Card -->
+            <div class="card">
+                <div class="px-6 py-5 border-b border-slate-100">
+                    <h3 class="text-base font-bold text-slate-900">Change Password</h3>
+                </div>
+                <div class="p-8">
+                    <form id="password-form" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Current Password</label>
+                            <input type="password" id="old-pass" class="input-field" placeholder="••••••••" required>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">New Password</label>
+                                <input type="password" id="new-pass" class="input-field" placeholder="••••••••" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Confirm New Password</label>
+                                <input type="password" id="confirm-pass" class="input-field" placeholder="••••••••" required>
+                            </div>
+                        </div>
+                        <div class="pt-4 flex justify-end">
+                            <button type="submit" id="pass-save-btn" class="btn-secondary px-8 border-indigo-200 text-indigo-700 font-bold hover:bg-indigo-50">Update Security</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('breadcrumb-parent').textContent = 'Settings';
+        document.getElementById('breadcrumb-current').textContent = 'Profile';
+
+        const userInfo = window.auth.getUserInfo();
+        if (userInfo) {
+            document.getElementById('u-email').value = userInfo.email || '';
+            document.getElementById('u-role').value = userInfo.role || 'Member';
+            document.getElementById('u-name').value = userInfo.name || '';
+            document.getElementById('u-avatar-large').textContent = (userInfo.name || userInfo.email)[0].toUpperCase();
+        }
+
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('u-name').value;
+            const btn = document.getElementById('profile-save-btn');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2"></i> Saving...';
+            lucide.createIcons();
+
+            // UserUpdateRequest: Name, Email, Password
+            const result = await window.api.post('/users/update', { name });
+            
+            if (result && result.isSuccess) {
+                window.notify.show('Profile updated successfully');
+                // Update local storage name if needed
+                const info = JSON.parse(localStorage.getItem('user_info'));
+                info.name = name;
+                localStorage.setItem('user_info', JSON.stringify(info));
+                document.getElementById('user-name').textContent = name;
+            } else {
+                window.notify.show(result.message || 'Update failed', 'error');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Save Changes';
+        });
+
+        document.getElementById('password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const oldPassword = document.getElementById('old-pass').value;
+            const newPassword = document.getElementById('new-pass').value;
+            const confirmPassword = document.getElementById('confirm-pass').value;
+
+            if (newPassword !== confirmPassword) {
+                window.notify.show('Passwords do not match', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('pass-save-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2"></i> Updating...';
+            lucide.createIcons();
+
+            // ChangePasswordRequest: OldPassword, NewPassword
+            const result = await window.api.post('/users/change-password', { oldPassword, newPassword });
+            
+            if (result && result.isSuccess) {
+                window.notify.show('Security settings updated');
+                document.getElementById('password-form').reset();
+            } else {
+                window.notify.show(result.message || 'Security update failed', 'error');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Update Security';
+        });
+    </script>
+}

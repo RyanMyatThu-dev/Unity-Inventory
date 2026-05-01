@@ -14,6 +14,8 @@ namespace IMS.Domain.Features.Inventories.Models
         public int BusinessId { get; set; }
         public decimal Price { get; set; }
         public bool DeleteFlag { get; set; }
+        public int? CurrentStock { get; set; }
+        public DateTime? LastUpdated { get; set; }
     }
     public class CreateProductRequest
     {
@@ -35,5 +37,14 @@ namespace IMS.Domain.Features.Inventories.Models
         public string Name { get; set; } = string.Empty;
         [Required]
         public decimal Price { get; set; }
+    }
+    public class UpdateStockRequest
+    {
+        [Required]
+        public int InventoryId { get; set; }
+        [Required]
+        public int BusinessId { get; set; }
+        [Required]
+        public int CurrentStock { get; set; }
     }
 }

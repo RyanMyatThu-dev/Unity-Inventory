@@ -1,0 +1,319 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<!-- Header -->
+<div class="sm:flex sm:items-center sm:justify-between mb-10">
+    <div>
+        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Overview</h1>
+        <p id="welcome-text" class="mt-2 text-sm text-slate-500 font-medium">Loading your business metrics...</p>
+    </div>
+    <div class="mt-4 sm:mt-0 flex gap-3">
+        <button onclick="loadDashboard()" class="btn-secondary h-11 px-6 shadow-sm">
+            <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+            Refresh
+        </button>
+        <a href="/Sales" class="btn-primary h-11 px-6 shadow-lg shadow-indigo-600/20 inline-flex items-center">
+            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+            New Transaction
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+    <div class="card p-6 bg-gradient-to-br from-indigo-600 to-indigo-700 text-white border-none shadow-xl shadow-indigo-600/20">
+        <div class="flex justify-between items-start mb-4">
+            <div class="p-2 bg-white/20 rounded-lg backdrop-blur-md">
+                <i data-lucide="banknote" class="w-6 h-6"></i>
+            </div>
+            <span id="revenue-badge" class="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-full">—</span>
+        </div>
+        <div class="text-sm font-medium text-indigo-100 mb-1">Total Revenue</div>
+        <div id="kpi-revenue" class="text-3xl font-black tabular-nums tracking-tight">-</div>
+    </div>
+
+    <div class="card p-6 border-slate-200">
+        <div class="flex justify-between items-start mb-4">
+            <div class="p-2 bg-amber-50 rounded-lg border border-amber-100 text-amber-600">
+                <i data-lucide="box" class="w-6 h-6"></i>
+            </div>
+            <span id="stock-badge" class="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-1 rounded-full">—</span>
+        </div>
+        <div class="text-sm font-medium text-slate-500 mb-1">Total Products</div>
+        <div id="kpi-products" class="text-3xl font-black text-slate-900 tabular-nums tracking-tight">—</div>
+    </div>
+
+    <div class="card p-6 border-slate-200">
+        <div class="flex justify-between items-start mb-4">
+            <div class="p-2 bg-emerald-50 rounded-lg border border-emerald-100 text-emerald-600">
+                <i data-lucide="users" class="w-6 h-6"></i>
+            </div>
+            <span id="customer-badge" class="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-full">—</span>
+        </div>
+        <div class="text-sm font-medium text-slate-500 mb-1">Total Customers</div>
+        <div id="kpi-customers" class="text-3xl font-black text-slate-900 tabular-nums tracking-tight">—</div>
+    </div>
+
+    <div class="card p-6 border-slate-200">
+        <div class="flex justify-between items-start mb-4">
+            <div class="p-2 bg-rose-50 rounded-lg border border-rose-100 text-rose-600">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-100 px-2 py-1 rounded-full">Action Required</span>
+        </div>
+        <div class="text-sm font-medium text-slate-500 mb-1">Low / Out of Stock</div>
+        <div id="kpi-lowstock" class="text-3xl font-black text-slate-900 tabular-nums tracking-tight">—</div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2 space-y-8">
+        <!-- Recent Transactions -->
+        <div class="card">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-900">Recent Transactions</h3>
+                <a href="/Sales" class="text-xs font-bold text-indigo-600 hover:text-indigo-500 uppercase tracking-widest transition-colors">View All</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-100">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Customer</th>
+                            <th class="px-6 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-sales" class="divide-y divide-slate-100">
+                        <tr><td colspan="3" class="px-6 py-8 text-center">
+                            <i data-lucide="loader-2" class="w-6 h-6 text-indigo-500 animate-spin mx-auto"></i>
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Low Stock Alerts -->
+        <div class="card">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-900">Stock Alerts</h3>
+                <a href="/Inventory" class="text-xs font-bold text-indigo-600 hover:text-indigo-500 uppercase tracking-widest transition-colors">Manage Stock</a>
+            </div>
+            <div id="stock-alerts" class="divide-y divide-slate-100">
+                <div class="px-6 py-8 text-center">
+                    <i data-lucide="loader-2" class="w-6 h-6 text-indigo-500 animate-spin mx-auto"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-8">
+        <!-- Top Customers -->
+        <div class="card">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-900">Top Customers</h3>
+                <a href="/Customers" class="text-xs font-bold text-indigo-600 hover:text-indigo-500 uppercase tracking-widest transition-colors">View All</a>
+            </div>
+            <div id="top-customers" class="divide-y divide-slate-100">
+                <div class="px-6 py-8 text-center">
+                    <i data-lucide="loader-2" class="w-6 h-6 text-indigo-500 animate-spin mx-auto"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Outstanding Balances -->
+        <div class="card">
+            <div class="px-6 py-5 border-b border-slate-100">
+                <h3 class="text-lg font-bold text-slate-900">Outstanding Balances</h3>
+            </div>
+            <div id="outstanding-balances" class="divide-y divide-slate-100">
+                <div class="px-6 py-8 text-center">
+                    <i data-lucide="loader-2" class="w-6 h-6 text-indigo-500 animate-spin mx-auto"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('breadcrumb-parent').textContent = 'Workspace';
+        document.getElementById('breadcrumb-current').textContent = 'Dashboard';
+
+        async function loadDashboard() {
+            const userInfo = window.auth.getUserInfo();
+            if (userInfo) {
+                const displayName = userInfo.name || userInfo.email || 'there';
+                const business = window.auth.getCurrentBusiness();
+                const businessName = business ? (business.businessName || business.BusinessName) : 'your business';
+                document.getElementById('welcome-text').textContent =
+                    'Welcome back, ' + displayName + '! Here\u2019s ' + businessName + '\u2019s snapshot.';
+            }
+
+            // Parallel data fetch
+            const [salesRes, inventoryRes, customersRes] = await Promise.all([
+                window.api.get('/sales/reports?pageNumber=1&pageSize=5'),
+                window.api.get('/inventories?pageNumber=1&pageSize=1000'),
+                window.api.get('/customers?pageNumber=1&pageSize=1000')
+            ]);
+
+            // ── KPIs ───────────────────────────────────────────────────────────
+            const allSales   = salesRes.isSuccess   ? (salesRes.data   || []) : [];
+            const allInv     = inventoryRes.isSuccess ? (inventoryRes.data || []) : [];
+            const allCust    = customersRes.isSuccess ? (customersRes.data || []) : [];
+
+            // Updated Revenue Formatter (MMK at the back)
+            const totalRevenue = allSales.reduce((sum, r) => sum + (r.totalAmount || 0), 0);
+            const salesTotal   = salesRes.isSuccess ? (salesRes.pagination || salesRes.Pagination) : null;
+            const totalSalesCount = salesTotal ? salesTotal.totalCount : allSales.length;
+
+            // KPI Revenue update
+            document.getElementById('kpi-revenue').textContent =
+                `${new Intl.NumberFormat('en-US', { minimumFractionDigits: 0 }).format(totalRevenue)} MMK`;
+            document.getElementById('revenue-badge').textContent = `${totalSalesCount} transactions`;
+
+            const totalProducts = inventoryRes.isSuccess
+                ? ((inventoryRes.pagination || inventoryRes.Pagination)?.totalCount ?? allInv.length)
+                : '—';
+            document.getElementById('kpi-products').textContent = totalProducts;
+
+            const lowStockItems = allInv.filter(i => (i.currentStock ?? 1) <= 10);
+            document.getElementById('stock-badge').textContent = `${lowStockItems.length} alerts`;
+            document.getElementById('kpi-lowstock').textContent = lowStockItems.length;
+
+            const totalCustomers = customersRes.isSuccess
+                ? ((customersRes.pagination || customersRes.Pagination)?.totalCount ?? allCust.length)
+                : '—';
+            document.getElementById('kpi-customers').textContent = totalCustomers;
+
+            const newCustomers = allCust.filter(c => {
+                if (!c.lastTransactionDate) return false;
+                const d = new Date(c.lastTransactionDate);
+                const now = new Date();
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            });
+            document.getElementById('customer-badge').textContent = `${newCustomers.length} active this month`;
+
+            // ── Recent Transactions ───────────────────────────────────────────
+            const salesBody = document.getElementById('recent-sales');
+            if (allSales.length === 0) {
+                salesBody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400 font-medium text-sm">No transactions yet.</td></tr>`;
+            } else {
+                salesBody.innerHTML = allSales.map(r => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-3.5 text-sm text-slate-500 whitespace-nowrap tabular-nums">
+                            ${new Date(r.reportDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <div class="flex items-center gap-2">
+                                <div class="h-7 w-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-black text-[10px] uppercase flex-shrink-0">
+                                    ${r.customerName.substring(0, 2)}
+                                </div>
+                                <span class="text-sm font-semibold text-slate-800">${r.customerName}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-3.5 text-sm font-black text-emerald-600 tabular-nums text-right whitespace-nowrap">
+                            ${new Intl.NumberFormat('en-US', { minimumFractionDigits: 0 }).format(r.totalAmount)} MMK
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // ── Stock Alerts ──────────────────────────────────────────────────
+            const alertsContainer = document.getElementById('stock-alerts');
+            if (lowStockItems.length === 0) {
+                alertsContainer.innerHTML = `
+                    <div class="px-6 py-8 text-center">
+                        <div class="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="check-circle" class="w-6 h-6 text-emerald-500"></i>
+                        </div>
+                        <p class="text-sm font-bold text-slate-700">All stock levels are healthy</p>
+                        <p class="text-xs text-slate-400 mt-1">No products require restocking right now.</p>
+                    </div>`;
+            } else {
+                alertsContainer.innerHTML = lowStockItems.slice(0, 6).map(item => {
+                    const isOut = (item.currentStock ?? 0) <= 0;
+                    return `
+                    <div class="px-6 py-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="h-8 w-8 rounded-lg ${isOut ? 'bg-rose-50 text-rose-500' : 'bg-amber-50 text-amber-600'} flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="${isOut ? 'alert-circle' : 'alert-triangle'}" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">${item.name}</p>
+                                <p class="text-xs text-slate-400 font-medium">
+                                    ${new Intl.NumberFormat('en-US', { minimumFractionDigits: 0 }).format(item.price)} MMK per unit
+                                </p>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold
+                            ${isOut ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-amber-50 text-amber-700 border border-amber-100'}">
+                            ${isOut ? 'Out of stock' : `${item.currentStock} left`}
+                        </span>
+                    </div>`;
+                }).join('');
+            }
+
+            // ── Top Customers ────────────────────────────
+            const topCustomers = [...allCust]
+                .filter(c => c.totalPurchased > 0)
+                .sort((a, b) => (b.totalPurchased || 0) - (a.totalPurchased || 0))
+                .slice(0, 5);
+
+            const topCustContainer = document.getElementById('top-customers');
+            if (topCustomers.length === 0) {
+                topCustContainer.innerHTML = `<div class="px-6 py-8 text-center text-slate-400 text-sm font-medium">No purchase history yet.</div>`;
+            } else {
+                topCustContainer.innerHTML = topCustomers.map((c, i) => `
+                    <div class="px-6 py-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-black text-slate-400 w-5 text-center">${i + 1}</span>
+                            <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-black text-xs uppercase flex-shrink-0">
+                                ${c.name.substring(0, 2)}
+                            </div>
+                            <span class="text-sm font-bold text-slate-800">${c.name}</span>
+                        </div>
+                        <span class="text-sm font-black text-emerald-600 tabular-nums">
+                            ${new Intl.NumberFormat('en-US', { minimumFractionDigits: 0 }).format(c.totalPurchased)} MMK
+                        </span>
+                    </div>
+                `).join('');
+            }
+
+            // ── Outstanding Balances ──────────────────────────────────────────
+            const withBalance = [...allCust]
+                .filter(c => c.outstandingBalance > 0)
+                .sort((a, b) => (b.outstandingBalance || 0) - (a.outstandingBalance || 0))
+                .slice(0, 5);
+
+            const balContainer = document.getElementById('outstanding-balances');
+            if (withBalance.length === 0) {
+                balContainer.innerHTML = `
+                    <div class="px-6 py-8 text-center">
+                        <div class="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="check-circle" class="w-6 h-6 text-emerald-500"></i>
+                        </div>
+                        <p class="text-sm font-bold text-slate-700">No outstanding balances</p>
+                        <p class="text-xs text-slate-400 mt-1">All accounts are settled.</p>
+                    </div>`;
+            } else {
+                balContainer.innerHTML = withBalance.map(c => `
+                    <div class="px-6 py-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="h-8 w-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-black text-xs uppercase flex-shrink-0">
+                                ${c.name.substring(0, 2)}
+                            </div>
+                            <span class="text-sm font-bold text-slate-800">${c.name}</span>
+                        </div>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-100">
+                            ${new Intl.NumberFormat('en-US', { minimumFractionDigits: 0 }).format(c.outstandingBalance)} MMK due
+                        </span>
+                    </div>
+                `).join('');
+            }
+            lucide.createIcons();
+        }
+
+        loadDashboard();
+    </script>
+}

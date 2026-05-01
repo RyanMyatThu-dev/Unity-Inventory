@@ -1,6 +1,7 @@
 using IMS.Domain.Features.Customers;
 using IMS.Domain.Features.Customers.Models;
 using IMS.shared;
+using IMS.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,12 +28,12 @@ namespace IMS.api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCustomers()
+        public async Task<IActionResult> GetCustomers([FromQuery] PaginationRequest paginationRequest)
         {
             var businessId = GetBusinessId();
-            if (businessId == 0) return BadRequest("Business not selected.");
+            if (businessId == 0) return BadRequest("Business not selected.");   
 
-            var result = await _customerService.GetCustomersByBusinessIdAsync(businessId);
+            var result = await _customerService.GetCustomersByBusinessIdAsync(paginationRequest, businessId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

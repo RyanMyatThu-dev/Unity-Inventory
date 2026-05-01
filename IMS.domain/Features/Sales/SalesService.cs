@@ -1,6 +1,7 @@
 using IMS.Database.IMSDbContextModels;
 using IMS.Domain.Features.Sales.Models;
 using IMS.shared;
+using IMS.Shared;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -19,13 +20,20 @@ namespace IMS.Domain.Features.Sales
             _db = db;
         }
 
-        public async Task<Result<List<ReportDTO>>> GetReportsByBusinessIdAsync(int businessId)
+        public async Task<PagedResult<ReportDTO>> GetReportsByBusinessIdAsync(PaginationRequest paginationRequest, int businessId)
         {
             try
             {
-                var reports = await _db.TblReports
+                var query = _db.TblReports
                     .Include(r => r.Customer)
-                    .Where(r => r.BusinessId == businessId)
+                    .Where(r => r.BusinessId == businessId);
+
+                var totalCount = await query.CountAsync();
+
+                var items = await query
+                    .OrderByDescending(r => r.ReportDate)
+                    .Skip((paginationRequest.PageNumber - 1) * paginationRequest.PageSize)
+                    .Take(paginationRequest.PageSize)
                     .Select(r => new ReportDTO
                     {
                         Id = r.ReportId,
@@ -36,14 +44,14 @@ namespace IMS.Domain.Features.Sales
                         TotalAmount = r.TotalAmount ?? 0,
                         Remarks = r.Remarks
                     })
-                    .OrderByDescending(r => r.ReportDate)
                     .ToListAsync();
 
-                return Result<List<ReportDTO>>.Success(reports);
+                var pagination = new Pagination(paginationRequest.PageNumber, paginationRequest.PageSize, totalCount);
+                return PagedResult<ReportDTO>.Success(items, pagination);
             }
             catch (Exception ex)
             {
-                return Result<List<ReportDTO>>.Failure(ex.Message);
+                return PagedResult<ReportDTO>.Failure(ex.Message);
             }
         }
 

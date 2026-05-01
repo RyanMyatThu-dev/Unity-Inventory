@@ -52,8 +52,8 @@ namespace IMS.Shared.Middlewares
 
                         if (res != null)
                         {
-                            ValidateToken(res.AccessToken, context);
-                            context.Response.Cookies.Append("X-Access-Token", res.AccessToken);
+                            ValidateToken(res.Data.AccessToken, context);
+                            context.Response.Cookies.Append("X-Access-Token", res.Data.AccessToken);
 
                             var cookieOptions = new CookieOptions
                             {
@@ -63,7 +63,7 @@ namespace IMS.Shared.Middlewares
                                 Expires = DateTime.UtcNow.AddDays(7)
                             };
 
-                            context.Response.Cookies.Append("refreshToken", res.RefreshToken, cookieOptions);
+                            context.Response.Cookies.Append("refreshToken", res.Data.RefreshToken, cookieOptions);
 
                         }
 

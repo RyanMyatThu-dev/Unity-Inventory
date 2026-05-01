@@ -1,7 +1,8 @@
-﻿using IMS.Database.IMSDbContextModels;
+using IMS.Database.IMSDbContextModels;
 using IMS.Domain.Features.Authentication.Models;
 using IMS.Domain.Features.Authentication.Tokens;
 using IMS.Domain.Features.Business;
+using IMS.shared;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -29,13 +30,13 @@ namespace IMS.Domain.Features.Authentication
             _businessService = businessService;
         }
 
-        public async Task<TokenResponse?> LoginAsync(LoginRequest request)
+        public async Task<Result<TokenResponse>> LoginAsync(LoginRequest request)
         {
             var user = await _db.TblUsers.FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (user == null) return null;
+            if (user == null) return Result<TokenResponse>.Failure("Invalid email or password.");
 
             if(!(BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))){
-                return null;
+                return Result<TokenResponse>.Failure("Invalid email or password.");
             }
 
             var accessToken = _tokenService.GenerateAccessToken(user, null, null);
@@ -55,27 +56,27 @@ namespace IMS.Domain.Features.Authentication
             _db.TblUserTokens.Add(userToken);
             await _db.SaveChangesAsync();   
 
-            return new TokenResponse
+            return Result<TokenResponse>.Success(new TokenResponse
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 Email = user.Email,
                 Businesses = businesses.Data ?? new List<BusinessAccessDto>()
-            };
+            });
 
         }
 
-        public async Task<TokenResponse?> RefreshTokenAsync(RefreshTokenRequest request)
+        public async Task<Result<TokenResponse>> RefreshTokenAsync(RefreshTokenRequest request)
         {
             var hashedToken = HashToken(request.RefreshToken);
             var userToken = await _db.TblUserTokens
                .Include(ut => ut.User)
                .FirstOrDefaultAsync(ut => ut.TokenHash == hashedToken && (ut.IsRevoked != true) && ut.ExpiryDate > DateTime.UtcNow);
 
-            if (userToken == null) return null;
+            if (userToken == null) return Result<TokenResponse>.Failure("Invalid or expired refresh token.");
 
             var user = userToken.User;
-            if (user == null) return null;
+            if (user == null) return Result<TokenResponse>.Failure("User not found.");
 
             // Revoke the old token
             userToken.IsRevoked = true;
@@ -100,13 +101,13 @@ namespace IMS.Domain.Features.Authentication
 
             var businesses = await _businessService.GetBusinessesByUserIdAsync(user.UserId);
 
-            return new TokenResponse
+            return Result<TokenResponse>.Success(new TokenResponse
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 Email = user.Email,
                 Businesses = businesses.Data ?? new List<BusinessAccessDto>()
-            };
+            });
         }
 
         private string HashToken(string token)

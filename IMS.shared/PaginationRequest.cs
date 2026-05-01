@@ -8,7 +8,7 @@ namespace IMS.Shared
 {
     public class PaginationRequest
     {
-        int PageSize { get; set; } = 10;
-        int PageNumber { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
+        public int PageNumber { get; set; } = 1;
     }
 }

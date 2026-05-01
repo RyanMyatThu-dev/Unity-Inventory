@@ -1,4 +1,4 @@
-﻿using IMS.Domain.Features.Authentication.Models;
+using IMS.Domain.Features.Authentication.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -28,7 +28,7 @@ namespace IMS.Domain.Features.Authentication
                 return BadRequest(ModelState);
             }
             var result = await _authService.LoginAsync(request);
-            if (result != null)
+            if (result.IsSuccess)
             {
                 return Ok(result);
             }

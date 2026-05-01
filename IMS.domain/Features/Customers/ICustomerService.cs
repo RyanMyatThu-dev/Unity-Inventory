@@ -1,5 +1,6 @@
 using IMS.Domain.Features.Customers.Models;
 using IMS.shared;
+using IMS.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace IMS.Domain.Features.Customers
 {
     public interface ICustomerService
     {
-        Task<Result<List<CustomerDTO>>> GetCustomersByBusinessIdAsync(int businessId);
+        Task<PagedResult<CustomerDTO>> GetCustomersByBusinessIdAsync(PaginationRequest paginationRequest, int businessId);
         Task<Result<CustomerDTO>> GetCustomerByIdAsync(int id);
         Task<Result<CustomerDTO>> CreateCustomerAsync(CreateCustomerRequest request);
         Task<Result<CustomerDTO>> UpdateCustomerAsync(UpdateCustomerRequest request);

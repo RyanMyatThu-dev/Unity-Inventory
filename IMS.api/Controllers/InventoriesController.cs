@@ -1,6 +1,7 @@
 using IMS.Domain.Features.Inventories;
 using IMS.Domain.Features.Inventories.Models;
 using IMS.shared;
+using IMS.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,12 +28,12 @@ namespace IMS.api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetInventories()
+        public async Task<IActionResult> GetInventories([FromQuery] PaginationRequest request)
         {
             var businessId = GetBusinessId();
             if (businessId == 0) return BadRequest("Business not selected.");
 
-            var result = await _inventoryService.GetInventoriesByBusinessIdAsync(businessId);
+            var result = await _inventoryService.GetInventoriesByBusinessIdAsync(request, businessId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -71,6 +72,20 @@ namespace IMS.api.Controllers
         public async Task<IActionResult> DeleteInventory(int id)
         {
             var result = await _inventoryService.DeleteInventoryAsync(id);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        [HttpPost("update-stock")]
+        public async Task<IActionResult> UpdateStock([FromBody] UpdateStockRequest request)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var businessId = GetBusinessId();
+            if (businessId == 0) return BadRequest("Business not selected.");
+
+            request.BusinessId = businessId;
+
+            var result = await _inventoryService.UpdateStockAsync(request);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

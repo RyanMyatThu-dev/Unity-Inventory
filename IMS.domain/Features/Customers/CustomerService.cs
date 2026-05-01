@@ -1,6 +1,7 @@
 using IMS.Database.IMSDbContextModels;
 using IMS.Domain.Features.Customers.Models;
 using IMS.shared;
+using IMS.Shared;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -19,28 +20,45 @@ namespace IMS.Domain.Features.Customers
             _db = db;
         }
 
-        public async Task<Result<List<CustomerDTO>>> GetCustomersByBusinessIdAsync(int businessId)
+        public async Task<PagedResult<CustomerDTO>> GetCustomersByBusinessIdAsync(PaginationRequest paginationRequest, int businessId)
         {
             try
             {
-                var customers = await _db.TblCustomers
-                    .Where(c => c.BusinessId == businessId)
-                    .Select(c => new CustomerDTO
-                    {
-                        Id = c.CustomerId,
-                        Name = c.CustomerName,
-                        BusinessId = c.BusinessId,
-                        Phone = c.Phone,
-                        Address = c.Address,
-                        TotalItems = c.TotalItems ?? 0
-                    })
+                var query = _db.TblCustomers
+                    .Where(c => c.BusinessId == businessId);
+
+                var totalCount = await query.CountAsync();
+
+                var items = await query
+                    .Skip((paginationRequest.PageNumber - 1) * paginationRequest.PageSize)
+                    .Take(paginationRequest.PageSize)
+                    .GroupJoin(
+                        _db.TblCustomerSummaries.Where(s => s.BusinessId == businessId),
+                        c => c.CustomerId,
+                        s => s.CustomerId,
+                        (c, sums) => new { c, sums })
+                    .SelectMany(
+                        x => x.sums.DefaultIfEmpty(),
+                        (x, summary) => new CustomerDTO
+                        {
+                            Id = x.c.CustomerId,
+                            Name = x.c.CustomerName,
+                            BusinessId = x.c.BusinessId,
+                            Phone = x.c.Phone,
+                            Address = x.c.Address,
+                            TotalItems = x.c.TotalItems ?? 0,
+                            TotalPurchased = summary != null ? summary.TotalPurchased : 0,
+                            OutstandingBalance = summary != null ? summary.OutstandingBalance : 0,
+                            LastTransactionDate = summary != null ? summary.LastTransactionDate : null
+                        })
                     .ToListAsync();
 
-                return Result<List<CustomerDTO>>.Success(customers);
+                var pagination = new Pagination(paginationRequest.PageNumber, paginationRequest.PageSize, totalCount);
+                return PagedResult<CustomerDTO>.Success(items, pagination);
             }
             catch (Exception ex)
             {
-                return Result<List<CustomerDTO>>.Failure(ex.Message);
+                return PagedResult<CustomerDTO>.Failure(ex.Message);
             }
         }
 
@@ -50,15 +68,25 @@ namespace IMS.Domain.Features.Customers
             {
                 var customer = await _db.TblCustomers
                     .Where(c => c.CustomerId == id)
-                    .Select(c => new CustomerDTO
-                    {
-                        Id = c.CustomerId,
-                        Name = c.CustomerName,
-                        BusinessId = c.BusinessId,
-                        Phone = c.Phone,
-                        Address = c.Address,
-                        TotalItems = c.TotalItems ?? 0
-                    })
+                    .GroupJoin(
+                        _db.TblCustomerSummaries,
+                        c => c.CustomerId,
+                        s => s.CustomerId,
+                        (c, sums) => new { c, sums })
+                    .SelectMany(
+                        x => x.sums.DefaultIfEmpty(),
+                        (x, summary) => new CustomerDTO
+                        {
+                            Id = x.c.CustomerId,
+                            Name = x.c.CustomerName,
+                            BusinessId = x.c.BusinessId,
+                            Phone = x.c.Phone,
+                            Address = x.c.Address,
+                            TotalItems = x.c.TotalItems ?? 0,
+                            TotalPurchased = summary != null ? summary.TotalPurchased : 0,
+                            OutstandingBalance = summary != null ? summary.OutstandingBalance : 0,
+                            LastTransactionDate = summary != null ? summary.LastTransactionDate : null
+                        })
                     .FirstOrDefaultAsync();
 
                 if (customer == null)
