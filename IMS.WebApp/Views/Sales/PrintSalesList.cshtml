@@ -1,0 +1,152 @@
+@model IEnumerable<IMS.WebApp.Models.ReportDTO>
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Sales Report List</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 40px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #4f46e5;
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: #64748b;
+            text-align: left;
+            padding: 12px 10px;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .text-right { text-align: right; }
+        .font-mono { font-family: 'Courier New', Courier, monospace; }
+        .font-bold { font-weight: 700; }
+
+        .summary-box {
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .summary-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .summary-label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 11px;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Sales Transactions Summary</h1>
+        <p>Report generated on @DateTime.Now.ToString("MMMM dd, yyyy")</p>
+    </div>
+
+    <div class="summary-box">
+        <div class="summary-item">
+            <div class="summary-label">Total Transactions</div>
+            <div class="summary-value">@Model.Count()</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">Total Revenue</div>
+            <div class="summary-value" style="color: #059669;">@Model.Sum(x => x.TotalAmount).ToString("N0") MMK</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Remarks</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.OrderByDescending(x => x.ReportDate))
+            {
+                <tr>
+                    <td class="font-mono">@item.ReportDate.ToString("yyyy-MM-dd")</td>
+                    <td class="font-bold">@item.CustomerName</td>
+                    <td style="color: #64748b;">@(string.IsNullOrEmpty(item.Remarks) ? "-" : item.Remarks)</td>
+                    <td class="text-right font-mono font-bold">@item.TotalAmount.ToString("N0") MMK</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Confidential Sales Report - Powered by IMS Pro System
+    </div>
+</body>
+</html>

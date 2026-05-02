@@ -1,5 +1,6 @@
 using IMS.WebApp.Models;
 using Microsoft.AspNetCore.Mvc;
+using Rotativa.AspNetCore;
 using System.Diagnostics;
 
 namespace IMS.WebApp.Controllers

@@ -30,10 +30,16 @@
                 <option value="50">50</option>
             </select>
         </div>
-        <button onclick="loadInventory(1)" class="btn-secondary text-xs h-9 w-full sm:w-auto">
-            <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
-            Sync
-        </button>
+        <div class="flex gap-2 w-full sm:w-auto">
+            <button onclick="printInventory()" class="btn-secondary text-xs h-9">
+                <i data-lucide="printer" class="w-4 h-4 mr-2"></i>
+                Print Report
+            </button>
+            <button onclick="loadInventory(1)" class="btn-secondary text-xs h-9">
+                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                Sync
+            </button>
+        </div>
     </div>
 
     <div class="overflow-x-auto">
@@ -353,6 +359,16 @@
                 window.notify.show(result.message || 'Archive failed', 'error');
             }
         }
+    }
+
+    function printInventory() {
+        const businessId = localStorage.getItem('current_business_id');
+        if (!businessId) {
+            window.notify.show('Please select a business first', 'error');
+            return;
+        }
+        const token = window.api.getToken();
+        window.open(`/Inventory/PrintStock?businessId=${businessId}&token=${token}`, '_blank');
     }
 
     document.getElementById('search-input').addEventListener('input', (e) => {

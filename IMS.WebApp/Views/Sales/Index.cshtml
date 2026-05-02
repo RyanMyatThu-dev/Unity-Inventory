@@ -31,6 +31,10 @@
             </select>
         </div>
         <div class="flex gap-2">
+            <button onclick="printSalesReportList()" class="btn-secondary text-xs h-9">
+                <i data-lucide="printer" class="w-4 h-4 mr-2"></i>
+                Print List
+            </button>
             <button onclick="loadReports(1)" class="btn-secondary text-xs h-9">
                 <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
                 Sync
@@ -147,9 +151,14 @@
                         <h3 class="text-xl font-bold text-slate-900" id="detail-title">Transaction Detail</h3>
                         <p class="text-sm text-slate-400 font-medium mt-1" id="detail-meta"></p>
                     </div>
-                    <button onclick="hideDetailModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-100 transition-all">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
+                    <div class="flex gap-2">
+                        <button id="detail-print-btn" class="text-slate-400 hover:text-emerald-600 p-2 rounded-lg hover:bg-emerald-50 transition-all" title="Print PDF">
+                            <i data-lucide="printer" class="w-5 h-5"></i>
+                        </button>
+                        <button onclick="hideDetailModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-100 transition-all">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
                 </div>
                 <div id="detail-body"></div>
             </div>
@@ -231,12 +240,16 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex justify-end gap-2">
+                                <button onclick="printReport(${item.id})"
+                                    class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="Print PDF">
+                                    <i data-lucide="printer" class="w-4 h-4"></i>
+                                </button>
                                 <button onclick="viewReport(${item.id})"
-                                    class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                                    class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="View Details">
                                     <i data-lucide="eye" class="w-4 h-4"></i>
                                 </button>
                                 <button onclick="deleteReport(${item.id})"
-                                    class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all">
+                                    class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" title="Delete">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                             </div>
@@ -446,6 +459,7 @@
                     </div>
                 `;
                 document.getElementById('detail-modal').classList.remove('hidden');
+                document.getElementById('detail-print-btn').onclick = () => printReport(id);
                 lucide.createIcons();
             } else {
                 window.notify.show('Could not load report details', 'error');
@@ -462,6 +476,21 @@
                     window.notify.show(result.message || 'Deletion failed', 'error');
                 }
             }
+        }
+
+        function printReport(id) {
+            const token = window.api.getToken();
+            window.open(`/Sales/PrintReport/${id}?token=${token}`, '_blank');
+        }
+
+        function printSalesReportList() {
+            const businessId = localStorage.getItem('current_business_id');
+            if (!businessId) {
+                window.notify.show('Please select a business first', 'error');
+                return;
+            }
+            const token = window.api.getToken();
+            window.open(`/Sales/PrintSalesList?businessId=${businessId}&token=${token}`, '_blank');
         }
 
         document.getElementById('search-input').addEventListener('input', (e) => {
