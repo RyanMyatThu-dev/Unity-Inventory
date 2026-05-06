@@ -19,6 +19,7 @@ namespace IMS.Domain.Features.Customers.Models
         public decimal? TotalPurchased { get; set; }
         public decimal? OutstandingBalance { get; set; }
         public DateTime? LastTransactionDate { get; set; }
+        public byte[] VersionStamp { get; set; }
     }
 
     public class CreateCustomerRequest
@@ -45,5 +46,8 @@ namespace IMS.Domain.Features.Customers.Models
 
         public string? Phone { get; set; }
         public string? Address { get; set; }
+
+        [Required]
+        public byte[] VersionStamp { get; set;  }
     }
 }

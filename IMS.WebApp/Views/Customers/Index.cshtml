@@ -254,8 +254,13 @@
             saveBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2"></i>Saving...';
             lucide.createIcons();
 
+            let versionStamp = null;
+            if (id && window._customerMap[id]) {
+                versionStamp = window._customerMap[id].versionStamp;
+            }
+
             const result = id
-                ? await window.api.put('/customers', { id: parseInt(id), name, phone, address })
+                ? await window.api.put('/customers', { id: parseInt(id), name, phone, address, versionStamp })
                 : await window.api.post('/customers', { name, businessId, phone, address });
 
             if (result && result.isSuccess) {
@@ -272,7 +277,9 @@
 
         async function deleteCustomer(id) {
             if (confirm('Permanently remove this customer record?')) {
-                const result = await window.api.delete(`/customers/${id}`);
+                const item = window._customerMap && window._customerMap[id];
+                const versionStamp = item ? item.versionStamp : null;
+                const result = await window.api.delete(`/customers/${id}?version=${encodeURIComponent(versionStamp)}`);
                 if (result && result.isSuccess) {
                     window.notify.show('Customer removed');
                     loadCustomers(currentPage);

@@ -15,6 +15,8 @@ public partial class TblInventorySummary
 
     public DateTime? LastUpdated { get; set; }
 
+    public byte[] VersionStamp { get; set; } = null!;
+
     public virtual TblBusiness Business { get; set; } = null!;
 
     public virtual TblInventory Inventory { get; set; } = null!;

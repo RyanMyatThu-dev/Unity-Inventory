@@ -1,3 +1,4 @@
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -15,6 +16,7 @@ using IMS.Domain.Features.Inventories;
 using IMS.Domain.Features.Customers;
 using IMS.Domain.Features.Sales;
 using IMS.Domain.Features.CustomerPrices;
+using IMS.Domain.Features.PhotoUpload;
 
 
 namespace IMS.Domain.Features
@@ -26,6 +28,14 @@ namespace IMS.Domain.Features
             builder.Services.AddDbContext<IMS.Database.IMSDbContextModels.IMSDbContext>(options => 
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            //cloudinary config
+            var cloudName = builder.Configuration["Cloudinary:CloudName"]?.Trim();
+            var apiKey = builder.Configuration["Cloudinary:ApiKey"]?.Trim();
+            var apiSecret = builder.Configuration["Cloudinary:ApiSecret"]?.Trim();
+            var acc = new Account(cloudName, apiKey, apiSecret);
+            builder.Services.AddSingleton(new Cloudinary(acc));
+
+            builder.Services.AddScoped<IPhotoUploadService, PhotoUploadService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<IBusinessService, BusinessService>();

@@ -49,7 +49,8 @@ namespace IMS.Domain.Features.Customers
                             TotalItems = x.c.TotalItems ?? 0,
                             TotalPurchased = summary != null ? summary.TotalPurchased : 0,
                             OutstandingBalance = summary != null ? summary.OutstandingBalance : 0,
-                            LastTransactionDate = summary != null ? summary.LastTransactionDate : null
+                            LastTransactionDate = summary != null ? summary.LastTransactionDate : null,
+                            VersionStamp = x.c.VersionStamp,
                         })
                     .ToListAsync();
 
@@ -85,7 +86,8 @@ namespace IMS.Domain.Features.Customers
                             TotalItems = x.c.TotalItems ?? 0,
                             TotalPurchased = summary != null ? summary.TotalPurchased : 0,
                             OutstandingBalance = summary != null ? summary.OutstandingBalance : 0,
-                            LastTransactionDate = summary != null ? summary.LastTransactionDate : null
+                            LastTransactionDate = summary != null ? summary.LastTransactionDate : null,
+                            VersionStamp = x.c.VersionStamp,
                         })
                     .FirstOrDefaultAsync();
 
@@ -123,7 +125,8 @@ namespace IMS.Domain.Features.Customers
                     BusinessId = customer.BusinessId,
                     Phone = customer.Phone,
                     Address = customer.Address,
-                    TotalItems = 0
+                    TotalItems = 0,
+                    VersionStamp = customer.VersionStamp
                 });
             }
             catch (Exception ex)
@@ -140,6 +143,8 @@ namespace IMS.Domain.Features.Customers
                 if (customer == null)
                     return Result<CustomerDTO>.Failure("Customer not found.");
 
+                _db.Entry(customer).Property(p => p.VersionStamp).OriginalValue = request.VersionStamp;
+
                 customer.CustomerName = request.Name;
                 customer.Phone = request.Phone;
                 customer.Address = request.Address;
@@ -153,8 +158,13 @@ namespace IMS.Domain.Features.Customers
                     BusinessId = customer.BusinessId,
                     Phone = customer.Phone,
                     Address = customer.Address,
-                    TotalItems = customer.TotalItems ?? 0
+                    TotalItems = customer.TotalItems ?? 0,
+                    VersionStamp = customer.VersionStamp
                 });
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result<CustomerDTO>.Failure("The customer has been updated by another user. Please refresh and try again.");
             }
             catch (Exception ex)
             {
@@ -162,13 +172,15 @@ namespace IMS.Domain.Features.Customers
             }
         }
 
-        public async Task<Result<bool>> DeleteCustomerAsync(int id)
+        public async Task<Result<bool>> DeleteCustomerAsync(int id, byte[] version)
         {
             try
             {
                 var customer = await _db.TblCustomers.FindAsync(id);
                 if (customer == null)
                     return Result<bool>.Failure("Customer not found.");
+
+                _db.Entry(customer).Property(p => p.VersionStamp).OriginalValue = version;
 
                 // Check if customer has any reports/sales before deleting
                 var hasReports = await _db.TblReports.AnyAsync(r => r.CustomerId == id);
@@ -179,6 +191,10 @@ namespace IMS.Domain.Features.Customers
                 await _db.SaveChangesAsync();
 
                 return Result<bool>.Success(true);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result<bool>.Failure("The customer has been updated by another user. Please refresh and try again.");
             }
             catch (Exception ex)
             {

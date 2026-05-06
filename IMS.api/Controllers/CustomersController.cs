@@ -67,10 +67,11 @@ namespace IMS.api.Controllers
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
+
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCustomer(int id)
+        public async Task<IActionResult> DeleteCustomer(int id, [FromQuery] byte[] version)
         {
-            var result = await _customerService.DeleteCustomerAsync(id);
+            var result = await _customerService.DeleteCustomerAsync(id, version);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

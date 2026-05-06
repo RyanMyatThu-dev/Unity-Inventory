@@ -90,8 +90,13 @@
                                 <input type="text" id="p-name" class="input-field" placeholder="e.g. Wireless Mouse">
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Unit Price ($)</label>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Unit Price (MMK)</label>
                                 <input type="number" step="0.01" id="p-price" class="input-field" placeholder="0.00">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Product Photo</label>
+                                <input type="file" id="p-photo" class="input-field" accept="image/*">
+                                <p class="text-[10px] text-slate-400 mt-1">Recommended: Square image, max 5MB.</p>
                             </div>
                         </div>
                     </div>
@@ -189,12 +194,17 @@
                 return;
             }
 
+            window._inventoryMap = {};
+            items.forEach(item => { window._inventoryMap[item.id] = item; });
+
             tbody.innerHTML = items.map(item => `
                 <tr class="hover:bg-slate-50/80 transition-colors">
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
-                            <div class="h-8 w-8 rounded bg-slate-100 flex items-center justify-center mr-3 text-slate-400 flex-shrink-0">
-                                <i data-lucide="package" class="w-4 h-4"></i>
+                            <div class="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center mr-3 text-slate-400 flex-shrink-0 overflow-hidden border border-slate-200">
+                                ${item.imageUrl 
+                                    ? `<img src="${item.imageUrl}" class="h-full w-full object-cover" alt="${item.name}">`
+                                    : `<i data-lucide="package" class="w-5 h-5"></i>`}
                             </div>
                             <span class="text-sm font-bold text-slate-900">${item.name}</span>
                         </div>
@@ -258,11 +268,13 @@
         document.getElementById('p-id').value = '';
         document.getElementById('p-name').value = '';
         document.getElementById('p-price').value = '';
+        document.getElementById('p-photo').value = '';
         document.getElementById('product-modal').classList.remove('hidden');
     }
 
     function hideModal() {
         document.getElementById('product-modal').classList.add('hidden');
+        document.getElementById('p-photo').value = '';
     }
 
     function editProduct(id, name, price) {
@@ -270,6 +282,7 @@
         document.getElementById('p-id').value = id;
         document.getElementById('p-name').value = name;
         document.getElementById('p-price').value = price;
+        document.getElementById('p-photo').value = '';
         document.getElementById('product-modal').classList.remove('hidden');
     }
 
@@ -299,10 +312,14 @@
         btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2"></i>Saving...';
         lucide.createIcons();
 
+        const item = window._inventoryMap && window._inventoryMap[inventoryId];
+        const stockVersionStamp = item ? item.stockVersionStamp : null;
+
         const result = await window.api.post('/inventories/update-stock', {
             inventoryId,
             businessId,
-            currentStock: newStock
+            currentStock: newStock,
+            stockVersionStamp
         });
 
         if (result && result.isSuccess) {
@@ -333,9 +350,31 @@
         saveBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2"></i>Saving...';
         lucide.createIcons();
 
+        let versionStamp = null;
+        let stockVersionStamp = null;
+        if (id && window._inventoryMap[id]) {
+            versionStamp = window._inventoryMap[id].versionStamp;
+            stockVersionStamp = window._inventoryMap[id].stockVersionStamp;
+        }
+
+        const formData = new FormData();
+        if (id) formData.append('id', id);
+        formData.append('name', name);
+        formData.append('price', price);
+        formData.append('businessId', businessId);
+        
+        if (versionStamp) formData.append('versionStamp', versionStamp);
+        if (stockVersionStamp) formData.append('stockVersionStamp', stockVersionStamp);
+
+        const photoInput = document.getElementById('p-photo');
+        const photoFile = photoInput.files[0];
+        if (photoFile) {
+            formData.append('photoFile', photoFile);
+        }
+
         const result = id
-            ? await window.api.put('/inventories', { id: parseInt(id), name, price })
-            : await window.api.post('/inventories', { name, price, businessId });
+            ? await window.api.putForm('/inventories', formData)
+            : await window.api.postForm(photoFile ? '/inventories/photo-upload' : '/inventories', formData);
 
         if (result && result.isSuccess) {
             window.notify.show(`Product ${id ? 'updated' : 'created'} successfully`);
@@ -351,7 +390,9 @@
 
     async function deleteProduct(id) {
         if (confirm('Move this product to archives?')) {
-            const result = await window.api.delete(`/inventories/${id}`);
+            const item = window._inventoryMap && window._inventoryMap[id];
+            const versionStamp = item ? item.versionStamp : null;
+            const result = await window.api.delete(`/inventories/${id}?version=${encodeURIComponent(versionStamp)}`);
             if (result && result.isSuccess) {
                 window.notify.show('Product archived');
                 loadInventory(currentPage);

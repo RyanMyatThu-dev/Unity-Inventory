@@ -16,6 +16,12 @@ namespace IMS.Domain.Features.Inventories.Models
         public bool DeleteFlag { get; set; }
         public int? CurrentStock { get; set; }
         public DateTime? LastUpdated { get; set; }
+        public byte[] VersionStamp { get; set; }
+        public byte[]? StockVersionStamp { get; set; }
+
+        public string? ImageUrl { get; set; }
+        public string? ImageId { get; set; }
+
     }
     public class CreateProductRequest
     {
@@ -37,6 +43,12 @@ namespace IMS.Domain.Features.Inventories.Models
         public string Name { get; set; } = string.Empty;
         [Required]
         public decimal Price { get; set; }
+
+        [Required]
+        public byte[] VersionStamp { get; set; }
+        [Required]
+        public byte[]? StockVersionStamp { get; set; }
+
     }
     public class UpdateStockRequest
     {
@@ -46,5 +58,8 @@ namespace IMS.Domain.Features.Inventories.Models
         public int BusinessId { get; set; }
         [Required]
         public int CurrentStock { get; set; }
+
+        public byte[]? StockVersionStamp { get; set; }
+
     }
 }

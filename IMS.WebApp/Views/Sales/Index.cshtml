@@ -86,6 +86,12 @@
                         <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">Customer</label>
+                                <div class="relative mb-2">
+                                    <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                                        <i data-lucide="search" class="h-3.5 w-3.5"></i>
+                                    </div>
+                                    <input type="text" id="r-customer-search" class="input-field pl-8 py-1.5 text-sm" placeholder="Search customer..." oninput="filterCustomers()">
+                                </div>
                                 <select id="r-customer" class="input-field">
                                     <option value="">Select a customer...</option>
                                 </select>
@@ -273,6 +279,10 @@
         }
 
         function showModal() {
+            const customerSearch = document.getElementById('r-customer-search');
+            if (customerSearch) customerSearch.value = '';
+            if (typeof filterCustomers === 'function') filterCustomers();
+            
             document.getElementById('r-customer').value = '';
             document.getElementById('r-remarks').value = '';
             document.getElementById('r-date').value = new Date().toISOString().split('T')[0];
@@ -296,6 +306,12 @@
             row.className = 'voucher-row group';
             row.innerHTML = `
                 <td class="px-2 py-2">
+                    <div class="relative mb-1">
+                        <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="search" class="h-3 w-3"></i>
+                        </div>
+                        <input type="text" class="w-full text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded pl-7 py-1.5 focus:ring-1 focus:ring-indigo-500 focus:outline-none" placeholder="Search product..." oninput="filterProducts(this)">
+                    </div>
                     <select class="p-prod w-full text-sm font-semibold text-slate-700 border-0 bg-transparent focus:ring-0 focus:outline-none" onchange="updateRowPrice(this)">
                         <option value="">Select product...</option>
                         ${products.map(p => `<option value="${p.id}" data-price="${p.price}">${p.name}</option>`).join('')}
@@ -499,6 +515,36 @@
                 row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
             });
         });
+
+        function filterCustomers() {
+            const term = document.getElementById('r-customer-search').value.toLowerCase();
+            const select = document.getElementById('r-customer');
+            if (!select) return;
+            const currentValue = select.value;
+            
+            const filtered = customers.filter(c => c.name.toLowerCase().includes(term));
+            select.innerHTML = '<option value="">Select a customer...</option>' +
+                filtered.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                
+            if (filtered.some(c => c.id.toString() === currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        function filterProducts(input) {
+            const term = input.value.toLowerCase();
+            const select = input.parentElement.nextElementSibling;
+            if (!select) return;
+            const currentValue = select.value;
+            
+            const filtered = products.filter(p => p.name.toLowerCase().includes(term));
+            select.innerHTML = '<option value="">Select product...</option>' +
+                filtered.map(p => `<option value="${p.id}" data-price="${p.price}">${p.name}</option>`).join('');
+                
+            if (filtered.some(p => p.id.toString() === currentValue)) {
+                select.value = currentValue;
+            }
+        }
 
         loadData();
     </script>

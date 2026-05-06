@@ -4,9 +4,12 @@ const api = {
     async request(endpoint, options = {}) {
         const token = localStorage.getItem('access_token');
         const headers = {
-            'Content-Type': 'application/json',
             ...options.headers,
         };
+
+        if (!(options.body instanceof FormData)) {
+            headers['Content-Type'] = 'application/json';
+        }
 
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
@@ -70,8 +73,26 @@ const api = {
         });
     },
 
-    delete(endpoint) {
-        return this.request(endpoint, { method: 'DELETE' });
+    postForm(endpoint, formData) {
+        return this.request(endpoint, {
+            method: 'POST',
+            body: formData,
+        });
+    },
+
+    putForm(endpoint, formData) {
+        return this.request(endpoint, {
+            method: 'PUT',
+            body: formData,
+        });
+    },
+
+    delete(endpoint, body) {
+        const options = { method: 'DELETE' };
+        if (body) {
+            options.body = JSON.stringify(body);
+        }
+        return this.request(endpoint, options);
     },
 
     setToken(token) {

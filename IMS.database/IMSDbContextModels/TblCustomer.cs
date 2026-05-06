@@ -17,6 +17,8 @@ public partial class TblCustomer
 
     public int? TotalItems { get; set; }
 
+    public byte[] VersionStamp { get; set; } = null!;
+
     public virtual TblBusiness Business { get; set; } = null!;
 
     public virtual ICollection<TblCustomerPrice> TblCustomerPrices { get; set; } = new List<TblCustomerPrice>();

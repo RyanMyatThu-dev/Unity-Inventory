@@ -45,7 +45,7 @@ namespace IMS.api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateInventory([FromBody] CreateProductRequest request)
+        public async Task<IActionResult> CreateInventory([FromForm] CreateProductRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -59,19 +59,62 @@ namespace IMS.api.Controllers
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
+        [HttpPost("photo-upload")]
+        public async Task<IActionResult> UploadPhoto([FromForm] CreateProductRequest createRequest, IFormFile? photoFile)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // 1. Check if a file was actually provided
+            if (photoFile == null || photoFile.Length == 0)
+            {
+                return BadRequest("Please provide a product photo.");
+            }
+
+            var businessId = GetBusinessId();
+            if (businessId == 0) return BadRequest("Business not selected.");
+            createRequest.BusinessId = businessId;
+
+            // 2. Open a read stream from the IFormFile
+            using var stream = photoFile.OpenReadStream();
+
+            // 3. Pass the stream and the filename to your service
+            var fileName = string.IsNullOrWhiteSpace(photoFile.FileName) ? "uploaded-photo" : photoFile.FileName;
+            var result = await _inventoryService.CreateProductWithPhotoAsync(createRequest, stream, fileName);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return CreatedAtAction(
+                nameof(GetInventory),
+                new { id = result.Data!.Id },
+                result);
+        }
+
         [HttpPut]
-        public async Task<IActionResult> UpdateInventory([FromBody] UpdateProductRequest request)
+        public async Task<IActionResult> UpdateInventory([FromForm] UpdateProductRequest request, IFormFile? photoFile)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var result = await _inventoryService.UpdateInventoryAsync(request);
+            using var stream = photoFile?.Length > 0 ? photoFile.OpenReadStream() : null;
+            var fileName = string.Empty;
+
+            if (photoFile != null && photoFile.Length > 0)
+            {
+                fileName = string.IsNullOrWhiteSpace(photoFile.FileName) ? "uploaded-photo" : photoFile.FileName;
+            }
+
+            var result = await _inventoryService.UpdateInventoryAsync(request, stream, fileName);
+
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
+       
+
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteInventory(int id)
+        public async Task<IActionResult> DeleteInventory(int id, [FromQuery] byte[] version)
         {
-            var result = await _inventoryService.DeleteInventoryAsync(id);
+            var result = await _inventoryService.DeleteInventoryAsync(id, version);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

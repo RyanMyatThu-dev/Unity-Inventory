@@ -14,8 +14,9 @@ namespace IMS.Domain.Features.Inventories
         Task<PagedResult<InventoriesDTO>> GetInventoriesByBusinessIdAsync(PaginationRequest paginationRequest, int businessId);
         Task<Result<InventoriesDTO>> GetInventoryByIdAsync(int id);
         Task<Result<InventoriesDTO>> CreateInventoryAsync(CreateProductRequest request);
-        Task<Result<InventoriesDTO>> UpdateInventoryAsync(UpdateProductRequest request);
-        Task<Result<bool>> DeleteInventoryAsync(int id);
+        Task<Result<InventoriesDTO>> CreateProductWithPhotoAsync(CreateProductRequest request, Stream photoStream, string fileName);
+        Task<Result<InventoriesDTO>> UpdateInventoryAsync(UpdateProductRequest request, Stream photoStream, string fileName);
+        Task<Result<bool>> DeleteInventoryAsync(int id, byte[] version);
         Task<Result<bool>> UpdateStockAsync(UpdateStockRequest request);
     }
 }

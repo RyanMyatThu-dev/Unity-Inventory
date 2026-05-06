@@ -15,6 +15,6 @@ namespace IMS.Domain.Features.Customers
         Task<Result<CustomerDTO>> GetCustomerByIdAsync(int id);
         Task<Result<CustomerDTO>> CreateCustomerAsync(CreateCustomerRequest request);
         Task<Result<CustomerDTO>> UpdateCustomerAsync(UpdateCustomerRequest request);
-        Task<Result<bool>> DeleteCustomerAsync(int id);
+        Task<Result<bool>> DeleteCustomerAsync(int id, byte[] Version);
     }
 }

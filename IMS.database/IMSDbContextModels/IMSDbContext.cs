@@ -70,6 +70,9 @@ public partial class IMSDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.TotalItems).HasDefaultValue(0);
+            entity.Property(e => e.VersionStamp)
+                .IsRowVersion()
+                .IsConcurrencyToken();
 
             entity.HasOne(d => d.Business).WithMany(p => p.TblCustomers)
                 .HasForeignKey(d => d.BusinessId)
@@ -135,8 +138,17 @@ public partial class IMSDbContext : DbContext
             entity.HasIndex(e => e.BusinessId, "IX_Tbl_Inventories_BusinessId");
 
             entity.Property(e => e.DeleteFlag).HasDefaultValue(false);
+            entity.Property(e => e.ImageId)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.ImageUrl)
+                .HasMaxLength(2048)
+                .IsUnicode(false);
             entity.Property(e => e.InventoryName).HasMaxLength(50);
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.VersionStamp)
+                .IsRowVersion()
+                .IsConcurrencyToken();
 
             entity.HasOne(d => d.Business).WithMany(p => p.TblInventories)
                 .HasForeignKey(d => d.BusinessId)
@@ -154,6 +166,9 @@ public partial class IMSDbContext : DbContext
             entity.Property(e => e.LastUpdated)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.VersionStamp)
+                .IsRowVersion()
+                .IsConcurrencyToken();
 
             entity.HasOne(d => d.Business).WithMany(p => p.TblInventorySummaries)
                 .HasForeignKey(d => d.BusinessId)
