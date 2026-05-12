@@ -31,6 +31,12 @@ namespace IMS.Domain.Features.Inventories
                 var query = _db.TblInventories
                     .Where(i => i.BusinessId == businessId && i.DeleteFlag != true);
 
+                if (!string.IsNullOrWhiteSpace(paginationRequest.SearchTerm))
+                {
+                    var term = paginationRequest.SearchTerm.ToLower();
+                    query = query.Where(i => i.InventoryName.ToLower().Contains(term));
+                }
+
                 var totalCount = await query.CountAsync();
 
                 var items = await query

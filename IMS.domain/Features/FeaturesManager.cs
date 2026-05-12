@@ -17,6 +17,7 @@ using IMS.Domain.Features.Customers;
 using IMS.Domain.Features.Sales;
 using IMS.Domain.Features.CustomerPrices;
 using IMS.Domain.Features.PhotoUpload;
+using IMS.Domain.Features.Dashboard;
 
 
 namespace IMS.Domain.Features
@@ -44,6 +45,7 @@ namespace IMS.Domain.Features
             builder.Services.AddScoped<ICustomerService, CustomerService>();
             builder.Services.AddScoped<ISalesService, SalesService>();
             builder.Services.AddScoped<ICustomerPriceService, CustomerPriceService>();
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
 
         }
     }

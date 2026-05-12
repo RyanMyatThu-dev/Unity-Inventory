@@ -65,11 +65,19 @@ public partial class IMSDbContext : DbContext
             entity.HasIndex(e => e.BusinessId, "IX_Tbl_Customers_BusinessId");
 
             entity.Property(e => e.Address).HasMaxLength(50);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.CustomerName).HasMaxLength(50);
+            entity.Property(e => e.ImageId)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.ImageUrl)
+                .HasMaxLength(2048)
+                .IsUnicode(false);
             entity.Property(e => e.Phone)
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.TotalItems).HasDefaultValue(0);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.VersionStamp)
                 .IsRowVersion()
                 .IsConcurrencyToken();
@@ -193,9 +201,7 @@ public partial class IMSDbContext : DbContext
             entity.Property(e => e.ReportDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.TotalAmount)
-                .HasDefaultValue(0m)
-                .HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.TotalAmount).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.Business).WithMany(p => p.TblReports)
                 .HasForeignKey(d => d.BusinessId)
@@ -220,6 +226,12 @@ public partial class IMSDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(100);
+            entity.Property(e => e.ImageId)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.ImageUrl)
+                .HasMaxLength(2048)
+                .IsUnicode(false);
             entity.Property(e => e.Name).HasMaxLength(50);
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");

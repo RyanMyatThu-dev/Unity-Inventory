@@ -60,6 +60,7 @@ namespace IMS.Shared.Middlewares
                                 HttpOnly = true,
                                 Secure = true,
                                 SameSite = SameSiteMode.Strict,
+
                                 Expires = DateTime.UtcNow.AddDays(7)
                             };
 

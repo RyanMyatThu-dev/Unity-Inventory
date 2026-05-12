@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #09090b; /* Zinc 950 */
+  --muted: #71717a; /* Zinc 500 */
+  --border: #e2e8f0; /* Slate 200 */
+  --radius: 6px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+}
+
+* {
+  @apply border-border;
+}
+
+html {
+  scroll-behavior: auto !important; /* Enterprise speed */
+}
+
+::selection {
+  background-color: #f4f4f5;
+  color: #18181b;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+}
+
+.surface {
+  @apply bg-white border border-border rounded-[var(--radius)];
+}

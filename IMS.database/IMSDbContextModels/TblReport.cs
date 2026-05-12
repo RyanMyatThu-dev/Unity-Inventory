@@ -13,7 +13,7 @@ public partial class TblReport
 
     public DateTime? ReportDate { get; set; }
 
-    public decimal? TotalAmount { get; set; }
+    public decimal TotalAmount { get; set; }
 
     public string? Remarks { get; set; }
 

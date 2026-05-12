@@ -19,6 +19,14 @@ public partial class TblCustomer
 
     public byte[] VersionStamp { get; set; } = null!;
 
+    public string? ImageUrl { get; set; }
+
+    public string? ImageId { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
     public virtual TblBusiness Business { get; set; } = null!;
 
     public virtual ICollection<TblCustomerPrice> TblCustomerPrices { get; set; } = new List<TblCustomerPrice>();

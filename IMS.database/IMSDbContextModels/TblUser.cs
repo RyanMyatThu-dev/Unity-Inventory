@@ -13,6 +13,10 @@ public partial class TblUser
 
     public string PasswordHash { get; set; } = null!;
 
+    public string? ImageId { get; set; }
+
+    public string? ImageUrl { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public bool DeleteFlag { get; set; }

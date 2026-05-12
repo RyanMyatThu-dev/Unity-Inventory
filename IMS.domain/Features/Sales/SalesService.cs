@@ -41,7 +41,7 @@ namespace IMS.Domain.Features.Sales
                         CustomerId = r.CustomerId,
                         CustomerName = r.Customer.CustomerName,
                         ReportDate = r.ReportDate ?? DateTime.Now,
-                        TotalAmount = r.TotalAmount ?? 0,
+                        TotalAmount = r.TotalAmount,
                         Remarks = r.Remarks
                     })
                     .ToListAsync();
@@ -76,7 +76,7 @@ namespace IMS.Domain.Features.Sales
                     CustomerId = report.CustomerId,
                     CustomerName = report.Customer.CustomerName,
                     ReportDate = report.ReportDate ?? DateTime.Now,
-                    TotalAmount = report.TotalAmount ?? 0,
+                    TotalAmount = report.TotalAmount,
                     Remarks = report.Remarks,
                     Vouchers = report.TblVouchers.Select(v => new VoucherDTO
                     {
