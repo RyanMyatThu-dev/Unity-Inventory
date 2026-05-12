@@ -1,0 +1,205 @@
+@model IEnumerable<Unity_Inventory.WebApp.Models.InventoryDTO>
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Inventory Stock Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 40px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-section h1 {
+            margin: 0;
+            color: #4f46e5;
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .title-section p {
+            margin: 5px 0 0 0;
+            color: #64748b;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .date-section {
+            text-align: right;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: #64748b;
+            text-align: left;
+            padding: 12px 10px;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        
+        .font-mono { font-family: 'Courier New', Courier, monospace; }
+        .font-bold { font-weight: 700; }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-success { background-color: #ecfdf5; color: #059669; }
+        .badge-warning { background-color: #fffbeb; color: #d97706; }
+        .badge-danger { background-color: #fef2f2; color: #dc2626; }
+
+        .footer {
+            position: fixed;
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 11px;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 20px;
+        }
+
+        .summary-box {
+            display: inline-block;
+            background-color: #f8fafc;
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 30px;
+        }
+
+        .summary-item {
+            display: inline-block;
+            margin-right: 40px;
+        }
+
+        .summary-label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title-section">
+            <h1>Stock Inventory Report</h1>
+            <p>Comprehensive overview of current product levels and pricing</p>
+        </div>
+        <div class="date-section">
+            Generated on<br>@DateTime.Now.ToString("MMMM dd, yyyy")
+        </div>
+    </div>
+
+    <div class="summary-box">
+        <div class="summary-item">
+            <div class="summary-label">Total Products</div>
+            <div class="summary-value">@Model.Count()</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">Low Stock Items</div>
+            <div class="summary-value" style="color: #d97706;">@Model.Count(x => x.CurrentStock > 0 && x.CurrentStock <= 10)</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">Out of Stock</div>
+            <div class="summary-value" style="color: #dc2626;">@Model.Count(x => (x.CurrentStock ?? 0) <= 0)</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 40px;">#</th>
+                <th>Product Name</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-center">Stock Level</th>
+                <th class="text-center">Status</th>
+                <th class="text-right">Last Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{ int i = 1; }
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td class="text-slate-400 font-mono">@i.ToString("D3")</td>
+                    <td class="font-bold">@item.Name</td>
+                    <td class="text-right font-mono">@item.Price.ToString("N0") MMK</td>
+                    <td class="text-center font-mono">@(item.CurrentStock?.ToString() ?? "0")</td>
+                    <td class="text-center">
+                        @if ((item.CurrentStock ?? 0) <= 0)
+                        {
+                            <span class="badge badge-danger">Out of Stock</span>
+                        }
+                        else if (item.CurrentStock <= 10)
+                        {
+                            <span class="badge badge-warning">Low Stock</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-success">In Stock</span>
+                        }
+                    </td>
+                    <td class="text-right text-slate-500">
+                        @(item.LastUpdated?.ToString("MMM dd, yyyy") ?? "Never")
+                    </td>
+                </tr>
+                i++;
+            }
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Confidential Inventory Report - Powered by Unity Inventory System
+    </div>
+</body>
+</html>

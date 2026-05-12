@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="../Unity_Inventory.Database/Unity_Inventory.Database.csproj" />
+  <Project Path="../Unity_Inventory.Domain/Unity_Inventory.Domain.csproj" />
+  <Project Path="../Unity_Inventory.Shared/Unity_Inventory.Shared.csproj" />
+  <Project Path="../Unity_Inventory.WebApp/Unity_Inventory.WebApp.csproj" Id="eb658ba0-5ae0-4e97-8979-599b6f1f63c8" />
+  <Project Path="Unity_Inventory.Api.csproj" />
+</Solution>

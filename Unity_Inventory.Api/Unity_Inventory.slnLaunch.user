@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "Unity_Inventory.Api.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "..\\Unity_Inventory.WebApp\\Unity_Inventory.WebApp.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

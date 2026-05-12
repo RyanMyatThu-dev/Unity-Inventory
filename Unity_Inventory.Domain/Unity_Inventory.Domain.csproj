@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+		<PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.0" />
+		<PackageReference Include="CloudinaryDotNet" Version="1.29.0" />
+
+	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Unity_Inventory.Database\Unity_Inventory.Database.csproj" />
+    <ProjectReference Include="..\Unity_Inventory.Shared\Unity_Inventory.Shared.csproj" />
+  </ItemGroup>
+
+</Project>
