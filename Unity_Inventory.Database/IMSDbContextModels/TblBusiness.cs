@@ -25,6 +25,8 @@ public partial class TblBusiness
 
     public virtual ICollection<TblReport> TblReports { get; set; } = new List<TblReport>();
 
+    public virtual ICollection<TblRolePermission> TblRolePermissions { get; set; } = new List<TblRolePermission>();
+
     public virtual ICollection<TblUserBusiness> TblUserBusinesses { get; set; } = new List<TblUserBusiness>();
 
     public virtual ICollection<TblVoucher> TblVouchers { get; set; } = new List<TblVoucher>();

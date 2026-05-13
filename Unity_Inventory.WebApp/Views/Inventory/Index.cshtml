@@ -4,7 +4,7 @@
 
 <div class="sm:flex sm:items-center sm:justify-between mb-8">
     <div>
-        <h1 class="text-2xl font-bold text-slate-900 sm:text-3xl tracking-tight">Inventory</h1>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 sm:text-3xl tracking-tight">Inventory</h1>
         <p class="mt-2 text-sm text-slate-500">Manage products, prices, and real-time stock levels.</p>
     </div>
     <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
@@ -16,7 +16,7 @@
 </div>
 
 <div class="card">
-    <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
+    <div class="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
         <div class="flex items-center gap-3 w-full sm:w-auto">
             <div class="relative w-full sm:max-w-xs">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -32,7 +32,7 @@
         </div>
         <div class="flex items-center gap-2 w-full sm:w-auto">
             <div class="flex p-1 bg-slate-100 rounded-lg mr-2">
-                <button onclick="switchView('table')" id="view-table-btn" class="p-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm">
+                <button onclick="switchView('table')" id="view-table-btn" class="p-1.5 rounded-md transition-all bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm">
                     <i data-lucide="list" class="w-4 h-4"></i>
                 </button>
                 <button onclick="switchView('grid')" id="view-grid-btn" class="p-1.5 rounded-md transition-all text-slate-500 hover:text-slate-700">
@@ -52,7 +52,7 @@
 
     <div id="inventory-table-container" class="overflow-x-auto">
         <table class="min-w-full divide-y divide-slate-200">
-            <thead class="bg-slate-50">
+            <thead class="bg-slate-50 dark:bg-slate-950">
                 <tr>
                     <th class="px-6 py-3.5 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Product</th>
                     <th class="px-6 py-3.5 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Price</th>
@@ -62,7 +62,7 @@
                     <th class="relative px-6 py-3.5"><span class="sr-only">Actions</span></th>
                 </tr>
             </thead>
-            <tbody id="inventory-body" class="bg-white divide-y divide-slate-100">
+            <tbody id="inventory-body" class="bg-white dark:bg-zinc-900 divide-y divide-slate-100 dark:divide-slate-800">
                 <tr>
                     <td colspan="6" class="px-6 py-12 text-center">
                         <div class="flex flex-col items-center justify-center">
@@ -89,14 +89,14 @@
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 bg-slate-900/60" onclick="hideModal()"></div>
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-        <div class="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-8 sm:pb-4">
+        <div class="relative z-10 inline-block align-bottom bg-white dark:bg-zinc-900 rounded-2xl text-left overflow-hidden shadow-2xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white dark:bg-zinc-900 px-4 pt-5 pb-4 sm:p-8 sm:pb-4">
                 <div class="sm:flex sm:items-start">
                     <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-50 text-indigo-600 sm:mx-0 sm:h-10 sm:w-10">
                         <i data-lucide="box" class="h-6 w-6"></i>
                     </div>
                     <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                        <h3 class="text-xl leading-6 font-bold text-slate-900" id="modal-title">New Product</h3>
+                        <h3 class="text-xl leading-6 font-bold text-slate-900 dark:text-slate-100" id="modal-title">New Product</h3>
                         <div class="mt-6 space-y-4">
                             <input type="hidden" id="p-id">
                             <div>
@@ -116,7 +116,7 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-slate-50 px-4 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
+            <div class="bg-slate-50 dark:bg-slate-950 px-4 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
                 <button type="button" onclick="saveProduct()" id="save-btn" class="btn-primary w-full sm:w-auto px-8">Save Product</button>
                 <button type="button" onclick="hideModal()" class="btn-secondary w-full sm:w-auto">Cancel</button>
             </div>
@@ -129,14 +129,14 @@
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 bg-slate-900/60" onclick="hideStockModal()"></div>
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-        <div class="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl sm:my-8 sm:align-middle sm:max-w-sm sm:w-full">
+        <div class="relative z-10 inline-block align-bottom bg-white dark:bg-zinc-900 rounded-2xl text-left overflow-hidden shadow-2xl sm:my-8 sm:align-middle sm:max-w-sm sm:w-full">
             <div class="p-8">
                 <div class="flex items-center gap-4 mb-6">
                     <div class="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                         <i data-lucide="package-check" class="w-6 h-6"></i>
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold text-slate-900">Adjust Stock</h3>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">Adjust Stock</h3>
                         <p class="text-sm text-slate-400 font-medium" id="stock-product-name"></p>
                     </div>
                 </div>
@@ -177,12 +177,12 @@
         if (view === 'table') {
             tableCont.classList.remove('hidden');
             gridCont.classList.add('hidden');
-            tableBtn.className = 'p-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm';
+            tableBtn.className = 'p-1.5 rounded-md transition-all bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm';
             gridBtn.className = 'p-1.5 rounded-md transition-all text-slate-500 hover:text-slate-700';
         } else {
             tableCont.classList.add('hidden');
             gridCont.classList.remove('hidden');
-            gridBtn.className = 'p-1.5 rounded-md transition-all bg-white text-indigo-600 shadow-sm';
+            gridBtn.className = 'p-1.5 rounded-md transition-all bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm';
             tableBtn.className = 'p-1.5 rounded-md transition-all text-slate-500 hover:text-slate-700';
         }
         loadInventory(1);
@@ -190,7 +190,7 @@
 
     function stockBadge(stock) {
         if (stock === null || stock === undefined) {
-            return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
+            return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200 dark:border-slate-700">
                         <i data-lucide="minus" class="w-3 h-3"></i> N/A
                     </span>`;
         }
@@ -252,15 +252,15 @@
 
             if (currentView === 'table') {
                 tbody.innerHTML = items.map(item => `
-                    <tr class="hover:bg-slate-50/80 transition-colors">
+                    <tr class="hover:bg-slate-50 dark:bg-slate-950/80 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center mr-3 text-slate-400 flex-shrink-0 overflow-hidden border border-slate-200">
+                                <div class="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center mr-3 text-slate-400 flex-shrink-0 overflow-hidden border border-slate-200 dark:border-slate-700">
                                     ${item.imageUrl 
                                         ? `<img src="${item.imageUrl}" class="h-full w-full object-cover" alt="${item.name}">`
                                         : `<i data-lucide="package" class="w-5 h-5"></i>`}
                                 </div>
-                                <span class="text-sm font-bold text-slate-900">${item.name}</span>
+                                <span class="text-sm font-bold text-slate-900 dark:text-slate-100">${item.name}</span>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-700 tabular-nums">
@@ -303,8 +303,8 @@
                 `).join('');
             } else {
                 grid.innerHTML = items.map(item => `
-                    <div class="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
-                        <div class="aspect-square bg-slate-50 relative overflow-hidden">
+                    <div class="group bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
+                        <div class="aspect-square bg-slate-50 dark:bg-slate-950 relative overflow-hidden">
                             ${item.imageUrl 
                                 ? `<img src="${item.imageUrl}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="${item.name}">`
                                 : `<div class="w-full h-full flex items-center justify-center text-slate-300"><i data-lucide="package" class="w-12 h-12"></i></div>`}
@@ -313,7 +313,7 @@
                             </div>
                         </div>
                         <div class="p-5">
-                            <h4 class="text-base font-bold text-slate-900 mb-1 truncate">${item.name}</h4>
+                            <h4 class="text-base font-bold text-slate-900 dark:text-slate-100 mb-1 truncate">${item.name}</h4>
                             <div class="flex items-center justify-between mt-4">
                                 <span class="text-lg font-black text-indigo-600">${new Intl.NumberFormat('en-US').format(item.price)} <span class="text-[10px] text-slate-400 font-bold uppercase ml-0.5">MMK</span></span>
                                 <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

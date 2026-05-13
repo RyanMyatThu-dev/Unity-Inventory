@@ -3,7 +3,7 @@
 }
 
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-50">
+<html lang="en" class="h-full bg-slate-50 dark:bg-slate-950">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -24,7 +24,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style type="text/tailwindcss">
         @@layer components {
-            .input-field { @@apply block w-full px-4 py-3 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50/50; }
+            .input-field { @@apply block w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 dark:bg-slate-950/50; }
         }
     </style>
 </head>
@@ -39,11 +39,11 @@
             <div class="inline-flex items-center justify-center p-3 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-600/20 mb-6">
                 <i data-lucide="package" class="w-8 h-8 text-white"></i>
             </div>
-            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Welcome back</h1>
+            <h1 class="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Welcome back</h1>
             <p class="text-slate-500 mt-2">Sign in to your Unity Inventory dashboard</p>
         </div>
 
-        <div class="bg-white/80 backdrop-blur-xl rounded-3xl border border-white shadow-2xl overflow-hidden">
+        <div class="bg-white dark:bg-zinc-900/80 backdrop-blur-xl rounded-3xl border border-white shadow-2xl overflow-hidden">
             <div class="p-8 sm:p-10">
                 <form id="login-form" class="space-y-6">
                     <div id="error-message" class="hidden p-4 rounded-xl bg-rose-50 border border-rose-100 flex items-center gap-3">
@@ -85,7 +85,7 @@
                 </form>
             </div>
             
-            <div class="px-10 py-6 bg-slate-50/50 border-t border-slate-100 text-center">
+            <div class="px-10 py-6 bg-slate-50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800 text-center">
                 <p class="text-sm text-slate-500 font-medium">
                     New to Unity Inventory? 
                     <a href="/Account/Register" class="text-indigo-600 font-bold hover:text-indigo-500 transition-colors">Create account</a>

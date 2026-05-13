@@ -4,7 +4,7 @@
 
 <div class="max-w-4xl mx-auto">
     <div class="mb-10">
-        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Account Settings</h1>
+        <h1 class="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Account Settings</h1>
         <p class="mt-2 text-sm text-slate-500 font-medium">Manage your personal information, security, and preferences.</p>
     </div>
 
@@ -29,8 +29,8 @@
         <div class="lg:col-span-2 space-y-8">
             <!-- Profile Info Card -->
             <div class="card">
-                <div class="px-6 py-5 border-b border-slate-100">
-                    <h3 class="text-base font-bold text-slate-900">Personal Information</h3>
+                <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Personal Information</h3>
                 </div>
                 <div class="p-8">
                     <form id="profile-form" class="space-y-6">
@@ -39,7 +39,7 @@
                                 U
                             </div>
                             <div>
-                                <h4 class="text-sm font-bold text-slate-900">Profile Picture</h4>
+                                <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Profile Picture</h4>
                                 <p class="text-xs text-slate-400 mt-1 font-medium leading-relaxed">JPG, GIF or PNG. Max size of 2MB.</p>
                                 <div class="mt-3 flex gap-2">
                                     <button type="button" class="btn-secondary h-8 px-3 text-xs">Upload</button>
@@ -55,7 +55,7 @@
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                                         <i data-lucide="mail" class="w-4 h-4"></i>
                                     </div>
-                                    <input type="email" id="u-email" class="input-field pl-10 bg-slate-50 cursor-not-allowed opacity-70" disabled>
+                                    <input type="email" id="u-email" class="input-field pl-10 bg-slate-50 dark:bg-slate-950 cursor-not-allowed opacity-70" disabled>
                                 </div>
                                 <p class="text-[10px] text-slate-400 mt-1.5 font-bold uppercase tracking-wider">Email cannot be modified</p>
                             </div>
@@ -65,7 +65,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">Account Role</label>
-                                <input type="text" id="u-role" class="input-field bg-slate-50 cursor-not-allowed" disabled>
+                                <input type="text" id="u-role" class="input-field bg-slate-50 dark:bg-slate-950 cursor-not-allowed" disabled>
                             </div>
                         </div>
 
@@ -78,8 +78,8 @@
 
             <!-- Password Change Card -->
             <div class="card">
-                <div class="px-6 py-5 border-b border-slate-100">
-                    <h3 class="text-base font-bold text-slate-900">Change Password</h3>
+                <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Change Password</h3>
                 </div>
                 <div class="p-8">
                     <form id="password-form" class="space-y-6">

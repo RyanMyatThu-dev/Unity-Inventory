@@ -4,7 +4,7 @@
 
 <div class="sm:flex sm:items-center sm:justify-between mb-8">
     <div>
-        <h1 class="text-2xl font-bold text-slate-900 sm:text-3xl tracking-tight">Customers</h1>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 sm:text-3xl tracking-tight">Customers</h1>
         <p class="mt-2 text-sm text-slate-500">Track customer relationships, spending habits, and outstanding balances.</p>
     </div>
     <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
@@ -16,7 +16,7 @@
 </div>
 
 <div class="card">
-    <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
+    <div class="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
         <div class="flex items-center gap-3 w-full sm:w-auto">
             <div class="relative w-full sm:max-w-xs">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -38,7 +38,7 @@
 
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-slate-200">
-            <thead class="bg-slate-50">
+            <thead class="bg-slate-50 dark:bg-slate-950">
                 <tr>
                     <th class="px-6 py-3.5 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Customer</th>
                     <th class="px-6 py-3.5 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Contact</th>
@@ -48,7 +48,7 @@
                     <th class="relative px-6 py-3.5"><span class="sr-only">Actions</span></th>
                 </tr>
             </thead>
-            <tbody id="customers-body" class="bg-white divide-y divide-slate-100">
+            <tbody id="customers-body" class="bg-white dark:bg-zinc-900 divide-y divide-slate-100 dark:divide-slate-800">
                 <tr>
                     <td colspan="6" class="px-6 py-12 text-center">
                         <div class="flex flex-col items-center justify-center">
@@ -69,14 +69,14 @@
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 bg-slate-900/60" onclick="hideModal()"></div>
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-        <div class="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-8 sm:pb-4">
+        <div class="relative z-10 inline-block align-bottom bg-white dark:bg-zinc-900 rounded-2xl text-left overflow-hidden shadow-2xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white dark:bg-zinc-900 px-4 pt-5 pb-4 sm:p-8 sm:pb-4">
                 <div class="sm:flex sm:items-start">
                     <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-50 text-indigo-600 sm:mx-0 sm:h-10 sm:w-10">
                         <i data-lucide="user" class="h-6 w-6"></i>
                     </div>
                     <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                        <h3 class="text-xl leading-6 font-bold text-slate-900" id="modal-title">New Customer</h3>
+                        <h3 class="text-xl leading-6 font-bold text-slate-900 dark:text-slate-100" id="modal-title">New Customer</h3>
                         <div class="mt-6 space-y-4">
                             <input type="hidden" id="c-id">
                             <div>
@@ -90,7 +90,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold text-slate-700 mb-1">Items Ordered</label>
-                                    <input type="number" id="c-items" class="input-field bg-slate-50 cursor-not-allowed" disabled placeholder="0">
+                                    <input type="number" id="c-items" class="input-field bg-slate-50 dark:bg-slate-950 cursor-not-allowed" disabled placeholder="0">
                                 </div>
                             </div>
                             <div>
@@ -101,7 +101,7 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-slate-50 px-4 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
+            <div class="bg-slate-50 dark:bg-slate-950 px-4 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
                 <button type="button" onclick="saveCustomer()" id="save-btn" class="btn-primary w-full sm:w-auto px-8">Save Customer</button>
                 <button type="button" onclick="hideModal()" class="btn-secondary w-full sm:w-auto">Cancel</button>
             </div>
@@ -151,14 +151,14 @@
                 tbody.innerHTML = items.map(item => {
                     const hasBalance = item.outstandingBalance && item.outstandingBalance > 0;
                     return `
-                    <tr class="hover:bg-slate-50/80 transition-colors">
+                    <tr class="hover:bg-slate-50 dark:bg-slate-950/80 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="h-9 w-9 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center mr-3 text-indigo-700 font-black text-xs uppercase flex-shrink-0">
                                     ${item.name.substring(0, 2)}
                                 </div>
                                 <div>
-                                    <div class="text-sm font-bold text-slate-900">${item.name}</div>
+                                    <div class="text-sm font-bold text-slate-900 dark:text-slate-100">${item.name}</div>
                                     <div class="text-xs text-slate-400 font-medium">${item.address || 'No address'}</div>
                                 </div>
                             </div>

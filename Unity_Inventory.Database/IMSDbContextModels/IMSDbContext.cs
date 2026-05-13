@@ -29,6 +29,8 @@ public partial class IMSDbContext : DbContext
 
     public virtual DbSet<TblReport> TblReports { get; set; }
 
+    public virtual DbSet<TblRolePermission> TblRolePermissions { get; set; }
+
     public virtual DbSet<TblUser> TblUsers { get; set; }
 
     public virtual DbSet<TblUserBusiness> TblUserBusinesses { get; set; }
@@ -214,6 +216,36 @@ public partial class IMSDbContext : DbContext
                 .HasConstraintName("FK_Tbl_Reports_Customer");
         });
 
+        modelBuilder.Entity<TblRolePermission>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Tbl_Role__3214EC074E90015B");
+
+            entity.ToTable("Tbl_RolePermissions");
+
+            entity.HasIndex(e => new { e.BusinessId, e.RoleName, e.UserId, e.MenuCode, e.ActionCode }, "UQ_Permission").IsUnique();
+
+            entity.Property(e => e.ActionCode)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.IsAllowed).HasDefaultValue(true);
+            entity.Property(e => e.MenuCode)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.RoleName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.Business).WithMany(p => p.TblRolePermissions)
+                .HasForeignKey(d => d.BusinessId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Permission_Business");
+
+            entity.HasOne(d => d.User).WithMany(p => p.TblRolePermissions)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK_Permission_User");
+        });
+
         modelBuilder.Entity<TblUser>(entity =>
         {
             entity.HasKey(e => e.UserId).HasName("PK__Tbl_User__1788CC4CE2DC8A5F");
@@ -235,6 +267,7 @@ public partial class IMSDbContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(50);
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Username).HasMaxLength(50);
         });
 
         modelBuilder.Entity<TblUserBusiness>(entity =>

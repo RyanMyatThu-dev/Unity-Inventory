@@ -7,6 +7,8 @@ public partial class TblUser
 {
     public int UserId { get; set; }
 
+    public string? Username { get; set; }
+
     public string Name { get; set; } = null!;
 
     public string Email { get; set; } = null!;
@@ -22,6 +24,8 @@ public partial class TblUser
     public bool DeleteFlag { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+
+    public virtual ICollection<TblRolePermission> TblRolePermissions { get; set; } = new List<TblRolePermission>();
 
     public virtual ICollection<TblUserBusiness> TblUserBusinesses { get; set; } = new List<TblUserBusiness>();
 

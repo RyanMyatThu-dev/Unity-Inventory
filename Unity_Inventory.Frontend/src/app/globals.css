@@ -1,11 +1,20 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #09090b; /* Zinc 950 */
   --muted: #71717a; /* Zinc 500 */
   --border: #e2e8f0; /* Slate 200 */
   --radius: 6px;
+}
+
+.dark {
+  --background: #09090b; /* Zinc 950 */
+  --foreground: #fafafa; /* Zinc 50 */
+  --muted: #a1a1aa; /* Zinc 400 */
+  --border: #3f3f46; /* Zinc 700 */
 }
 
 @theme inline {
@@ -40,5 +49,5 @@ body {
 }
 
 .surface {
-  @apply bg-white border border-border rounded-[var(--radius)];
+  @apply bg-white dark:bg-zinc-900 border border-border rounded-[var(--radius)];
 }
