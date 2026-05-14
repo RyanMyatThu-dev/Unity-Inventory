@@ -9,7 +9,7 @@ namespace Unity_Inventory.Domain.Features.Authentication.Tokens
 {
     public interface ITokenService
     {
-        string GenerateAccessToken(TblUser user, int? businessId, string? role = null);
+        Task<string> GenerateAccessTokenAsync(TblUser user, int? businessId, string? role = null);
         string GenerateRefreshToken();
     }
 }

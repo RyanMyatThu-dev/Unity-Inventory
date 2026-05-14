@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Unity_Inventory.Api.Filters;
 
 namespace Unity_Inventory.Api.Controllers
 {
@@ -34,6 +35,14 @@ namespace Unity_Inventory.Api.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            // Only global Owner accounts may create businesses
+            var accountType = User.FindFirst("AccountType")?.Value ?? string.Empty;
+            if (!string.Equals(accountType, "Owner", StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(accountType))
+            {
+                return Forbid();
             }
             
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -71,7 +80,7 @@ namespace Unity_Inventory.Api.Controllers
             if (!result.IsSuccess) return Forbid();
 
             var user = await _userService.GetByIdAsync(userId);
-            var accessToken = _tokenService.GenerateAccessToken(user.Data!, businessId, result.Data!.Role);
+            var accessToken = await _tokenService.GenerateAccessTokenAsync(user.Data!, businessId, result.Data!.Role);
             var refreshToken = _tokenService.GenerateRefreshToken();
 
             var businesses = await _businessService.GetBusinessesByUserIdAsync(userId);
@@ -80,10 +89,13 @@ namespace Unity_Inventory.Api.Controllers
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 Email = user.Data!.Email,
+                Name = user.Data.Name,
+                AccountType = string.IsNullOrWhiteSpace(user.Data.AccountType) ? "Owner" : user.Data.AccountType,
                 Role = result.Data!.Role,
                 Businesses = businesses.Data ?? new List<BusinessAccessDto>()
             }));
 
         }
-        }
+    }
 }
+

@@ -1,4 +1,4 @@
-﻿using Unity_Inventory.Database.IMSDbContextModels;
+using Unity_Inventory.Database.IMSDbContextModels;
 using Unity_Inventory.Domain.Features.Authentication.Models;
 using Unity_Inventory.Shared;
 using Microsoft.EntityFrameworkCore;
@@ -65,6 +65,7 @@ namespace Unity_Inventory.Domain.Features.Authentication.Users
                 Name = request.Name,
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                AccountType = "Owner",
                 CreatedAt = DateTime.UtcNow,
                 DeleteFlag = false,
             };
@@ -208,5 +209,28 @@ namespace Unity_Inventory.Domain.Features.Authentication.Users
             return Result<TblUser>.Success(user, "User retrieved successfully.");
         }
 
+        public async Task<Result<IEnumerable<UserDto>>> GetUsersAsync(int businessId)
+        {
+            try
+            {
+                var users = await _db.TblUserBusinesses
+                    .Where(ub => ub.BusinessId == businessId && !ub.User.DeleteFlag)
+                    .Select(ub => new UserDto
+                    {
+                        UserId = ub.User.UserId,
+                        Name = ub.User.Name,
+                        Email= ub.User.Email,
+                        AccountType = string.IsNullOrWhiteSpace(ub.User.AccountType) ? "Owner" : ub.User.AccountType,
+                        CreatedAt = ub.User.CreatedAt
+                    })
+                    .ToListAsync();
+
+                return Result<IEnumerable<UserDto>>.Success(users, "Users retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return Result<IEnumerable<UserDto>>.Failure($"An error occurred while retrieving users: {ex.Message}");
+            }
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Unity_Inventory.Domain.Features.Authentication.Models;
+using Unity_Inventory.Domain.Features.Authentication.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +8,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Unity_Inventory.Api.Filters;
 
 namespace Unity_Inventory.Domain.Features.Authentication.Users
 {
@@ -90,6 +91,19 @@ namespace Unity_Inventory.Domain.Features.Authentication.Users
             }
             var userId = GetCurrentUserId();
             var result = await _userService.ChangePasswordAsync(userId, request, userId);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
+
+        // GET : api/users
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetUsers([FromQuery] int businessId)
+        {
+            var result = await _userService.GetUsersAsync(businessId);
             if (result.IsSuccess)
             {
                 return Ok(result);

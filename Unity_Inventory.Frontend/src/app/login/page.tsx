@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
-import { Mail, Lock, LogIn, AlertCircle, Building2, Loader2 } from 'lucide-react';
+import { Mail, Lock, LogIn, AlertCircle, Building2, Loader2, Eye, EyeOff } from 'lucide-react';
 import { UnityLogo } from '@/components/ui/UnityLogo';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
@@ -50,7 +51,7 @@ export default function LoginPage() {
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-3xl shadow-xl dark:shadow-black/70 shadow-zinc-200/50 p-10">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-rose-50 border border-rose-100 text-rose-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
+              <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 px-4 py-3 rounded-xl flex items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
                 <AlertCircle size={16} />
                 <p className="text-[11px] font-black uppercase tracking-tight">{error}</p>
               </div>
@@ -59,12 +60,12 @@ export default function LoginPage() {
             <div className="space-y-2">
               <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Identity (Email)</label>
               <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-zinc-900 dark:text-zinc-100 transition-colors" size={16} />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-300 dark:text-zinc-600 group-focus-within:text-zinc-900 dark:group-focus-within:text-zinc-100 transition-colors" size={16} />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 rounded-xl focus:bg-white dark:bg-zinc-900 focus:border-zinc-900 focus:outline-none transition-all text-xs font-bold placeholder:text-zinc-300 shadow-inner"
+                  className="w-full pl-11 pr-4 py-3.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:bg-white dark:focus:bg-zinc-800 focus:border-zinc-900 dark:focus:border-zinc-500 focus:outline-none transition-all text-xs font-bold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 shadow-inner"
                   placeholder="name@enterprise.com"
                   required
                 />
@@ -76,15 +77,23 @@ export default function LoginPage() {
                 <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Secret Key (Password)</label>
               </div>
               <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-zinc-900 dark:text-zinc-100 transition-colors" size={16} />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-300 dark:text-zinc-600 group-focus-within:text-zinc-900 dark:group-focus-within:text-zinc-100 transition-colors" size={16} />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 rounded-xl focus:bg-white dark:bg-zinc-900 focus:border-zinc-900 focus:outline-none transition-all text-xs font-bold placeholder:text-zinc-300 shadow-inner"
+                  className="w-full pl-11 pr-11 py-3.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:bg-white dark:focus:bg-zinc-800 focus:border-zinc-900 dark:focus:border-zinc-500 focus:outline-none transition-all text-xs font-bold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 shadow-inner"
                   placeholder="••••••••"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-300 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
 

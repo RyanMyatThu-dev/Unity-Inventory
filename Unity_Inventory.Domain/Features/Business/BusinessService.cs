@@ -1,5 +1,6 @@
 ﻿using Unity_Inventory.Database.IMSDbContextModels;
 using Unity_Inventory.Domain.Features.Authentication.Models;
+using Unity_Inventory.Domain.Features.Authorization;
 using Unity_Inventory.Domain.Features.Business.Models;
 using Unity_Inventory.Shared;
 using Microsoft.EntityFrameworkCore;
@@ -14,15 +15,28 @@ namespace Unity_Inventory.Domain.Features.Business
     public class BusinessService : IBusinessService
     {
         private readonly IMSDbContext _db;
-        public BusinessService(IMSDbContext db)
+        private readonly IPermissionService _permissionService;
+
+        public BusinessService(IMSDbContext db, IPermissionService permissionService)
         {
             _db = db;
+            _permissionService = permissionService;
         }
 
         public async Task<Result<BusinessAccessResponse>> CreateBusiness(BusinessCreateRequest request)
         {
             try
             {
+                var accountUser = await _db.TblUsers.AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.UserId == request.OwnerUserId && !u.DeleteFlag);
+                if (accountUser == null)
+                    return Result<BusinessAccessResponse>.Failure("User not found.");
+
+                var acct = accountUser.AccountType?.Trim();
+                if (!string.IsNullOrEmpty(acct)
+                    && !string.Equals(acct, "Owner", StringComparison.OrdinalIgnoreCase))
+                    return Result<BusinessAccessResponse>.Failure("Your account type is not permitted to create businesses.");
+
                 var existing = await _db.TblBusinesses.FirstOrDefaultAsync(b => b.BusinessName == request.BusinessName && b.OwnerId == request.OwnerUserId);
                 if (existing != null)
                     return Result<BusinessAccessResponse>.Failure("Business with the same name already exists for this user.");
@@ -40,9 +54,16 @@ namespace Unity_Inventory.Domain.Features.Business
                     Role = "Owner"
                 };
 
+                await using var tx = await _db.Database.BeginTransactionAsync();
+
                 _db.TblBusinesses.Add(business);
                 _db.TblUserBusinesses.Add(userBusiness);
                 await _db.SaveChangesAsync();
+
+                await _permissionService.SeedDefaultRolePermissionsForBusinessAsync(business.BusinessId, request.OwnerUserId);
+
+                await tx.CommitAsync();
+
                 return Result<BusinessAccessResponse>.Success(new BusinessAccessResponse
                 {
                     BusinessId = business.BusinessId,
@@ -52,7 +73,8 @@ namespace Unity_Inventory.Domain.Features.Business
 
                 });
 
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return Result<BusinessAccessResponse>.Failure(ex.Message);
             }

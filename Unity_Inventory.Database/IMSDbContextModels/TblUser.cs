@@ -19,13 +19,19 @@ public partial class TblUser
 
     public string? ImageUrl { get; set; }
 
+    public string? AccountType { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public bool DeleteFlag { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual ICollection<TblRolePermission> TblRolePermissions { get; set; } = new List<TblRolePermission>();
+    public virtual ICollection<TblRolePermission> TblRolePermissionGrantedByUsers { get; set; } = new List<TblRolePermission>();
+
+    public virtual ICollection<TblRolePermission> TblRolePermissionRevokedByUsers { get; set; } = new List<TblRolePermission>();
+
+    public virtual ICollection<TblRolePermission> TblRolePermissionUsers { get; set; } = new List<TblRolePermission>();
 
     public virtual ICollection<TblUserBusiness> TblUserBusinesses { get; set; } = new List<TblUserBusiness>();
 

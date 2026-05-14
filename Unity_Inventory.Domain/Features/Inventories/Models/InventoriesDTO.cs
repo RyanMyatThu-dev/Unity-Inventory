@@ -21,6 +21,8 @@ namespace Unity_Inventory.Domain.Features.Inventories.Models
 
         public string? ImageUrl { get; set; }
         public string? ImageId { get; set; }
+        public int? CategoryId { get; set; }
+        public string? CategoryName { get; set; }
 
     }
     public class CreateProductRequest
@@ -32,6 +34,7 @@ namespace Unity_Inventory.Domain.Features.Inventories.Models
         public decimal Price { get; set; }
         [Required]
         public int BusinessId { get; set; }
+        public int? CategoryId { get; set; }
     }
 
     public class UpdateProductRequest
@@ -48,6 +51,7 @@ namespace Unity_Inventory.Domain.Features.Inventories.Models
         public byte[] VersionStamp { get; set; }
         [Required]
         public byte[]? StockVersionStamp { get; set; }
+        public int? CategoryId { get; set; }
 
     }
     public class UpdateStockRequest

@@ -1,4 +1,4 @@
-﻿using Unity_Inventory.Database.IMSDbContextModels;
+using Unity_Inventory.Database.IMSDbContextModels;
 using Unity_Inventory.Domain.Features.Authentication.Models;
 using Unity_Inventory.Shared;
 using System;
@@ -16,6 +16,6 @@ namespace Unity_Inventory.Domain.Features.Authentication.Users
         Task<Result<UserResponse>> DeleteAsync(int id);
         Task<Result<UserResponse>> ChangePasswordAsync(int id, ChangePasswordRequest request, int currentUserId);
         Task<Result<TblUser>> GetByIdAsync(int id);
-        
-    }
+        Task<Result<IEnumerable<UserDto>>> GetUsersAsync(int businessId);
+            }
 }

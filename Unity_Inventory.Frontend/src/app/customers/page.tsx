@@ -82,12 +82,12 @@ const CustomerRow = memo(({ customer, index, onSelect, onDelete }: {
     </td>
     <td className="px-6 py-4 text-right">
       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button className="p-2 hover:bg-zinc-100 dark:bg-zinc-800 rounded-lg text-zinc-400 hover:text-zinc-900 dark:text-zinc-100 transition-colors">
+        <button className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
           <Edit2 size={12} />
         </button>
         <button 
           onClick={(e) => { e.stopPropagation(); onDelete(customer.id, customer.versionStamp); }}
-          className="p-2 hover:bg-rose-50 rounded-lg text-zinc-400 hover:text-rose-600 transition-colors"
+          className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
         >
           <Trash2 size={12} />
         </button>
@@ -108,7 +108,7 @@ const CustomerCard = memo(({ customer, index, onSelect, onDelete }: {
     className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-6 hover:shadow-md transition-all cursor-pointer relative overflow-hidden flex flex-col h-full"
   >
     <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-      <button className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 rounded shadow-sm text-zinc-400 hover:text-zinc-900 dark:text-zinc-100 transition-colors">
+      <button className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded shadow-sm text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
         <Edit2 size={10} />
       </button>
       <button 
@@ -230,7 +230,7 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
                   Modify Profile
                 </button>
               )}
-              <button onClick={onClose} className="p-1 hover:bg-zinc-100 dark:bg-zinc-800 rounded-md transition-colors">
+              <button onClick={onClose} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors">
                  <X size={16} className="text-zinc-400" />
               </button>
            </div>
@@ -257,21 +257,21 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
                             autoFocus
                             value={editForm.name}
                             onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                            className="w-full text-base font-semibold text-zinc-900 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 outline-none focus:ring-1 focus:ring-zinc-900"
+                            className="w-full text-base font-semibold text-zinc-900 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
                            />
                         </div>
                         <div className="flex gap-2 pt-2">
-                           <button onClick={handleSave} disabled={isSubmitting} className="flex-1 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-800 dark:bg-zinc-200 disabled:opacity-50 shadow-lg dark:shadow-black/20 shadow-zinc-100">
+                           <button onClick={handleSave} disabled={isSubmitting} className="flex-1 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 shadow-lg dark:shadow-black/20 shadow-zinc-100">
                               {isSubmitting ? 'Syncing...' : 'Commit Changes'}
                            </button>
-                           <button onClick={() => setIsEditing(false)} className="px-6 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-500 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:bg-zinc-900/50">Cancel</button>
+                           <button onClick={() => setIsEditing(false)} className="px-6 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-700">Cancel</button>
                         </div>
                       </div>
                     ) : (
                       <div className="space-y-2">
                         <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tighter leading-none">{customer.name}</h2>
                         <div className="flex items-center gap-3 pt-1">
-                           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[9px] font-bold uppercase tracking-widest rounded-full border border-emerald-100">
+                           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[9px] font-bold uppercase tracking-widest rounded-full border border-emerald-100 dark:border-emerald-500/20">
                              <UserCheck size={10} />
                              Verified Client
                            </div>
@@ -311,7 +311,7 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
                     <div className="flex-1">
                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Direct Comms</p>
                        {isEditing ? (
-                         <input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="w-full text-base font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-1.5 mt-2 outline-none focus:ring-1 focus:ring-zinc-900" />
+                         <input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="w-full text-base font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-1.5 mt-2 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 placeholder:text-zinc-300 dark:placeholder:text-zinc-600" />
                        ) : (
                          <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight mt-1">{customer.phone || 'Restricted Access'}</p>
                        )}
@@ -324,7 +324,7 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
                     <div className="flex-1">
                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Logistics Anchor</p>
                        {isEditing ? (
-                         <textarea value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className="w-full text-sm font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 mt-2 outline-none min-h-[100px] focus:ring-1 focus:ring-zinc-900" />
+                         <textarea value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className="w-full text-sm font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 mt-2 outline-none min-h-[100px] focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 placeholder:text-zinc-300 dark:placeholder:text-zinc-600" />
                        ) : (
                          <p className="text-sm font-bold text-zinc-500 leading-relaxed mt-2">{customer.address || 'Geo-data unavailable'}</p>
                        )}
@@ -335,7 +335,7 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
         </div>
 
         <div className="p-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
-           <button onClick={() => onDelete(customer.id, customer.versionStamp)} className="px-4 py-2 text-[10px] font-bold text-rose-600 uppercase tracking-widest hover:bg-rose-50 rounded-lg transition-all">Terminate Relationship</button>
+           <button onClick={() => onDelete(customer.id, customer.versionStamp)} className="px-4 py-2 text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all">Terminate Relationship</button>
            <span className="text-[9px] text-zinc-400 font-semibold uppercase tracking-widest opacity-50">Internal Record • Secured CID</span>
         </div>
       </div>
@@ -444,7 +444,7 @@ export default function CustomersPage() {
             placeholder="Filter relationship database..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-6 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-zinc-900 transition-all shadow-sm"
+            className="w-full pl-12 pr-6 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-sm"
           />
         </div>
         
@@ -553,15 +553,15 @@ export default function CustomersPage() {
             <form onSubmit={handleAddCustomer} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[9px] font-bold text-zinc-400 uppercase">Legal Entity Name</label>
-                <input required type="text" value={newCustomer.name} onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })} placeholder="Full Corporate Name" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-zinc-900" />
+                <input required type="text" value={newCustomer.name} onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })} placeholder="Full Corporate Name" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400" />
               </div>
               <div className="space-y-2">
                 <label className="text-[9px] font-bold text-zinc-400 uppercase">Primary Comms</label>
-                <input type="text" value={newCustomer.phone} onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })} placeholder="Direct Phone Line" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-zinc-900" />
+                <input type="text" value={newCustomer.phone} onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })} placeholder="Direct Phone Line" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400" />
               </div>
               <div className="space-y-2">
                 <label className="text-[9px] font-bold text-zinc-400 uppercase">Physical Address</label>
-                <textarea value={newCustomer.address} onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })} placeholder="Logistics Anchor Point" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-zinc-900 min-h-[80px]" />
+                <textarea value={newCustomer.address} onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })} placeholder="Logistics Anchor Point" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 min-h-[80px]" />
               </div>
               <button disabled={isSubmitting} type="submit" className="w-full py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-xl dark:shadow-black/40 shadow-zinc-200 mt-4">
                 {isSubmitting ? <Loader2 size={16} className="animate-spin m-auto" /> : 'Confirm Onboarding'}

@@ -1,4 +1,4 @@
-﻿using Unity_Inventory.Database.IMSDbContextModels;
+using Unity_Inventory.Database.IMSDbContextModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -29,6 +29,9 @@ namespace Unity_Inventory.Domain.Features.Authentication.Models
         public string AccessToken { get; set; } = string.Empty;
         public string RefreshToken { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        /// <summary>Global account classification (e.g. Owner, Admin, Staff). Distinct from per-business <see cref="BusinessAccessDto.Role"/>.</summary>
+        public string AccountType { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
 
         public List<BusinessAccessDto> Businesses { get; set; } = new List<BusinessAccessDto>();
@@ -87,5 +90,12 @@ namespace Unity_Inventory.Domain.Features.Authentication.Models
         public string NewPassword { get; set; } = string.Empty;
     }
 
-
+    public class UserDto
+    {
+        public int UserId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string AccountType { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+    }
 }

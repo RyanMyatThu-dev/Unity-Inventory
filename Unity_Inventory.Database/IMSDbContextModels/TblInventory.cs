@@ -21,7 +21,11 @@ public partial class TblInventory
 
     public string? ImageId { get; set; }
 
+    public int? CategoryId { get; set; }
+
     public virtual TblBusiness Business { get; set; } = null!;
+
+    public virtual TblCategory? Category { get; set; }
 
     public virtual ICollection<TblCustomerPrice> TblCustomerPrices { get; set; } = new List<TblCustomerPrice>();
 

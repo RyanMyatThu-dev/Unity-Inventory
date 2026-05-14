@@ -19,27 +19,33 @@ import {
   Building2,
   X,
   Loader2,
-  LogOut
+  LogOut,
+  UserCog,
+  LayoutList
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UnityLogo } from '@/components/ui/UnityLogo';
+import { canProvisionNewBusiness } from '@/lib/accountType';
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Inventory', href: '/inventory', icon: Package },
+  { name: 'Categories', href: '/inventory/categories', icon: LayoutList },
   { name: 'Report', href: '/sales', icon: FileText },
   { name: 'Customers', href: '/customers', icon: Users },
+  { name: 'Team & Permissions', href: '/users', icon: UserCog, ownerOnly: true },
 ];
 
 export const Sidebar = () => {
   const pathname = usePathname();
-  const { user, currentBusinessId, switchBusiness, logout } = useAuth();
+  const { user, currentBusinessId, switchBusiness, refreshUser, logout } = useAuth();
   const [isBusinessDropdownOpen, setIsBusinessDropdownOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newBusinessName, setNewBusinessName] = useState('');
 
   const currentBusiness = user?.businesses?.find(b => b.businessId === currentBusinessId);
+  const showRegisterBusiness = user ? canProvisionNewBusiness(user.accountType) : false;
 
   const handleRegisterBusiness = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,8 +60,9 @@ export const Sidebar = () => {
       });
 
       if (response.data.isSuccess) {
-        // Refresh page to get updated business list in context
-        window.location.reload();
+        await refreshUser();
+        setNewBusinessName('');
+        setIsRegisterModalOpen(false);
       }
     } catch (error) {
       console.error('Failed to register business:', error);
@@ -123,18 +130,21 @@ export const Sidebar = () => {
                   </button>
                 ))}
               </div>
-              <div className="border-t border-zinc-50 dark:border-zinc-800 mt-1 px-1 pt-1">
-                <button 
-                  onClick={() => {
-                    setIsBusinessDropdownOpen(false);
-                    setIsRegisterModalOpen(true);
-                  }}
-                  className="w-full flex items-center gap-2 px-2 py-2 rounded text-xs text-zinc-900 dark:text-zinc-100  hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:bg-zinc-100 dark:hover:bg-zinc-8000/10 font-medium transition-colors"
-                >
-                  <Plus size={12} />
-                  Register New Business
-                </button>
-              </div>
+              {showRegisterBusiness && (
+                <div className="border-t border-zinc-50 dark:border-zinc-800 mt-1 px-1 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsBusinessDropdownOpen(false);
+                      setIsRegisterModalOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded text-xs text-zinc-900 dark:text-zinc-100  hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:bg-zinc-100 dark:hover:bg-zinc-8000/10 font-medium transition-colors"
+                  >
+                    <Plus size={12} />
+                    Register New Business
+                  </button>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -156,6 +166,7 @@ export const Sidebar = () => {
       <nav className="flex-1 px-3 space-y-0.5">
         <p className="px-2 pb-2 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">Platform</p>
         {navItems.map((item) => {
+          if (item.ownerOnly && !showRegisterBusiness) return null;
           const isActive = pathname === item.href;
           return (
             <Link
@@ -198,7 +209,7 @@ export const Sidebar = () => {
       </div>
 
       {/* Register Business Modal */}
-      {isRegisterModalOpen && (
+      {showRegisterBusiness && isRegisterModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-zinc-900/40 dark:bg-black/60" onClick={() => setIsRegisterModalOpen(false)}></div>
           <div className="relative bg-white dark:bg-zinc-900 border border-border dark:border-zinc-700 w-full max-w-sm rounded-lg shadow-2xl animate-in zoom-in-95 duration-200">
@@ -218,7 +229,7 @@ export const Sidebar = () => {
                   value={newBusinessName}
                   onChange={(e) => setNewBusinessName(e.target.value)}
                   placeholder="e.g. Acme Corporation"
-                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900/50 border border-border dark:border-zinc-700 rounded-md text-xs focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-100 focus:border-zinc-900 dark:focus:border-zinc-100 outline-none transition-all text-zinc-900 dark:text-zinc-100"
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-md text-xs focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 focus:border-zinc-900 dark:focus:border-zinc-500 outline-none transition-all text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
                 />
               </div>
               <button 

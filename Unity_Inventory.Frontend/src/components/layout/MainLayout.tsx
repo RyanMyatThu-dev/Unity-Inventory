@@ -4,7 +4,7 @@ import React, { ReactNode, useEffect, useState, useRef } from 'react';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import { Bell, Plus, Search, Package, Users, FileText, BellOff, X } from 'lucide-react';
+import { Bell, Plus, Search, Package, Users, FileText, BellOff, X, LayoutList } from 'lucide-react';
 import { ThemeToggle } from '../ThemeToggle';
 import { UnityLogo } from '../ui/UnityLogo';
 
@@ -60,6 +60,7 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
 
   const quickActions = [
     { label: 'New Product', icon: Package, href: '/inventory', description: 'Register a new SKU' },
+    { label: 'New Category', icon: LayoutList, href: '/inventory/categories', description: 'Organize your stock' },
     { label: 'New Customer', icon: Users, href: '/customers', description: 'Onboard a client' },
     { label: 'New Sale', icon: FileText, href: '/sales', description: 'Record a transaction' },
   ];

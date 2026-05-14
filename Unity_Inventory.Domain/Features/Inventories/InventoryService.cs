@@ -61,7 +61,9 @@ namespace Unity_Inventory.Domain.Features.Inventories
                             VersionStamp = x.inv.VersionStamp,
                             StockVersionStamp = summary != null ? summary.VersionStamp : null,
                             ImageUrl = x.inv.ImageUrl,
-                            ImageId = x.inv.ImageId
+                            ImageId = x.inv.ImageId,
+                            CategoryId = x.inv.CategoryId,
+                            CategoryName = x.inv.Category != null ? x.inv.Category.CategoryName : null
                         })
                     .ToListAsync();
 
@@ -99,7 +101,9 @@ namespace Unity_Inventory.Domain.Features.Inventories
                             VersionStamp = x.inv.VersionStamp,
                             StockVersionStamp = summary != null ? summary.VersionStamp : null,
                             ImageUrl = x.inv.ImageUrl,
-                            ImageId = x.inv.ImageId
+                            ImageId = x.inv.ImageId,
+                            CategoryId = x.inv.CategoryId,
+                            CategoryName = x.inv.Category != null ? x.inv.Category.CategoryName : null
                         })
                     .FirstOrDefaultAsync();
 
@@ -118,12 +122,19 @@ namespace Unity_Inventory.Domain.Features.Inventories
         {
             try
             {
+                if (request.CategoryId.HasValue)
+                {
+                    var categoryExists = await _db.TblCategories.AnyAsync(c => c.CategoryId == request.CategoryId && c.BusinessId == request.BusinessId);
+                    if (!categoryExists) return Result<InventoriesDTO>.Failure("Invalid CategoryId for this business.");
+                }
+
                 var inventory = new TblInventory
                 {
                     BusinessId = request.BusinessId,
                     InventoryName = request.Name,
                     Price = request.Price,
-                    DeleteFlag = false
+                    DeleteFlag = false,
+                    CategoryId = request.CategoryId
                 };
 
                 _db.TblInventories.Add(inventory);
@@ -137,6 +148,7 @@ namespace Unity_Inventory.Domain.Features.Inventories
                     Price = inventory.Price,
                     DeleteFlag = false,
                     VersionStamp = inventory.VersionStamp,
+                    CategoryId = inventory.CategoryId
                 });
             }
             catch (Exception ex)
@@ -153,10 +165,17 @@ namespace Unity_Inventory.Domain.Features.Inventories
                 if (inventory == null)
                     return Result<InventoriesDTO>.Failure("Inventory item not found.");
 
+                if (request.CategoryId.HasValue)
+                {
+                    var categoryExists = await _db.TblCategories.AnyAsync(c => c.CategoryId == request.CategoryId && c.BusinessId == inventory.BusinessId);
+                    if (!categoryExists) return Result<InventoriesDTO>.Failure("Invalid CategoryId for this business.");
+                }
+
                 _db.Entry(inventory).Property(i => i.VersionStamp).OriginalValue = request.VersionStamp;
 
                 inventory.InventoryName = request.Name;
                 inventory.Price = request.Price;
+                inventory.CategoryId = request.CategoryId;
 
                 string oldImageId = null;
                 if (photoStream != null)
@@ -194,7 +213,8 @@ namespace Unity_Inventory.Domain.Features.Inventories
                     VersionStamp = inventory.VersionStamp,
                     StockVersionStamp = request.StockVersionStamp,
                     ImageUrl = inventory.ImageUrl,
-                    ImageId = inventory.ImageId
+                    ImageId = inventory.ImageId,
+                    CategoryId = inventory.CategoryId
                 });
             }
             catch (DbUpdateConcurrencyException)
@@ -279,6 +299,12 @@ namespace Unity_Inventory.Domain.Features.Inventories
 
             if (existingProduct != null) return Result<InventoriesDTO>.Failure("Product with the same name already exists.");
 
+            if (request.CategoryId.HasValue)
+            {
+                var categoryExists = await _db.TblCategories.AnyAsync(c => c.CategoryId == request.CategoryId && c.BusinessId == request.BusinessId);
+                if (!categoryExists) return Result<InventoriesDTO>.Failure("Invalid CategoryId for this business.");
+            }
+
             string photoUrl = null;
             string photoPublicId = null;
             if (photoStream != null)
@@ -308,7 +334,8 @@ namespace Unity_Inventory.Domain.Features.Inventories
                     Price = request.Price,
                     DeleteFlag = false,
                     ImageUrl = photoUrl,
-                    ImageId = photoPublicId
+                    ImageId = photoPublicId,
+                    CategoryId = request.CategoryId
                 };
 
                 _db.TblInventories.Add(newProduct);
@@ -324,7 +351,7 @@ namespace Unity_Inventory.Domain.Features.Inventories
                     VersionStamp = newProduct.VersionStamp,
                     ImageId = newProduct.ImageId,
                     ImageUrl = newProduct.ImageUrl,
-                    
+                    CategoryId = newProduct.CategoryId
                 };
 
                 return Result<InventoriesDTO>.Success(data);

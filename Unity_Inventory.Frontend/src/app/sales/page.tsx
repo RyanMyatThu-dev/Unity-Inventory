@@ -81,11 +81,11 @@ const SaleRow = memo(({ report, index, onSelect }: {
       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button 
           onClick={(e) => { e.stopPropagation(); onSelect(report.id); }}
-          className="p-1.5 hover:bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-400 hover:text-zinc-900 dark:text-zinc-100 transition-colors"
+          className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
         >
           <Eye size={14} />
         </button>
-        <button className="p-1.5 hover:bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-400 hover:text-zinc-900 dark:text-zinc-100 transition-colors">
+        <button className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
           <Download size={14} />
         </button>
       </div>
@@ -106,11 +106,11 @@ const SaleCard = memo(({ report, index, onSelect }: {
     <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
       <button 
         onClick={(e) => { e.stopPropagation(); onSelect(report.id); }}
-        className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 rounded shadow-sm text-zinc-400 hover:text-zinc-900 dark:text-zinc-100 transition-colors"
+        className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded shadow-sm text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
       >
         <Eye size={12} />
       </button>
-      <button className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 rounded shadow-sm text-zinc-400 hover:text-zinc-900 dark:text-zinc-100 transition-colors">
+      <button className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded shadow-sm text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
         <Download size={12} />
       </button>
     </div>
@@ -119,7 +119,7 @@ const SaleCard = memo(({ report, index, onSelect }: {
       <div className="w-6 h-6 bg-zinc-900/5 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-400">
         {index}
       </div>
-      <div className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold uppercase rounded tracking-widest">
+      <div className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[9px] font-bold uppercase rounded tracking-widest">
         {report.status || 'Completed'}
       </div>
     </div>
@@ -190,7 +190,7 @@ const SaleDetailModal = ({ reportId, onClose }: { reportId: number, onClose: () 
               <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Invoice #{report.id.toString().padStart(6, '0')}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white dark:bg-zinc-900 rounded-full border border-transparent hover:border-zinc-200 dark:border-zinc-700 transition-all shadow-sm">
+          <button onClick={onClose} className="p-2 hover:bg-white dark:hover:bg-zinc-800 rounded-full border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 transition-all shadow-sm">
             <X size={20} className="text-zinc-400" />
           </button>
         </div>
@@ -214,7 +214,7 @@ const SaleDetailModal = ({ reportId, onClose }: { reportId: number, onClose: () 
               <div className="flex items-center justify-end gap-1.5 text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
                 <CreditCard size={10} /> Status
               </div>
-              <span className="inline-block px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold rounded uppercase">
+              <span className="inline-block px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[9px] font-bold rounded uppercase">
                 {report.status || 'Verified'}
               </span>
             </div>
@@ -265,7 +265,7 @@ const SaleDetailModal = ({ reportId, onClose }: { reportId: number, onClose: () 
                   <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tighter">{formatCurrency(report.totalAmount)}</p>
                </div>
                <div className="flex gap-2">
-                  <button className="flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 dark:bg-zinc-200 transition-all shadow-md">
+                  <button className="flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-md">
                      <Download size={14} /> Download PDF
                   </button>
                </div>
@@ -377,7 +377,7 @@ const NewSaleModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
               </div>
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">Register Transaction</h3>
            </div>
-           <button onClick={onClose} className="p-1 hover:bg-zinc-100 dark:bg-zinc-800 rounded-md transition-colors">
+           <button onClick={onClose} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors">
               <X size={16} className="text-zinc-400" />
            </button>
         </div>
@@ -396,7 +396,7 @@ const NewSaleModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
                          placeholder="Type to filter clients..."
                          value={customerSearch}
                          onChange={(e) => setCustomerSearch(e.target.value)}
-                         className="w-full pl-9 pr-4 py-2 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 rounded text-xs outline-none focus:border-zinc-900 transition-all"
+                         className="w-full pl-9 pr-4 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-zinc-900 dark:focus:border-zinc-500 transition-all"
                        />
                     </div>
                     <div className="grid grid-cols-2 gap-2 p-1 border border-zinc-200 dark:border-zinc-700 rounded bg-white dark:bg-zinc-900 shadow-inner min-h-[100px]">
@@ -407,8 +407,8 @@ const NewSaleModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
                             className={cn(
                               "px-3 py-2.5 text-left text-[10px] font-bold rounded-lg border transition-all duration-200 truncate hover:scale-[1.02] active:scale-95",
                               selectedCustomerId === c.id 
-                                ? "bg-zinc-900 dark:bg-zinc-100 text-white border-violet-600 shadow-lg shadow-zinc-200 dark:shadow-black/20" 
-                                : "bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-100 dark:border-zinc-700 hover:border-violet-300 dark:hover:border-violet-900/50 hover:shadow-md hover:-translate-y-0.5"
+                                ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-lg shadow-zinc-200 dark:shadow-black/20" 
+                                : "bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-100 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-500 hover:shadow-md hover:-translate-y-0.5"
                             )}
                           >
                              {c.name}
@@ -447,7 +447,7 @@ const NewSaleModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
                       placeholder="Search Product ID or name..."
                       value={productSearch}
                       onChange={(e) => setProductSearch(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 rounded text-xs outline-none focus:border-zinc-900 transition-all"
+                      className="w-full pl-9 pr-4 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-zinc-900 dark:focus:border-zinc-500 transition-all"
                     />
                  </div>
                  <div className="grid grid-cols-2 gap-3 min-h-[200px]">
@@ -500,7 +500,7 @@ const NewSaleModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
            <div className="w-full md:w-80 bg-zinc-50 dark:bg-zinc-800/50 p-6 flex flex-col shadow-inner">
               <div className="flex items-center justify-between mb-6">
                  <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Order Summary</h4>
-                 <div className="px-2 py-0.5 bg-zinc-200 text-zinc-600 text-[9px] font-bold rounded uppercase tracking-widest">{items.length} Items</div>
+                 <div className="px-2 py-0.5 bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 text-[9px] font-bold rounded uppercase tracking-widest">{items.length} Items</div>
               </div>
 
               <div className="flex-1 space-y-4 overflow-y-auto mb-6 pr-2 scrollbar-thin scrollbar-thumb-zinc-200">
@@ -541,7 +541,7 @@ const NewSaleModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
                  <button 
                    disabled={isSubmitting || !selectedCustomerId || items.length === 0}
                    onClick={handleCreate}
-                   className="w-full py-3 bg-zinc-900 dark:bg-zinc-100 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-zinc-800 dark:bg-zinc-200 disabled:opacity-20 transition-all shadow-xl dark:shadow-black/50 shadow-zinc-200 flex items-center justify-center gap-2"
+                   className="w-full py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-20 transition-all shadow-xl dark:shadow-black/50 shadow-zinc-200 flex items-center justify-center gap-2"
                  >
                    {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : 'Execute Transaction'}
                  </button>
@@ -595,7 +595,7 @@ export default function SalesPage() {
           <h1 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">Financial Records</h1>
           <p className="text-[10px] text-zinc-500 font-medium italic">Comprehensive ledger of all business transactions.</p>
         </div>
-        <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white rounded text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 dark:bg-zinc-200 transition-all shadow-xl dark:shadow-black/50 shadow-zinc-100">
+        <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-xl dark:shadow-black/50 shadow-zinc-100">
           <Plus size={14} /> New Transaction
         </button>
       </div>
@@ -608,7 +608,7 @@ export default function SalesPage() {
             placeholder="Filter ledger..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs outline-none focus:border-zinc-900 transition-all shadow-sm"
+            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-zinc-900 dark:focus:border-zinc-500 transition-all shadow-sm"
           />
         </div>
 

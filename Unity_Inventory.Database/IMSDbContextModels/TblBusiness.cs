@@ -13,6 +13,8 @@ public partial class TblBusiness
 
     public int OwnerId { get; set; }
 
+    public virtual ICollection<TblCategory> TblCategories { get; set; } = new List<TblCategory>();
+
     public virtual ICollection<TblCustomerPrice> TblCustomerPrices { get; set; } = new List<TblCustomerPrice>();
 
     public virtual ICollection<TblCustomerSummary> TblCustomerSummaries { get; set; } = new List<TblCustomerSummary>();

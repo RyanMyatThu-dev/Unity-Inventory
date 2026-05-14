@@ -25,7 +25,17 @@ public partial class TblRolePermission
 
     public DateTime? UpdatedAt { get; set; }
 
+    public int GrantedByUserId { get; set; }
+
+    public int? RevokedByUserId { get; set; }
+
+    public DateTime? RevokedAt { get; set; }
+
     public virtual TblBusiness Business { get; set; } = null!;
+
+    public virtual TblUser GrantedByUser { get; set; } = null!;
+
+    public virtual TblUser? RevokedByUser { get; set; }
 
     public virtual TblUser? User { get; set; }
 }

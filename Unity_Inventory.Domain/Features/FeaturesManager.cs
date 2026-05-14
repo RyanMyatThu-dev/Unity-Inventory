@@ -18,6 +18,7 @@ using Unity_Inventory.Domain.Features.Sales;
 using Unity_Inventory.Domain.Features.CustomerPrices;
 using Unity_Inventory.Domain.Features.PhotoUpload;
 using Unity_Inventory.Domain.Features.Dashboard;
+using Unity_Inventory.Domain.Features.Authorization;
 
 
 namespace Unity_Inventory.Domain.Features
@@ -46,6 +47,8 @@ namespace Unity_Inventory.Domain.Features
             builder.Services.AddScoped<ISalesService, SalesService>();
             builder.Services.AddScoped<ICustomerPriceService, CustomerPriceService>();
             builder.Services.AddScoped<IDashboardService, DashboardService>();
+            builder.Services.AddScoped<IPermissionService, PermissionService>();
+            builder.Services.AddScoped<ICategoryService, CategoryService>();
 
         }
     }

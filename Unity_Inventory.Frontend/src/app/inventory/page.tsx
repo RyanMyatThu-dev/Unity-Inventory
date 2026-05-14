@@ -37,11 +37,36 @@ interface Product {
   imageUrl: string;
   versionStamp: string;
   stockVersionStamp: string;
+  categoryId?: number;
+  categoryName?: string;
+}
+
+interface Category {
+  categoryId: number;
+  categoryName: string;
+  description?: string;
+  parentCategoryId?: number;
+  subCategories: Category[];
 }
 
 const formatCurrency = (value: number) => {
   return `${(value || 0).toLocaleString()} MMK`;
 };
+
+const CategoryOptions = ({ categories, level = 0 }: { categories: Category[], level?: number }) => (
+  <>
+    {categories.map(cat => (
+      <React.Fragment key={cat.categoryId}>
+        <option value={cat.categoryId}>
+          {"\u00A0".repeat(level * 4)}{cat.categoryName}
+        </option>
+        {cat.subCategories && cat.subCategories.length > 0 && (
+          <CategoryOptions categories={cat.subCategories} level={level + 1} />
+        )}
+      </React.Fragment>
+    ))}
+  </>
+);
 
 // --- Memoized Row ---
 const InventoryRow = memo(({ product, index, onSelect, onDelete }: { 
@@ -64,7 +89,14 @@ const InventoryRow = memo(({ product, index, onSelect, onDelete }: {
         </div>
         <div>
           <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate tracking-tight">{product.name}</p>
-          <p className="text-[10px] text-zinc-400 font-medium">Product ID: {product.id.toString().padStart(5, '0')}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className="text-[10px] text-zinc-400 font-medium">ID: {product.id.toString().padStart(5, '0')}</p>
+            {product.categoryName && (
+              <span className="text-[9px] px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-md font-bold uppercase tracking-wider border border-zinc-200/50 dark:border-zinc-700/50">
+                {product.categoryName}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </td>
@@ -74,19 +106,19 @@ const InventoryRow = memo(({ product, index, onSelect, onDelete }: {
     <td className="px-4 py-3 text-right">
       <div className={cn(
         "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter",
-        product.currentStock > 5 ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+        product.currentStock > 5 ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
       )}>
         {product.currentStock} Units
       </div>
     </td>
     <td className="px-4 py-3 text-right">
       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button className="p-1.5 hover:bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-400 hover:text-zinc-900 dark:text-zinc-100 transition-colors">
+        <button className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
           <Edit2 size={12} />
         </button>
         <button 
           onClick={(e) => { e.stopPropagation(); onDelete(product.id, product.versionStamp); }}
-          className="p-1.5 hover:bg-rose-50 rounded text-zinc-400 hover:text-rose-600 transition-colors"
+          className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
         >
           <Trash2 size={12} />
         </button>
@@ -107,7 +139,7 @@ const InventoryCard = memo(({ product, index, onSelect, onDelete }: {
     className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 hover:shadow-md transition-all cursor-pointer relative overflow-hidden flex flex-col h-full"
   >
     <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-      <button className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 rounded shadow-sm text-zinc-400 hover:text-zinc-900 dark:text-zinc-100 transition-colors">
+      <button className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded shadow-sm text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
         <Edit2 size={10} />
       </button>
       <button 
@@ -130,15 +162,22 @@ const InventoryCard = memo(({ product, index, onSelect, onDelete }: {
     </div>
     
     <div className="space-y-1 mb-4 flex-1">
-      <p className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight line-clamp-1">{product.name}</p>
-      <p className="text-[9px] text-zinc-400 font-semibold uppercase tracking-widest">Product ID: {product.id.toString().padStart(5, '0')}</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight line-clamp-1 flex-1">{product.name}</p>
+        {product.categoryName && (
+          <span className="text-[8px] px-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-400 font-bold uppercase rounded border border-zinc-200 dark:border-zinc-700 shrink-0">
+            {product.categoryName}
+          </span>
+        )}
+      </div>
+      <p className="text-[9px] text-zinc-400 font-semibold uppercase tracking-widest">ID: {product.id.toString().padStart(5, '0')}</p>
     </div>
     
     <div className="flex items-center justify-between pt-3 border-t border-zinc-50 mt-auto">
       <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(product.price)}</p>
       <div className={cn(
         "px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter",
-        product.currentStock > 5 ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+        product.currentStock > 5 ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
       )}>
         {product.currentStock} Units
       </div>
@@ -157,7 +196,11 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editForm, setEditForm] = useState({ name: product.name, price: product.price.toString() });
+  const [editForm, setEditForm] = useState({ 
+    name: product.name, 
+    price: product.price.toString(),
+    categoryId: product.categoryId?.toString() || '' 
+  });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -166,7 +209,11 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
   // Sync form ONLY when NOT editing (e.g. after background refresh or on mount)
   useEffect(() => {
     if (!isEditing) {
-      setEditForm({ name: product.name, price: product.price.toString() });
+      setEditForm({ 
+        name: product.name, 
+        price: product.price.toString(),
+        categoryId: product.categoryId?.toString() || ''
+      });
     }
   }, [product, isEditing]);
   
@@ -219,6 +266,9 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
       formData.append('Id', product.id.toString());
       formData.append('Name', editForm.name);
       formData.append('Price', editForm.price);
+      if (editForm.categoryId) {
+        formData.append('CategoryId', editForm.categoryId);
+      }
       formData.append('VersionStamp', product.versionStamp);
       if (product.stockVersionStamp) {
         formData.append('StockVersionStamp', product.stockVersionStamp);
@@ -230,7 +280,9 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
         onEditSuccess({
           ...product,
           name: editForm.name,
-          price: parseFloat(editForm.price)
+          price: parseFloat(editForm.price),
+          categoryId: editForm.categoryId ? parseInt(editForm.categoryId) : undefined,
+          categoryName: categories.find(c => c.categoryId.toString() === editForm.categoryId)?.categoryName
         });
         setIsEditing(false);
         onUpdate(); // Trigger background sync
@@ -290,7 +342,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                   Update Product
                 </button>
               )}
-              <button onClick={onClose} className="p-1 hover:bg-zinc-100 dark:bg-zinc-800 rounded-md transition-colors">
+              <button onClick={onClose} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors">
                 <X size={16} className="text-zinc-400" />
               </button>
            </div>
@@ -343,7 +395,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                             autoFocus
                             value={editForm.name}
                             onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                            className="w-full text-base font-semibold text-zinc-900 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 outline-none focus:ring-1 focus:ring-zinc-900 transition-all"
+                            className="w-full text-base font-semibold text-zinc-900 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 transition-all"
                            />
                         </div>
                         <div className="space-y-1.5">
@@ -354,15 +406,26 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                                 type="number"
                                 value={editForm.price}
                                 onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
-                                className="w-full pl-14 pr-4 py-2 text-base font-semibold text-zinc-900 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 rounded-lg outline-none focus:ring-1 focus:ring-zinc-900 transition-all"
+                                className="w-full pl-14 pr-4 py-2 text-base font-semibold text-zinc-900 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 transition-all"
                               />
                            </div>
                         </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-bold text-zinc-400 uppercase">Category</label>
+                            <select 
+                              value={editForm.categoryId}
+                              onChange={(e) => setEditForm({ ...editForm, categoryId: e.target.value })}
+                              className="w-full text-xs font-semibold text-zinc-900 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all appearance-none"
+                            >
+                               <option value="">Uncategorized</option>
+                               <CategoryOptions categories={categoryTree} />
+                            </select>
+                         </div>
                         <div className="flex gap-2 pt-2">
-                           <button onClick={handleSaveInfo} disabled={isSubmitting} className="flex-1 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-zinc-800 dark:bg-zinc-200 disabled:opacity-50 shadow-lg dark:shadow-black/20 shadow-zinc-100">
+                           <button onClick={handleSaveInfo} disabled={isSubmitting} className="flex-1 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 shadow-lg dark:shadow-black/20 shadow-zinc-100">
                               {isSubmitting ? 'Syncing...' : 'Commit Changes'}
                            </button>
-                           <button onClick={() => setIsEditing(false)} className="px-6 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-500 text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:bg-zinc-900/50">Cancel</button>
+                           <button onClick={() => setIsEditing(false)} className="px-6 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700">Cancel</button>
                         </div>
                       </div>
                     ) : (
@@ -379,6 +442,11 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                            <div className="flex items-center gap-1.5 px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
                               Ver: {product.versionStamp?.substring(0, 6)}
                            </div>
+                            {product.categoryName && (
+                              <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 dark:bg-emerald-500/10 rounded text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest border border-emerald-200/50 dark:border-emerald-500/20">
+                                {product.categoryName}
+                              </div>
+                            )}
                         </div>
                       </div>
                     )}
@@ -403,7 +471,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                     </div>
                     <div className={cn(
                       "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest",
-                      product.currentStock > 10 ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                      product.currentStock > 10 ? "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400"
                     )}>
                        {product.currentStock > 10 ? 'Healthy Stock' : 'Low Inventory'}
                     </div>
@@ -437,7 +505,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
         </div>
 
         <div className="p-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
-           <button onClick={() => onDelete(product.id, product.versionStamp)} className="px-4 py-2 text-[10px] font-bold text-rose-600 uppercase tracking-widest hover:bg-rose-50 rounded-lg transition-all">Archive Product</button>
+           <button onClick={() => onDelete(product.id, product.versionStamp)} className="px-4 py-2 text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all">Archive Product</button>
            <span className="text-[9px] text-zinc-400 font-semibold uppercase tracking-widest opacity-50">Confidential • Enterprise Product Record</span>
         </div>
       </div>
@@ -457,10 +525,30 @@ export default function InventoryPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', stock: '' });
+  const [newProduct, setNewProduct] = useState({ name: '', price: '', stock: '', categoryId: '' });
   const [newProductImage, setNewProductImage] = useState<File | null>(null);
   const [newProductImagePreview, setNewProductImagePreview] = useState<string | null>(null);
   const addImageInputRef = useRef<HTMLInputElement>(null);
+
+  const [categoryTree, setCategoryTree] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const [treeRes, flatRes] = await Promise.all([
+        api.get('/categories/tree'),
+        api.get('/categories')
+      ]);
+      if (treeRes.data.isSuccess) setCategoryTree(treeRes.data.data);
+      if (flatRes.data.isSuccess) setCategories(flatRes.data.data);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -477,7 +565,9 @@ export default function InventoryPage() {
           currentStock: item.currentStock || 0,
           imageUrl: item.imageUrl,
           versionStamp: item.versionStamp,
-          stockVersionStamp: item.stockVersionStamp
+          stockVersionStamp: item.stockVersionStamp,
+          categoryId: item.categoryId,
+          categoryName: item.categoryName
         }));
         setProducts(mappedItems);
         setTotalPages(response.data.pagination?.totalPages || 1);
@@ -517,6 +607,9 @@ export default function InventoryPage() {
       const formData = new FormData();
       formData.append('name', newProduct.name);
       formData.append('price', newProduct.price);
+      if (newProduct.categoryId) {
+        formData.append('categoryId', newProduct.categoryId);
+      }
       formData.append('businessId', '0');
 
       let response;
@@ -529,7 +622,7 @@ export default function InventoryPage() {
 
       if (response.data.isSuccess) {
         setIsAddModalOpen(false);
-        setNewProduct({ name: '', price: '', stock: '' });
+        setNewProduct({ name: '', price: '', stock: '', categoryId: '' });
         setNewProductImage(null);
         setNewProductImagePreview(null);
         fetchProducts();
@@ -577,7 +670,7 @@ export default function InventoryPage() {
             placeholder="Filter Product database..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-6 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-zinc-900 transition-all shadow-sm"
+            className="w-full pl-12 pr-6 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-sm"
           />
         </div>
         
@@ -708,16 +801,27 @@ export default function InventoryPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-[9px] font-bold text-zinc-400 uppercase">Product Identification</label>
-                <input required type="text" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Legal Product Name" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-zinc-900" />
+                <input required type="text" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Legal Product Name" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase">Category Assignment</label>
+                <select 
+                  value={newProduct.categoryId} 
+                  onChange={(e) => setNewProduct({ ...newProduct, categoryId: e.target.value })} 
+                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 appearance-none"
+                >
+                  <option value="">Uncategorized</option>
+                  <CategoryOptions categories={categoryTree} />
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[9px] font-semibold text-zinc-400 uppercase">Unit Price</label>
-                  <input required type="number" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} placeholder="0.00" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium outline-none focus:ring-1 focus:ring-zinc-900" />
+                  <input required type="number" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} placeholder="0.00" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[9px] font-semibold text-zinc-400 uppercase">Initial Stock</label>
-                  <input required type="number" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })} placeholder="0" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium outline-none focus:ring-1 focus:ring-zinc-900" />
+                  <input required type="number" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })} placeholder="0" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400" />
                 </div>
               </div>
               <button disabled={isSubmitting} type="submit" className="w-full py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-semibold uppercase tracking-widest rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-xl dark:shadow-black/40 shadow-zinc-200 mt-4">

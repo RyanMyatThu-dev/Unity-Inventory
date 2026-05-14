@@ -39,7 +39,7 @@ namespace Unity_Inventory.Domain.Features.Authentication
                 return Result<TokenResponse>.Failure("Invalid email or password.");
             }
 
-            var accessToken = _tokenService.GenerateAccessToken(user, null, null);
+            var accessToken = await _tokenService.GenerateAccessTokenAsync(user, null, null);
             var refreshToken = _tokenService.GenerateRefreshToken();
             var expirydays = int.Parse(_configuration["JwtSettings:RefreshTokenExpiryDays"] ?? "7");
             var businesses = await _businessService.GetBusinessesByUserIdAsync(user.UserId);
@@ -61,6 +61,8 @@ namespace Unity_Inventory.Domain.Features.Authentication
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 Email = user.Email,
+                Name = user.Name,
+                AccountType = string.IsNullOrWhiteSpace(user.AccountType) ? "Owner" : user.AccountType,
                 Businesses = businesses.Data ?? new List<BusinessAccessDto>()
             });
 
@@ -82,7 +84,7 @@ namespace Unity_Inventory.Domain.Features.Authentication
             userToken.IsRevoked = true;
 
             // Generate new tokens
-            var accessToken = _tokenService.GenerateAccessToken(user, null, null);
+            var accessToken = await _tokenService.GenerateAccessTokenAsync(user, null, null);
             var refreshToken = _tokenService.GenerateRefreshToken();
             var expirydays = int.Parse(_configuration["JwtSettings:RefreshTokenExpiryDays"] ?? "7");
 
@@ -106,6 +108,8 @@ namespace Unity_Inventory.Domain.Features.Authentication
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 Email = user.Email,
+                Name = user.Name,
+                AccountType = string.IsNullOrWhiteSpace(user.AccountType) ? "Owner" : user.AccountType,
                 Businesses = businesses.Data ?? new List<BusinessAccessDto>()
             });
         }

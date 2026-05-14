@@ -17,6 +17,8 @@ public partial class IMSDbContext : DbContext
 
     public virtual DbSet<TblBusiness> TblBusinesses { get; set; }
 
+    public virtual DbSet<TblCategory> TblCategories { get; set; }
+
     public virtual DbSet<TblCustomer> TblCustomers { get; set; }
 
     public virtual DbSet<TblCustomerPrice> TblCustomerPrices { get; set; }
@@ -58,6 +60,28 @@ public partial class IMSDbContext : DbContext
                 .HasDefaultValue("Free");
         });
 
+        modelBuilder.Entity<TblCategory>(entity =>
+        {
+            entity.HasKey(e => e.CategoryId).HasName("PK__TblCateg__19093A0BFEA65208");
+
+            entity.ToTable("TblCategory");
+
+            entity.HasIndex(e => new { e.BusinessId, e.CategoryName }, "UQ_Category_Name").IsUnique();
+
+            entity.Property(e => e.CategoryName).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.Description).HasMaxLength(255);
+
+            entity.HasOne(d => d.Business).WithMany(p => p.TblCategories)
+                .HasForeignKey(d => d.BusinessId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Category_Business");
+
+            entity.HasOne(d => d.ParentCategory).WithMany(p => p.InverseParentCategory)
+                .HasForeignKey(d => d.ParentCategoryId)
+                .HasConstraintName("FK_Category_Parent");
+        });
+
         modelBuilder.Entity<TblCustomer>(entity =>
         {
             entity.HasKey(e => e.CustomerId).HasName("PK__Tbl_Cust__A4AE64D8295BE687");
@@ -96,6 +120,12 @@ public partial class IMSDbContext : DbContext
 
             entity.ToTable("Tbl_CustomerPrices");
 
+            entity.HasIndex(e => e.BusinessId, "IX_Tbl_CustomerPrices_BusinessId");
+
+            entity.HasIndex(e => e.CustomerId, "IX_Tbl_CustomerPrices_CustomerId");
+
+            entity.HasIndex(e => e.InventoryId, "IX_Tbl_CustomerPrices_InventoryId");
+
             entity.Property(e => e.SellPrice).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.Business).WithMany(p => p.TblCustomerPrices)
@@ -120,12 +150,16 @@ public partial class IMSDbContext : DbContext
 
             entity.ToTable("Tbl_CustomerSummary");
 
+            entity.HasIndex(e => e.BusinessId, "IX_Tbl_CustomerSummary_BusinessId");
+
+            entity.HasIndex(e => e.CustomerId, "IX_Tbl_CustomerSummary_CustomerId");
+
             entity.Property(e => e.LastTransactionDate).HasColumnType("datetime");
             entity.Property(e => e.OutstandingBalance)
-                .HasDefaultValue(0m)
+                .HasDefaultValue(0.0m)
                 .HasColumnType("decimal(18, 2)");
             entity.Property(e => e.TotalPurchased)
-                .HasDefaultValue(0m)
+                .HasDefaultValue(0.0m)
                 .HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.Business).WithMany(p => p.TblCustomerSummaries)
@@ -164,6 +198,10 @@ public partial class IMSDbContext : DbContext
                 .HasForeignKey(d => d.BusinessId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Tbl_Inventories_Business");
+
+            entity.HasOne(d => d.Category).WithMany(p => p.TblInventories)
+                .HasForeignKey(d => d.CategoryId)
+                .HasConstraintName("FK_Inventory_Category");
         });
 
         modelBuilder.Entity<TblInventorySummary>(entity =>
@@ -171,6 +209,10 @@ public partial class IMSDbContext : DbContext
             entity.HasKey(e => e.SummaryId).HasName("PK__Tbl_Inve__DAB10E2F52C7CE2C");
 
             entity.ToTable("Tbl_InventorySummary");
+
+            entity.HasIndex(e => e.BusinessId, "IX_Tbl_InventorySummary_BusinessId");
+
+            entity.HasIndex(e => e.InventoryId, "IX_Tbl_InventorySummary_InventoryId");
 
             entity.Property(e => e.CurrentStock).HasDefaultValue(0);
             entity.Property(e => e.LastUpdated)
@@ -199,6 +241,8 @@ public partial class IMSDbContext : DbContext
 
             entity.HasIndex(e => e.BusinessId, "IX_Tbl_Reports_BusinessId");
 
+            entity.HasIndex(e => e.CustomerId, "IX_Tbl_Reports_CustomerId");
+
             entity.Property(e => e.Remarks).HasMaxLength(200);
             entity.Property(e => e.ReportDate)
                 .HasDefaultValueSql("(getdate())")
@@ -222,7 +266,15 @@ public partial class IMSDbContext : DbContext
 
             entity.ToTable("Tbl_RolePermissions");
 
-            entity.HasIndex(e => new { e.BusinessId, e.RoleName, e.UserId, e.MenuCode, e.ActionCode }, "UQ_Permission").IsUnique();
+            entity.HasIndex(e => e.GrantedByUserId, "IX_Permission_GrantedByUserId");
+
+            entity.HasIndex(e => e.RevokedByUserId, "IX_Permission_RevokedByUserId");
+
+            entity.HasIndex(e => e.UserId, "IX_Tbl_RolePermissions_UserId");
+
+            entity.HasIndex(e => new { e.BusinessId, e.RoleName, e.UserId, e.MenuCode, e.ActionCode }, "UQ_Permission")
+                .IsUnique()
+                .HasFilter("([RoleName] IS NOT NULL AND [UserId] IS NOT NULL)");
 
             entity.Property(e => e.ActionCode)
                 .HasMaxLength(50)
@@ -241,7 +293,16 @@ public partial class IMSDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Permission_Business");
 
-            entity.HasOne(d => d.User).WithMany(p => p.TblRolePermissions)
+            entity.HasOne(d => d.GrantedByUser).WithMany(p => p.TblRolePermissionGrantedByUsers)
+                .HasForeignKey(d => d.GrantedByUserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Permission_GrantedByUser");
+
+            entity.HasOne(d => d.RevokedByUser).WithMany(p => p.TblRolePermissionRevokedByUsers)
+                .HasForeignKey(d => d.RevokedByUserId)
+                .HasConstraintName("FK_Permission_RevokedByUser");
+
+            entity.HasOne(d => d.User).WithMany(p => p.TblRolePermissionUsers)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK_Permission_User");
         });
@@ -254,6 +315,9 @@ public partial class IMSDbContext : DbContext
 
             entity.HasIndex(e => e.Email, "UQ__Tbl_User__A9D10534EAB8CDCF").IsUnique();
 
+            entity.Property(e => e.AccountType)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -275,6 +339,8 @@ public partial class IMSDbContext : DbContext
             entity.HasKey(e => new { e.UserId, e.BusinessId }).HasName("PK__Tbl_User__E896667A96DAE2D1");
 
             entity.ToTable("Tbl_UserBusinesses");
+
+            entity.HasIndex(e => e.BusinessId, "IX_Tbl_UserBusinesses_BusinessId");
 
             entity.Property(e => e.Role)
                 .HasMaxLength(50)
@@ -298,6 +364,8 @@ public partial class IMSDbContext : DbContext
 
             entity.ToTable("Tbl_UserTokens");
 
+            entity.HasIndex(e => e.UserId, "IX_Tbl_UserTokens_UserId");
+
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -317,6 +385,10 @@ public partial class IMSDbContext : DbContext
             entity.HasKey(e => e.VoucherId).HasName("PK__Tbl_Vouc__3AEE792164B1B440");
 
             entity.ToTable("Tbl_Vouchers");
+
+            entity.HasIndex(e => e.BusinessId, "IX_Tbl_Vouchers_BusinessId");
+
+            entity.HasIndex(e => e.InventoryId, "IX_Tbl_Vouchers_InventoryId");
 
             entity.HasIndex(e => e.ReportId, "IX_Tbl_Vouchers_ReportId");
 

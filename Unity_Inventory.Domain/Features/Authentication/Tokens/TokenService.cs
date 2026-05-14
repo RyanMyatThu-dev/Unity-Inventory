@@ -11,6 +11,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Unity_Inventory.Domain.Features.Authentication.Tokens
 {
@@ -24,7 +25,7 @@ namespace Unity_Inventory.Domain.Features.Authentication.Tokens
             _configuration = configuration;
         }
 
-        public string GenerateAccessToken(TblUser user, int? businessId, string? role = null)
+        public async Task<string> GenerateAccessTokenAsync(TblUser user, int? businessId, string? role = null)
         {
             var JWTConfig = _configuration.GetSection("JwtSettings");
             var secretKey = JWTConfig["SecretKey"] ?? throw new InvalidOperationException("Secret Key Not Found!");
@@ -40,6 +41,7 @@ namespace Unity_Inventory.Domain.Features.Authentication.Tokens
                 new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                 new Claim(ClaimTypes.Name, user.Name),
                 new Claim(ClaimTypes.Email, user.Email),
+                new Claim("AccountType", user.AccountType ?? string.Empty)
             };
 
             if (businessId.HasValue)
@@ -50,6 +52,15 @@ namespace Unity_Inventory.Domain.Features.Authentication.Tokens
             if (!string.IsNullOrEmpty(role))
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            if (businessId.HasValue)
+            {
+                var permissions = await GetUserPermissionsAsync(user.UserId, businessId.Value, role);
+                foreach (var permission in permissions)
+                {
+                    claims.Add(new Claim("Permission", permission));
+                }
             }
 
             var token = new JwtSecurityToken(
@@ -64,6 +75,18 @@ namespace Unity_Inventory.Domain.Features.Authentication.Tokens
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        private async Task<List<string>> GetUserPermissionsAsync(int userId, int businessId, string? role)
+        {
+            return await _db.TblRolePermissions
+                .AsNoTracking()
+                .Where(rp => rp.BusinessId == businessId)
+                .Where(rp => (rp.UserId == userId && rp.RoleName == role) || (rp.UserId == userId) || (rp.RoleName == role))
+                .Where(rp => rp.IsAllowed && !rp.IsRevoked)
+                .Select(rp => $"{rp.MenuCode}.{rp.ActionCode}")
+                .Distinct()
+                .ToListAsync();
+             
+        }
         public string GenerateRefreshToken()
         {
             var random = new byte[64];
