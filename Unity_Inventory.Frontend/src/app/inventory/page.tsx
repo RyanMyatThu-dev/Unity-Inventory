@@ -188,12 +188,14 @@ const InventoryCard = memo(({ product, index, onSelect, onDelete }: {
 InventoryCard.displayName = 'InventoryCard';
 
 // --- Optimized Detail Modal ---
-const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSuccess }: {
+const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSuccess, categories, categoryTree }: {
   product: Product,
   onClose: () => void,
   onUpdate: () => void,
   onDelete: (id: number, version: string) => void,
-  onEditSuccess: (updated: Product) => void
+  onEditSuccess: (updated: Product) => void,
+  categories: Category[],
+  categoryTree: Category[]
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -652,7 +654,7 @@ export default function InventoryPage() {
   }, [fetchProducts]);
 
   return (
-    <div className="space-y-6 max-w-[1400px] animate-in fade-in duration-300">
+    <div className="space-y-6 w-full animate-in fade-in duration-300">
       <div className="flex items-center justify-between bg-white dark:bg-zinc-900 p-6 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-sm">
         <div>
           <h1 className="text-base font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">Inventory Matrix</h1>
@@ -766,6 +768,8 @@ export default function InventoryPage() {
           onUpdate={fetchProducts}
           onDelete={handleDeleteProduct}
           onEditSuccess={(updated) => setSelectedProduct(updated)}
+          categories={categories}
+          categoryTree={categoryTree}
         />
       )}
 

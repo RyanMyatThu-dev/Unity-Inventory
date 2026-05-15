@@ -205,7 +205,7 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div className="max-w-[1000px] animate-in fade-in duration-300 pb-20">
+    <div className="w-full animate-in fade-in duration-300 pb-20">
       <div className="flex items-center justify-between bg-white dark:bg-zinc-900 p-6 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm mb-6">
         <div>
           <h1 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest flex items-center gap-2">
@@ -238,7 +238,7 @@ export default function CategoriesPage() {
             <button onClick={() => handleOpenCreate()} className="mt-4 text-[10px] font-bold text-zinc-900 dark:text-zinc-100 underline decoration-2 underline-offset-4 uppercase tracking-widest">Initialize Root</button>
           </div>
         ) : (
-          <div className="space-y-1 max-w-3xl">
+          <div className="space-y-1 w-full">
             {tree.map(cat => (
               <CategoryNode 
                 key={cat.categoryId} 

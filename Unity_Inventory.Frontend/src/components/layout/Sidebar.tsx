@@ -192,7 +192,7 @@ export const Sidebar = () => {
       <div className="p-3 border-t border-border dark:border-zinc-800 bg-white dark:bg-zinc-900 dark:bg-zinc-950 space-y-2 transition-colors">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 dark:bg-zinc-900 flex items-center justify-center text-zinc-500 dark:text-zinc-400 border border-border dark:border-zinc-700 shrink-0 text-xs font-bold">
-            {user?.email?.[0].toUpperCase()}
+            {user?.email?.[0]?.toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">{user?.email?.split('@')[0]}</p>

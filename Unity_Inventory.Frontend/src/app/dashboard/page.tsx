@@ -145,7 +145,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-8 max-w-[1400px] pb-20 animate-in fade-in duration-500">
+    <div className="space-y-8 w-full pb-20 animate-in fade-in duration-500">
       {/* Dynamic Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
