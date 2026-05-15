@@ -2,6 +2,7 @@ using Unity_Inventory.Domain.Features.CustomerPrices;
 using Unity_Inventory.Domain.Features.CustomerPrices.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Unity_Inventory.Api.Filters;
 using System.Security.Claims;
 
 namespace Unity_Inventory.Api.Controllers
@@ -26,6 +27,7 @@ namespace Unity_Inventory.Api.Controllers
 
         // GET: api/customer-prices/by-customer/{customerId}
         [HttpGet("by-customer/{customerId}")]
+        [Permission("customerprices", "view")]
         public async Task<IActionResult> GetByCustomer(int customerId)
         {
             var businessId = GetBusinessId();
@@ -37,6 +39,7 @@ namespace Unity_Inventory.Api.Controllers
 
         // GET: api/customer-prices/by-inventory/{inventoryId}
         [HttpGet("by-inventory/{inventoryId}")]
+        [Permission("customerprices", "view")]
         public async Task<IActionResult> GetByInventory(int inventoryId)
         {
             var businessId = GetBusinessId();
@@ -48,6 +51,7 @@ namespace Unity_Inventory.Api.Controllers
 
         // GET: api/customer-prices/effective?customerId=&inventoryId=
         [HttpGet("effective")]
+        [Permission("customerprices", "view")]
         public async Task<IActionResult> GetEffectivePrice([FromQuery] int customerId, [FromQuery] int inventoryId)
         {
             var businessId = GetBusinessId();
@@ -59,6 +63,7 @@ namespace Unity_Inventory.Api.Controllers
 
         // POST: api/customer-prices
         [HttpPost]
+        [Permission("customerprices", "edit")]
         public async Task<IActionResult> SetPrice([FromBody] SetCustomerPriceRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -74,6 +79,7 @@ namespace Unity_Inventory.Api.Controllers
 
         // DELETE: api/customer-prices
         [HttpDelete]
+        [Permission("customerprices", "delete")]
         public async Task<IActionResult> DeletePrice([FromBody] DeleteCustomerPriceRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Unity_Inventory.Api.Filters;
 using Unity_Inventory.Domain.Features.Inventories;
 using Unity_Inventory.Domain.Features.Inventories.Models;
 using System.Security.Claims;
@@ -26,6 +27,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpGet]
+        [Permission("categories", "view")]
         public async Task<IActionResult> GetCategories()
         {
             var businessId = GetBusinessId();
@@ -36,6 +38,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpGet("tree")]
+        [Permission("categories", "view")]
         public async Task<IActionResult> GetCategoryTree()
         {
             var businessId = GetBusinessId();
@@ -46,6 +49,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpGet("{id}")]
+        [Permission("categories", "view")]
         public async Task<IActionResult> GetCategory(int id)
         {
             var result = await _categoryService.GetCategoryByIdAsync(id);
@@ -53,6 +57,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpPost]
+        [Permission("categories", "create")]
         public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -66,6 +71,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpPut]
+        [Permission("categories", "edit")]
         public async Task<IActionResult> UpdateCategory([FromBody] UpdateCategoryRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -75,6 +81,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Permission("categories", "delete")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
             var result = await _categoryService.DeleteCategoryAsync(id);

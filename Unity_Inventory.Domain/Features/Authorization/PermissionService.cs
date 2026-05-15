@@ -20,6 +20,7 @@ namespace Unity_Inventory.Domain.Features.Authorization
             ("sales", "view"),
             ("sales", "create"),
             ("customerprices", "view"),
+            ("categories", "view"),
         ];
 
         private static readonly string[] Menus =
@@ -29,6 +30,7 @@ namespace Unity_Inventory.Domain.Features.Authorization
             "customers",
             "sales",
             "customerprices",
+            "categories",
             "users",
             "business",
         ];

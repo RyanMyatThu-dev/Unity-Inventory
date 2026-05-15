@@ -11,6 +11,7 @@ internal static class RolePermissionSeedData
         "customers",
         "sales",
         "customerprices",
+        "categories",
         "users",
         "business"
     ];
@@ -71,5 +72,6 @@ internal static class RolePermissionSeedData
         ("sales", "view"),
         ("sales", "create"),
         ("customerprices", "view"),
+        ("categories", "view"),
     ];
 }

@@ -64,7 +64,7 @@ namespace Unity_Inventory.Domain.Features.Authentication.Users
         }
 
         // DELETE : api/users/delete
-        [Authorize(Roles = "Admin")]
+        [Permission("users", "delete")]
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
