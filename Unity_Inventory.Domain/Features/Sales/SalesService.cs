@@ -102,6 +102,10 @@ namespace Unity_Inventory.Domain.Features.Sales
             using var transaction = await _db.Database.BeginTransactionAsync();
             try
             {
+                var customer = await _db.TblCustomers.FindAsync(request.CustomerId);
+                if (customer == null || customer.DeleteFlag == true)
+                    return Result<ReportDTO>.Failure("Cannot create report for a non-existent or deleted customer.");
+
                 var report = new TblReport
                 {
                     BusinessId = request.BusinessId,

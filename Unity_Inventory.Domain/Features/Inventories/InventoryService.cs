@@ -138,6 +138,19 @@ namespace Unity_Inventory.Domain.Features.Inventories
                 };
 
                 _db.TblInventories.Add(inventory);
+
+                if(request.InitialStock > 0)
+                {
+                    var summary = new TblInventorySummary
+                    {
+                        Inventory = inventory,
+                        BusinessId = request.BusinessId,
+                        CurrentStock = request.InitialStock,
+                        LastUpdated = DateTime.Now
+                    };
+                    _db.TblInventorySummaries.Add(summary);
+                }
+
                 await _db.SaveChangesAsync();
 
                 return Result<InventoriesDTO>.Success(new InventoriesDTO
@@ -162,7 +175,7 @@ namespace Unity_Inventory.Domain.Features.Inventories
             try
             {
                 var inventory = await _db.TblInventories.FindAsync(request.Id);
-                if (inventory == null)
+                if (inventory == null || inventory.DeleteFlag == true)
                     return Result<InventoriesDTO>.Failure("Inventory item not found.");
 
                 if (request.CategoryId.HasValue)
@@ -232,7 +245,7 @@ namespace Unity_Inventory.Domain.Features.Inventories
             try
             {
                 var inventory = await _db.TblInventories.FindAsync(id);
-                if (inventory == null)
+                if (inventory == null || inventory.DeleteFlag == true)
                     return Result<bool>.Failure("Inventory item not found.");
 
                 _db.Entry(inventory).Property(i => i.VersionStamp).OriginalValue = version;
@@ -339,6 +352,19 @@ namespace Unity_Inventory.Domain.Features.Inventories
                 };
 
                 _db.TblInventories.Add(newProduct);
+
+                if(request.InitialStock > 0)
+                {
+                    var summary = new TblInventorySummary
+                    {
+                        Inventory = newProduct,
+                        BusinessId = request.BusinessId,
+                        CurrentStock = request.InitialStock,
+                        LastUpdated = DateTime.Now
+                    };
+                    _db.TblInventorySummaries.Add(summary);
+                }
+
                 await _db.SaveChangesAsync();
 
                 var data = new InventoriesDTO

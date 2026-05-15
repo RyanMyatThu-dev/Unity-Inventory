@@ -50,7 +50,7 @@ namespace Unity_Inventory.Domain.Features.CustomerPrices
                 var prices = await _db.TblCustomerPrices
                     .Include(cp => cp.Customer)
                     .Include(cp => cp.Inventory)
-                    .Where(cp => cp.InventoryId == inventoryId && cp.BusinessId == businessId)
+                    .Where(cp => cp.InventoryId == inventoryId && cp.BusinessId == businessId && cp.Customer.DeleteFlag != true)
                     .Select(cp => new CustomerPriceDTO
                     {
                         CustomerPriceId = cp.CustomerPriceId,

@@ -28,6 +28,7 @@ import {
   LayoutGrid
 } from 'lucide-react';
 
+
 // --- Types ---
 interface Product {
   id: number;
@@ -801,14 +802,15 @@ export default function InventoryPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-[9px] font-bold text-zinc-400 uppercase">Product Identification</label>
-                <input required type="text" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Legal Product Name" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400" />
+                <input required type="text" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Legal Product Name" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 outline-none transition-all shadow-inner" 
+                />
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase">Category Assignment</label>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Category Assignment</label>
                 <select 
                   value={newProduct.categoryId} 
                   onChange={(e) => setNewProduct({ ...newProduct, categoryId: e.target.value })} 
-                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 appearance-none"
+                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 appearance-none cursor-pointer"
                 >
                   <option value="">Uncategorized</option>
                   <CategoryOptions categories={categoryTree} />
@@ -816,16 +818,16 @@ export default function InventoryPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-semibold text-zinc-400 uppercase">Unit Price</label>
-                  <input required type="number" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} placeholder="0.00" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400" />
+                  <label className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest px-1">Unit Price</label>
+                  <input required type="number" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} placeholder="0.00" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-inner" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-semibold text-zinc-400 uppercase">Initial Stock</label>
-                  <input required type="number" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })} placeholder="0" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400" />
+                  <label className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest px-1">Initial Stock</label>
+                  <input required type="number" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })} placeholder="0" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-inner" />
                 </div>
               </div>
-              <button disabled={isSubmitting} type="submit" className="w-full py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-semibold uppercase tracking-widest rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-xl dark:shadow-black/40 shadow-zinc-200 mt-4">
-                {isSubmitting ? <Loader2 size={16} className="animate-spin m-auto" /> : 'Confirm Registration'}
+              <button disabled={isSubmitting} type="submit" className="w-full py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-xl dark:shadow-black/40 shadow-zinc-200 mt-4">
+                {isSubmitting ? <Loader2 size={16} className="animate-spin m-auto" /> : 'Register Inventory Asset'}
               </button>
             </form>
           </div>

@@ -192,6 +192,144 @@ const PermissionModal = ({ userDto, businessId, onClose }: {
   );
 };
 
+const AddUserModal = ({ businessId, onClose, onSuccess }: {
+  businessId: number;
+  onClose: () => void;
+  onSuccess: () => void;
+}) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    accountType: 'Staff' as 'Admin' | 'Staff'
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await api.post('/users/create', {
+        ...formData,
+        businessId
+      });
+
+      if (res.data.isSuccess) {
+        onSuccess();
+        onClose();
+      } else {
+        setError(res.data.message || 'Failed to create user');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.message || 'An error occurred during user creation');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-zinc-900/60 dark:bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 w-full max-w-md rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200 p-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">Onboard Team Member</h2>
+            <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-1">Provision access for new administrative or staff entities.</p>
+          </div>
+          <button onClick={onClose} className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl flex items-center gap-3 text-rose-600 dark:text-rose-400 text-xs font-semibold animate-in fade-in slide-in-from-top-1">
+            <ShieldAlert size={16} />
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Legal Name</label>
+            <input 
+              required
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all"
+              placeholder="Full Entity Name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Email Address</label>
+            <input 
+              required
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all"
+              placeholder="corporate@identity.com"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Access Credentials</label>
+            <input 
+              required
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all"
+              placeholder="Secure Passcode"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Access Level (Role)</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['Admin', 'Staff'] as const).map((role) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, accountType: role })}
+                  className={cn(
+                    "px-4 py-3 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all",
+                    formData.accountType === role 
+                      ? "bg-zinc-900 border-zinc-900 text-white dark:bg-zinc-100 dark:border-zinc-100 dark:text-zinc-900 shadow-lg shadow-zinc-200 dark:shadow-none" 
+                      : "bg-white border-zinc-200 text-zinc-400 hover:border-zinc-300 dark:bg-zinc-800 dark:border-zinc-800 dark:hover:border-zinc-700"
+                  )}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            disabled={isSubmitting}
+            type="submit"
+            className="w-full py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-xl dark:shadow-black/20 shadow-zinc-100 mt-4 flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : (
+              <>
+                <Check size={16} />
+                Confirm Provisioning
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 export default function UsersPage() {
   const { user: authUser, currentBusinessId } = useAuth();
   const router = useRouter();
@@ -199,6 +337,7 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
   useEffect(() => {
     // Only Owners can access this page
@@ -220,7 +359,7 @@ export default function UsersPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentBusinessId]);
 
   useEffect(() => {
     if (currentBusinessId) {
@@ -244,6 +383,12 @@ export default function UsersPage() {
           <h1 className="text-base font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">Team & Permissions</h1>
           <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-1">Manage system users and their access within your active business.</p>
         </div>
+        <button 
+          onClick={() => setIsAddUserModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-xl dark:shadow-black/20 shadow-zinc-100"
+        >
+          <UserIcon size={16} /> Onboard Team Member
+        </button>
       </div>
 
       <div className="flex items-center justify-between gap-4">
@@ -343,6 +488,14 @@ export default function UsersPage() {
           userDto={selectedUser} 
           businessId={currentBusinessId} 
           onClose={() => setSelectedUser(null)} 
+        />
+      )}
+
+      {isAddUserModalOpen && currentBusinessId && (
+        <AddUserModal 
+          businessId={currentBusinessId} 
+          onClose={() => setIsAddUserModalOpen(false)} 
+          onSuccess={loadUsers}
         />
       )}
     </div>

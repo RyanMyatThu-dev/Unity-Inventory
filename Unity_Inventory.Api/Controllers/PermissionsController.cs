@@ -8,7 +8,7 @@ namespace Unity_Inventory.Api.Controllers
 {
     [ApiController]
     [Route("api/permissions")]
-    [Authorize]
+    [Authorize(Roles = "Owner")]
     public class PermissionsController : ControllerBase
     {
         private readonly IPermissionService _permissionService;

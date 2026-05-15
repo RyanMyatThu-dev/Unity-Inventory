@@ -25,7 +25,7 @@ namespace Unity_Inventory.Domain.Features.Customers
             try
             {
                 var query = _db.TblCustomers
-                    .Where(c => c.BusinessId == businessId);
+                    .Where(c => c.BusinessId == businessId && c.DeleteFlag != true);
 
                 var totalCount = await query.CountAsync();
 
@@ -68,7 +68,7 @@ namespace Unity_Inventory.Domain.Features.Customers
             try
             {
                 var customer = await _db.TblCustomers
-                    .Where(c => c.CustomerId == id)
+                    .Where(c => c.CustomerId == id && c.DeleteFlag != true)
                     .GroupJoin(
                         _db.TblCustomerSummaries,
                         c => c.CustomerId,
@@ -112,7 +112,8 @@ namespace Unity_Inventory.Domain.Features.Customers
                     CustomerName = request.Name,
                     Phone = request.Phone,
                     Address = request.Address,
-                    TotalItems = 0
+                    TotalItems = 0,
+                    DeleteFlag = false
                 };
 
                 _db.TblCustomers.Add(customer);
@@ -140,7 +141,7 @@ namespace Unity_Inventory.Domain.Features.Customers
             try
             {
                 var customer = await _db.TblCustomers.FindAsync(request.Id);
-                if (customer == null)
+                if (customer == null || customer.DeleteFlag == true)
                     return Result<CustomerDTO>.Failure("Customer not found.");
 
                 _db.Entry(customer).Property(p => p.VersionStamp).OriginalValue = request.VersionStamp;
@@ -177,17 +178,14 @@ namespace Unity_Inventory.Domain.Features.Customers
             try
             {
                 var customer = await _db.TblCustomers.FindAsync(id);
-                if (customer == null)
+                if (customer == null || customer.DeleteFlag == true)
                     return Result<bool>.Failure("Customer not found.");
 
                 _db.Entry(customer).Property(p => p.VersionStamp).OriginalValue = version;
 
-                // Check if customer has any reports/sales before deleting
-                var hasReports = await _db.TblReports.AnyAsync(r => r.CustomerId == id);
-                if (hasReports)
-                    return Result<bool>.Failure("Cannot delete customer with existing sales reports.");
+                // Note: Soft delete allows keeping historical records while hiding the customer from active lists.
+                customer.DeleteFlag = true;
 
-                _db.TblCustomers.Remove(customer);
                 await _db.SaveChangesAsync();
 
                 return Result<bool>.Success(true);

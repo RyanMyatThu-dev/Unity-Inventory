@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Unity_Inventory.Api.Filters;
 
 namespace Unity_Inventory.Api.Controllers
 {
@@ -28,6 +29,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpGet]
+        [Permission("customers", "view")]
         public async Task<IActionResult> GetCustomers([FromQuery] PaginationRequest paginationRequest)
         {
             var businessId = GetBusinessId();
@@ -38,6 +40,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpGet("{id}")]
+        [Permission("customers", "view")]
         public async Task<IActionResult> GetCustomer(int id)
         {
             var result = await _customerService.GetCustomerByIdAsync(id);
@@ -45,6 +48,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpPost]
+        [Permission("customers", "create")]
         public async Task<IActionResult> CreateCustomer([FromBody] CreateCustomerRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -59,6 +63,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpPut]
+        [Permission("customers", "update")]
         public async Task<IActionResult> UpdateCustomer([FromBody] UpdateCustomerRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -69,6 +74,7 @@ namespace Unity_Inventory.Api.Controllers
 
 
         [HttpDelete("{id}")]
+        [Permission("customers", "delete")]
         public async Task<IActionResult> DeleteCustomer(int id, [FromQuery] byte[] version)
         {
             var result = await _customerService.DeleteCustomerAsync(id, version);

@@ -32,9 +32,12 @@ namespace Unity_Inventory.Domain.Features.Inventories.Models
         public string Name { get; set; } = string.Empty;
         [Required]
         public decimal Price { get; set; }
+
         [Required]
         public int BusinessId { get; set; }
         public int? CategoryId { get; set; }
+        public int InitialStock { get; set; }
+
     }
 
     public class UpdateProductRequest

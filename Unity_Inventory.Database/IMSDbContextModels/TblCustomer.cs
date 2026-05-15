@@ -27,6 +27,8 @@ public partial class TblCustomer
 
     public DateTime? UpdatedAt { get; set; }
 
+    public bool DeleteFlag { get; set; }
+
     public virtual TblBusiness Business { get; set; } = null!;
 
     public virtual ICollection<TblCustomerPrice> TblCustomerPrices { get; set; } = new List<TblCustomerPrice>();

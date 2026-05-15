@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Unity_Inventory.Api.Filters;
 
 namespace Unity_Inventory.Api.Controllers
 {
@@ -23,6 +24,7 @@ namespace Unity_Inventory.Api.Controllers
         // Get complete dashboard data for the current business
 
         [HttpGet]
+        [Permission("dashboard", "view")]
         public async Task<IActionResult> GetDashboard()
         {
             var businessId = GetCurrentBusinessId();
@@ -44,6 +46,7 @@ namespace Unity_Inventory.Api.Controllers
 
         // Get only Revenue summary
         [HttpGet("revenue")]
+        [Permission("dashboard", "view")]
         public async Task<IActionResult> GetRevenue()
         {
             var businessId = GetCurrentBusinessId();
@@ -55,6 +58,7 @@ namespace Unity_Inventory.Api.Controllers
 
         // Get only Customer Statistics
         [HttpGet("customers")]
+        [Permission("dashboard", "view")]
         public async Task<IActionResult> GetCustomerStats()
         {
             var businessId = GetCurrentBusinessId();
@@ -66,6 +70,7 @@ namespace Unity_Inventory.Api.Controllers
 
         // Get only Product Statistics
         [HttpGet("products")]
+        [Permission("dashboard", "view")]
         public async Task<IActionResult> GetProductStats([FromQuery] int topCount = 5)
         {
             var businessId = GetCurrentBusinessId();
@@ -77,6 +82,7 @@ namespace Unity_Inventory.Api.Controllers
 
         // Get only Sales Trends
         [HttpGet("trends")]
+        [Permission("dashboard", "view")]
         public async Task<IActionResult> GetSalesTrends()
         {
             var businessId = GetCurrentBusinessId();

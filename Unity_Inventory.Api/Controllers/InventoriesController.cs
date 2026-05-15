@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-
+using Unity_Inventory.Api.Filters;
 namespace Unity_Inventory.Api.Controllers
 {
     [Route("api/inventories")]
@@ -28,6 +28,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpGet]
+        [Permission("inventory", "view")]
         public async Task<IActionResult> GetInventories([FromQuery] PaginationRequest request)
         {
             var businessId = GetBusinessId();
@@ -38,6 +39,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpGet("{id}")]
+        [Permission("inventory", "view")]
         public async Task<IActionResult> GetInventory(int id)
         {
             var result = await _inventoryService.GetInventoryByIdAsync(id);
@@ -45,6 +47,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpPost]
+        [Permission("inventory", "create")]
         public async Task<IActionResult> CreateInventory([FromForm] CreateProductRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -60,6 +63,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpPost("photo-upload")]
+        [Permission("inventory", "create")]
         public async Task<IActionResult> UploadPhoto([FromForm] CreateProductRequest createRequest, IFormFile? photoFile)
         {
             if (!ModelState.IsValid)
@@ -92,6 +96,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpPut]
+        [Permission("inventory", "edit")]
         public async Task<IActionResult> UpdateInventory([FromForm] UpdateProductRequest request, IFormFile? photoFile)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -112,6 +117,7 @@ namespace Unity_Inventory.Api.Controllers
        
 
         [HttpDelete("{id}")]
+        [Permission("inventory", "delete")]
         public async Task<IActionResult> DeleteInventory(int id, [FromQuery] byte[] version)
         {
             var result = await _inventoryService.DeleteInventoryAsync(id, version);
@@ -119,6 +125,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpPost("update-stock")]
+        [Permission("inventory", "edit")]
         public async Task<IActionResult> UpdateStock([FromBody] UpdateStockRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

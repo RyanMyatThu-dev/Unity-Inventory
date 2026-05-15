@@ -17,5 +17,8 @@ namespace Unity_Inventory.Domain.Features.Authentication.Users
         Task<Result<UserResponse>> ChangePasswordAsync(int id, ChangePasswordRequest request, int currentUserId);
         Task<Result<TblUser>> GetByIdAsync(int id);
         Task<Result<IEnumerable<UserDto>>> GetUsersAsync(int businessId);
-            }
+        Task<Result<UserResponse>> CreateUserAsync(CreateUserRequest request, int currentUserId);
+            
+    
+    }
 }

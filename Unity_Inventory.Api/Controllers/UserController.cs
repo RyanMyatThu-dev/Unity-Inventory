@@ -101,9 +101,28 @@ namespace Unity_Inventory.Domain.Features.Authentication.Users
         // GET : api/users
         [Authorize]
         [HttpGet]
+        [Permission("users", "view")]
         public async Task<IActionResult> GetUsers([FromQuery] int businessId)
         {
             var result = await _userService.GetUsersAsync(businessId);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
+        
+        [Authorize]
+        [HttpPost("create")]
+        [Permission("users", "create")]
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var currentUserId = GetCurrentUserId();
+            var result = await _userService.CreateUserAsync(request, currentUserId);
             if (result.IsSuccess)
             {
                 return Ok(result);

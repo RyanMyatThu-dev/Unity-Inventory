@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Unity_Inventory.Api.Filters;
 
 namespace Unity_Inventory.Api.Controllers
 {
@@ -28,6 +29,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpGet("reports")]
+        [Permission("sales", "view")]
         public async Task<IActionResult> GetReports([FromQuery] PaginationRequest request)
         {
             var businessId = GetBusinessId();
@@ -38,6 +40,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpGet("reports/{id}")]
+        [Permission("sales", "view")]
         public async Task<IActionResult> GetReport(int id)
         {
             var result = await _salesService.GetReportByIdAsync(id);
@@ -45,6 +48,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpPost("reports")]
+        [Permission("sales", "create")]
         public async Task<IActionResult> CreateReport([FromBody] CreateReportRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -59,6 +63,7 @@ namespace Unity_Inventory.Api.Controllers
         }
 
         [HttpDelete("reports/{id}")]
+        [Permission("sales", "delete")]
         public async Task<IActionResult> DeleteReport(int id)
         {
             var result = await _salesService.DeleteReportAsync(id);

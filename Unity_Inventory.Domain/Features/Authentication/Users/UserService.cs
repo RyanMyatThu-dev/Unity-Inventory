@@ -232,5 +232,85 @@ namespace Unity_Inventory.Domain.Features.Authentication.Users
                 return Result<IEnumerable<UserDto>>.Failure($"An error occurred while retrieving users: {ex.Message}");
             }
         }
+
+        public async Task<Result<UserResponse>> CreateUserAsync(CreateUserRequest request, int currentUserId)
+        {
+            try
+            {
+                // 1. Basic Validation
+                if (string.IsNullOrEmpty(request.Name)) return Result<UserResponse>.Failure("Name is required.");
+                if (!ValidateEmail(request.Email)) return Result<UserResponse>.Failure("Invalid email format.");
+                if (!ValidatePassword(request.Password)) return Result<UserResponse>.Failure("Password must be at least 6 characters and contain uppercase, lowercase, and a digit.");
+
+                // 2. Authorization: Current user must be an Owner of this business
+                var ownerAccess = await _db.TblUserBusinesses
+                    .FirstOrDefaultAsync(ub => ub.UserId == currentUserId && ub.BusinessId == request.BusinessId && ub.Role == "Owner");
+
+                if (ownerAccess == null)
+                {
+                    return Result<UserResponse>.Failure("Only business owners can onboard new administrative staff.");
+                }
+
+                // 3. Restriction: Can only create Admin or Staff
+                var allowedRoles = new[] { "Admin", "Staff" };
+                if (!allowedRoles.Contains(request.AccountType))
+                {
+                    return Result<UserResponse>.Failure("You can only create 'Admin' or 'Staff' accounts.");
+                }
+
+                // 4. Check if user already exists globally
+                var existingUser = await _db.TblUsers
+                    .FirstOrDefaultAsync(u => u.Email == request.Email);
+
+                if (existingUser != null)
+                {
+                    // If user exists, check if they are already in this business
+                    var existingInBusiness = await _db.TblUserBusinesses
+                        .AnyAsync(ub => ub.UserId == existingUser.UserId && ub.BusinessId == request.BusinessId);
+
+                    if (existingInBusiness)
+                    {
+                        return Result<UserResponse>.Failure("User is already associated with this business.");
+                    }
+
+                    // Optional: Link existing user to this business? 
+                    // For now, let's assume we want to create NEW users only for this flow as requested.
+                    return Result<UserResponse>.Failure("User with this email already exists in the system.");
+                }
+
+                // 5. Create new user
+                var newUser = new TblUser
+                {
+                    Name = request.Name,
+                    Email = request.Email,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                    AccountType = request.AccountType,
+                    CreatedAt = DateTime.UtcNow,
+                    DeleteFlag = false,
+                };
+
+                var newUserBusiness = new TblUserBusiness
+                {
+                    BusinessId = request.BusinessId,
+                    User = newUser,
+                    Role = request.AccountType
+                };
+
+                _db.TblUsers.Add(newUser);
+                _db.TblUserBusinesses.Add(newUserBusiness);
+                await _db.SaveChangesAsync();
+
+                return Result<UserResponse>.Success(new UserResponse
+                {
+                    IsSuccess = true,
+                    Message = $"{request.AccountType} user created successfully.",
+                    UserId = newUser.UserId,
+                });
+            }
+            catch (Exception ex)
+            {
+                return Result<UserResponse>.Failure($"An error occurred while creating the user: {ex.Message}");
+            }
+        }
     }
 }

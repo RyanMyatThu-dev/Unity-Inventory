@@ -30,6 +30,7 @@ namespace Unity_Inventory.Domain.Features.Inventories
                         CategoryName = c.CategoryName,
                         Description = c.Description,
                         ParentCategoryId = c.ParentCategoryId
+
                     })
                     .ToListAsync();
 

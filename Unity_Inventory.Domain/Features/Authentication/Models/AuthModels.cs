@@ -66,6 +66,15 @@ namespace Unity_Inventory.Domain.Features.Authentication.Models
 
     }
 
+    public class CreateUserRequest : UserRegisterRequest
+    {
+        [Required]
+        public string AccountType { get; set; } = string.Empty; // e.g. Owner, Admin, Staff
+
+        [Required]
+        public int BusinessId { get; set; }
+    }
+
     public class UserResponse
     {
         public bool IsSuccess { get; set; }

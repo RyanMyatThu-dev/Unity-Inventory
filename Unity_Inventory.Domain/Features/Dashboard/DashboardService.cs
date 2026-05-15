@@ -1,4 +1,4 @@
-﻿using Unity_Inventory.Database.IMSDbContextModels;
+using Unity_Inventory.Database.IMSDbContextModels;
 using Unity_Inventory.Domain.Features.Dashboard.Models;
 using Unity_Inventory.Shared;
 using Microsoft.EntityFrameworkCore;
@@ -65,10 +65,11 @@ namespace Unity_Inventory.Domain.Features.Dashboard
                 var dto = new CustomerStatsDTO
                 {
                     TotalCustomers = await _db.TblCustomers
-                        .CountAsync(c => c.BusinessId == businessId),
+                        .CountAsync(c => c.BusinessId == businessId && c.DeleteFlag != true),
 
                     NewCustomersThisMonth = await _db.TblCustomers
                         .CountAsync(c => c.BusinessId == businessId
+                                       && c.DeleteFlag != true
                                        && c.CreatedAt.HasValue
                                        && c.CreatedAt.Value >= startOfMonth),
 
@@ -114,7 +115,7 @@ namespace Unity_Inventory.Domain.Features.Dashboard
                     .Take(topCount)
                     .ToListAsync();
 
-                var totalProducts = await _db.TblInventories.CountAsync(i => i.BusinessId == businessId);
+                var totalProducts = await _db.TblInventories.CountAsync(i => i.BusinessId == businessId && i.DeleteFlag != true);
 
                 return Result<ProductStatsDTO>.Success(new ProductStatsDTO
                 {
