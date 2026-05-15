@@ -190,7 +190,7 @@ namespace Unity_Inventory.Domain.Features.Inventories
                 var hasSubCategories = await _db.TblCategories.AnyAsync(c => c.ParentCategoryId == id);
                 if (hasSubCategories) return Result<bool>.Failure("Cannot delete category with subcategories.");
 
-                _db.TblCategories.Remove(category);
+                category.DeleteFlag = true;
                 await _db.SaveChangesAsync();
 
                 return Result<bool>.Success(true);

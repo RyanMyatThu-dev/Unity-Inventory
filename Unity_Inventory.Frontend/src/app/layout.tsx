@@ -5,6 +5,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
+import { Toaster } from "sonner";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -43,6 +45,12 @@ export default function RootLayout({
               {children}
             </MainLayout>
           </AuthProvider>
+          <Toaster 
+            position="bottom-right" 
+            toastOptions={{
+              className: 'dark:bg-zinc-900 dark:text-white dark:border-zinc-800'
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>

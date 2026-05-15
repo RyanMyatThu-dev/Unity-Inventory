@@ -3,6 +3,9 @@
 import React, { useEffect, useState, useCallback, memo } from 'react';
 import api from '@/services/api';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useAuth } from '@/context/AuthContext';
 import { 
   Search, 
   Plus, 
@@ -161,6 +164,7 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [editForm, setEditForm] = useState({ 
     name: customer.name, 
     phone: customer.phone || '', 
@@ -198,10 +202,13 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
         });
         setIsEditing(false);
         onUpdate();
+        toast.success('Customer updated successfully');
+      } else {
+        toast.error(response.data.message || 'Update failed');
       }
     } catch (error: any) {
       console.error('Failed to update customer:', error);
-      alert(error.response?.data?.message || 'Update failed');
+      toast.error(error.response?.data?.message || 'Update failed');
     } finally {
       setIsSubmitting(false);
     }
@@ -261,8 +268,8 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
                            />
                         </div>
                         <div className="flex gap-2 pt-2">
-                           <button onClick={handleSave} disabled={isSubmitting} className="flex-1 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 shadow-lg dark:shadow-black/20 shadow-zinc-100">
-                              {isSubmitting ? 'Syncing...' : 'Commit Changes'}
+                           <button onClick={handleSave} disabled={isSubmitting} className="flex-1 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 shadow-lg dark:shadow-black/20 shadow-zinc-100 flex items-center justify-center gap-2">
+                              {isSubmitting ? <><Loader2 size={12} className="animate-spin" /> Syncing...</> : <><Save size={12} /> Commit Changes</>}
                            </button>
                            <button onClick={() => setIsEditing(false)} className="px-6 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-700">Cancel</button>
                         </div>
@@ -335,7 +342,7 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
         </div>
 
         <div className="p-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
-           <button onClick={() => onDelete(customer.id, customer.versionStamp)} className="px-4 py-2 text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all">Terminate Relationship</button>
+           <button disabled={isDeleting} onClick={() => onDelete(customer.id, customer.versionStamp)} className="px-4 py-2 text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all disabled:opacity-50 flex items-center gap-2">Terminate Relationship</button>
            <span className="text-[9px] text-zinc-400 font-semibold uppercase tracking-widest opacity-50">Internal Record • Secured CID</span>
         </div>
       </div>
@@ -345,7 +352,9 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
 
 // --- Main Page ---
 export default function CustomersPage() {
+  const { currentBusinessId } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customerToDelete, setCustomerToDelete] = useState<{ id: number, version: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -361,7 +370,7 @@ export default function CustomersPage() {
     setLoading(true);
     try {
       const response = await api.get('/customers', {
-        params: { pageNumber: page, pageSize: 15, searchTerm: search }
+        params: { pageNumber: page, pageSize: 15, searchTerm: search, businessId: currentBusinessId }
       });
       if (response.data.isSuccess) {
         const items: Customer[] = response.data.data || [];
@@ -374,7 +383,7 @@ export default function CustomersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, search, currentBusinessId]);
 
   // Sync selected customer with background updates
   useEffect(() => {
@@ -394,30 +403,46 @@ export default function CustomersPage() {
         name: newCustomer.name,
         phone: newCustomer.phone,
         address: newCustomer.address,
-        businessId: 0
+        businessId: currentBusinessId
       });
       if (response.data.isSuccess) {
         setIsAddModalOpen(false);
         setNewCustomer({ name: '', phone: '', address: '' });
         fetchCustomers();
+        toast.success('Customer added successfully');
+      } else {
+        toast.error(response.data.message || 'Failed to add customer');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add customer:', error);
+      toast.error(error.response?.data?.message || 'Failed to add customer');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteCustomer = useCallback(async (id: number, version: string) => {
-    if (!confirm('Are you sure you want to delete this customer?')) return;
+    setCustomerToDelete({ id, version });
+  }, []);
+
+  const confirmDeleteCustomer = async () => {
+    if (!customerToDelete) return;
     try {
-      await api.delete(`/customers/${id}`, { params: { version } });
-      setSelectedCustomer(null);
-      fetchCustomers();
-    } catch (error) {
+      const response = await api.delete(`/customers/${customerToDelete.id}`, { params: { version: customerToDelete.version } });
+      if (response.data.isSuccess) {
+        setSelectedCustomer(null);
+        fetchCustomers();
+        toast.success('Customer deleted successfully');
+      } else {
+        toast.error(response.data.message || 'Failed to delete customer');
+      }
+    } catch (error: any) {
       console.error('Failed to delete customer:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete customer');
+    } finally {
+      setCustomerToDelete(null);
     }
-  }, [fetchCustomers]);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => { fetchCustomers(); }, 300);
@@ -470,6 +495,12 @@ export default function CustomersPage() {
         </div>
       </div>
 
+      <div className="relative">
+        {loading && customers.length > 0 && (
+          <div className="absolute inset-0 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-xl">
+            <Loader2 className="animate-spin text-zinc-400" size={24} />
+          </div>
+        )}
       {viewType === 'table' ? (
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
@@ -523,6 +554,7 @@ export default function CustomersPage() {
            )}
         </div>
       )}
+      </div>
 
         {!loading && customers.length > 0 && (
         <div className="px-6 py-4 flex items-center justify-between border-t border-zinc-50 bg-zinc-50 dark:bg-zinc-800/20 rounded-xl mt-6 border border-zinc-200 dark:border-zinc-700 shadow-sm">
@@ -570,6 +602,16 @@ export default function CustomersPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!customerToDelete}
+        title="Terminate Relationship"
+        description="Are you sure you want to permanently delete this customer? This action cannot be undone."
+        confirmText="Delete Customer"
+        onConfirm={confirmDeleteCustomer}
+        onCancel={() => setCustomerToDelete(null)}
+        isDestructive={true}
+      />
     </div>
   );
 }

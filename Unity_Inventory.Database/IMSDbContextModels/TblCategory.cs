@@ -19,6 +19,8 @@ public partial class TblCategory
 
     public DateTime? UpdatedAt { get; set; }
 
+    public bool DeleteFlag { get; set; }
+
     public virtual TblBusiness Business { get; set; } = null!;
 
     public virtual ICollection<TblCategory> InverseParentCategory { get; set; } = new List<TblCategory>();

@@ -178,17 +178,17 @@ namespace Unity_Inventory.Domain.Features.Authorization
         rp.IsAllowed == true &&
         rp.IsRevoked == false);
 
-            if (roleHasIt && request.UserId != null)
-            {
-                return Result<bool>.Failure("Permission already exists");
-            }
-
             var existing = await _db.TblRolePermissions.FirstOrDefaultAsync(rp =>
         rp.BusinessId == request.BusinessId &&
         rp.MenuCode == request.MenuCode &&
         rp.ActionCode == request.ActionCode &&
         rp.UserId == request.UserId &&
         rp.RoleName == request.RoleName);
+
+            if (roleHasIt && existing == null)
+            {
+                return Result<bool>.Failure("Permission already exists");
+            }
 
             if (existing != null)
             {

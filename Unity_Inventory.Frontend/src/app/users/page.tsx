@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { canProvisionNewBusiness } from '@/lib/accountType';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface UserDto {
   userId: number;
@@ -50,7 +52,9 @@ const PermissionModal = ({ userDto, businessId, onClose }: {
 }) => {
   const [permissions, setPermissions] = useState<RolePermissionDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  const [draftPermissions, setDraftPermissions] = useState<Record<string, boolean>>({});
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const isOwner = userDto.accountType?.toLowerCase() === 'owner';
 
@@ -60,9 +64,15 @@ const PermissionModal = ({ userDto, businessId, onClose }: {
       const res = await api.get(`/permissions/${businessId}/user/${userDto.userId}?roleName=${userDto.accountType || 'Staff'}`);
       if (res.data.isSuccess) {
         setPermissions(res.data.data);
+        const draft: Record<string, boolean> = {};
+        res.data.data.forEach((p: RolePermissionDTO) => {
+          draft[`${p.menuCode}-${p.actionCode}`] = p.isAllowed && !p.isRevoked;
+        });
+        setDraftPermissions(draft);
       }
     } catch (err) {
       console.error(err);
+      toast.error('Failed to load permissions');
     } finally {
       setIsLoading(false);
     }
@@ -73,28 +83,63 @@ const PermissionModal = ({ userDto, businessId, onClose }: {
   }, [fetchPermissions]);
 
   const hasPermission = (menu: string, action: string) => {
-    const p = permissions.find(x => x.menuCode === menu && x.actionCode === action);
-    if (!p) return false;
-    return p.isAllowed && !p.isRevoked;
+    if (isOwner) return true;
+    return draftPermissions[`${menu}-${action}`] || false;
   };
 
-  const togglePermission = async (menu: string, action: string, currentStatus: boolean) => {
-    const key = `${menu}-${action}`;
-    setIsUpdating(key);
+  const togglePermission = (menu: string, action: string, currentStatus: boolean) => {
+    if (isOwner) return;
+    setDraftPermissions(prev => ({
+      ...prev,
+      [`${menu}-${action}`]: !currentStatus
+    }));
+  };
+
+  const hasChanges = React.useMemo(() => {
+    for (const group of AVAILABLE_PERMISSIONS) {
+      for (const action of group.actions) {
+        const key = `${group.menu}-${action}`;
+        const draftVal = draftPermissions[key] || false;
+        const p = permissions.find(x => x.menuCode === group.menu && x.actionCode === action);
+        const originalVal = p ? (p.isAllowed && !p.isRevoked) : false;
+        if (draftVal !== originalVal) return true;
+      }
+    }
+    return false;
+  }, [permissions, draftPermissions]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
     try {
-      const endpoint = currentStatus ? '/permissions/revoke' : '/permissions/grant';
-      await api.post(endpoint, {
-        userId: userDto.userId,
-        businessId: businessId,
-        menuCode: menu,
-        actionCode: action,
-        roleName: userDto.accountType || 'Staff'
-      });
-      await fetchPermissions(); // Refresh after update
+      const promises = [];
+      for (const group of AVAILABLE_PERMISSIONS) {
+        for (const action of group.actions) {
+          const key = `${group.menu}-${action}`;
+          const draftVal = draftPermissions[key] || false;
+          const p = permissions.find(x => x.menuCode === group.menu && x.actionCode === action);
+          const originalVal = p ? (p.isAllowed && !p.isRevoked) : false;
+          
+          if (draftVal !== originalVal) {
+            const endpoint = draftVal ? '/permissions/grant' : '/permissions/revoke';
+            promises.push(api.post(endpoint, {
+              userId: userDto.userId,
+              businessId: businessId,
+              menuCode: group.menu,
+              actionCode: action,
+              roleName: userDto.accountType || 'Staff'
+            }));
+          }
+        }
+      }
+      await Promise.all(promises);
+      toast.success('Permissions updated successfully');
+      await fetchPermissions();
+      setIsConfirmOpen(false);
     } catch (error) {
-      console.error('Failed to update permission:', error);
+      console.error('Failed to update permissions:', error);
+      toast.error('Failed to update permissions');
     } finally {
-      setIsUpdating(null);
+      setIsSaving(false);
     }
   };
 
@@ -143,9 +188,8 @@ const PermissionModal = ({ userDto, businessId, onClose }: {
                   </div>
                   <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
                     {group.actions.map((action) => {
-                      const allowed = isOwner || hasPermission(group.menu, action);
+                      const allowed = hasPermission(group.menu, action);
                       const key = `${group.menu}-${action}`;
-                      const updating = isUpdating === key;
                       
                       return (
                         <div key={action} className="flex items-center justify-between px-4 py-3 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors">
@@ -163,8 +207,8 @@ const PermissionModal = ({ userDto, businessId, onClose }: {
                           </div>
                           
                           <button
-                            disabled={updating || isOwner}
-                            onClick={() => !isOwner && togglePermission(group.menu, action, allowed)}
+                            disabled={isOwner || isSaving}
+                            onClick={() => togglePermission(group.menu, action, allowed)}
                             className={cn(
                               "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 disabled:opacity-50",
                               allowed ? "bg-emerald-500" : "bg-zinc-200 dark:bg-zinc-700"
@@ -174,9 +218,6 @@ const PermissionModal = ({ userDto, businessId, onClose }: {
                               "inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
                               allowed ? "translate-x-[18px]" : "translate-x-[2px]"
                             )} />
-                            {updating && (
-                              <Loader2 size={10} className="absolute inset-0 m-auto text-zinc-600 animate-spin" />
-                            )}
                           </button>
                         </div>
                       );
@@ -187,7 +228,30 @@ const PermissionModal = ({ userDto, businessId, onClose }: {
             </div>
           )}
         </div>
+        {/* Bottom Bar for Save Actions */}
+        {!isOwner && !isLoading && (
+          <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm flex justify-end">
+            <button
+              onClick={() => setIsConfirmOpen(true)}
+              disabled={!hasChanges || isSaving}
+              className="px-6 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-md disabled:opacity-50 flex items-center gap-2"
+            >
+              {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+              Save Changes
+            </button>
+          </div>
+        )}
       </div>
+
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        title="Save Permission Changes"
+        description={`You are about to modify the access permissions for ${userDto.name}. Are you sure you want to proceed?`}
+        confirmText="Confirm Changes"
+        onConfirm={handleSave}
+        onCancel={() => setIsConfirmOpen(false)}
+        isDestructive={false}
+      />
     </div>
   );
 };

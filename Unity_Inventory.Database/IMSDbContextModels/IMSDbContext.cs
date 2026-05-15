@@ -66,6 +66,8 @@ public partial class IMSDbContext : DbContext
 
             entity.ToTable("TblCategory");
 
+            entity.HasIndex(e => e.ParentCategoryId, "IX_TblCategory_ParentCategoryId");
+
             entity.HasIndex(e => new { e.BusinessId, e.CategoryName }, "UQ_Category_Name").IsUnique();
 
             entity.Property(e => e.CategoryName).HasMaxLength(100);
@@ -181,7 +183,9 @@ public partial class IMSDbContext : DbContext
 
             entity.HasIndex(e => e.BusinessId, "IX_Tbl_Inventories_BusinessId");
 
-            entity.Property(e => e.DeleteFlag).HasDefaultValue(false);
+            entity.HasIndex(e => e.CategoryId, "IX_Tbl_Inventories_CategoryId");
+
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.ImageId)
                 .HasMaxLength(255)
                 .IsUnicode(false);
@@ -190,6 +194,7 @@ public partial class IMSDbContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.InventoryName).HasMaxLength(50);
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.VersionStamp)
                 .IsRowVersion()
                 .IsConcurrencyToken();

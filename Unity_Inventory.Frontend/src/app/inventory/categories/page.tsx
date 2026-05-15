@@ -16,6 +16,8 @@ import {
   FolderTree,
   Box
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface Category {
   categoryId: number;
@@ -130,6 +132,7 @@ export default function CategoriesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [parentCategory, setParentCategory] = useState<Category | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
   
   const [form, setForm] = useState({ name: '', description: '' });
 
@@ -185,22 +188,32 @@ export default function CategoriesPage() {
       }
       setIsModalOpen(false);
       fetchTree();
+      toast.success(editingCategory ? 'Category updated successfully' : 'Category created successfully');
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Operation failed');
+      toast.error(error.response?.data?.message || 'Operation failed');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this category? It must be empty of products and sub-categories.')) return;
+    setCategoryToDelete(id);
+  };
+
+  const confirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
     try {
-      const response = await api.delete(`/categories/${id}`);
+      const response = await api.delete(`/categories/${categoryToDelete}`);
       if (response.data.isSuccess) {
         fetchTree();
+        toast.success('Category deleted successfully');
+      } else {
+        toast.error(response.data.message || 'Delete failed');
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Delete failed');
+      toast.error(error.response?.data?.message || 'Delete failed');
+    } finally {
+      setCategoryToDelete(null);
     }
   };
 
@@ -315,6 +328,16 @@ export default function CategoriesPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={categoryToDelete !== null}
+        title="Delete Category"
+        description="Are you sure you want to delete this category? It must be empty of products and sub-categories."
+        confirmText="Delete Category"
+        onConfirm={confirmDeleteCategory}
+        onCancel={() => setCategoryToDelete(null)}
+        isDestructive={true}
+      />
     </div>
   );
 }

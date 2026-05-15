@@ -55,7 +55,6 @@ namespace Unity_Inventory.Domain.Features.Inventories
                             Name = x.inv.InventoryName,
                             BusinessId = x.inv.BusinessId,
                             Price = x.inv.Price,
-                            DeleteFlag = x.inv.DeleteFlag ?? false,
                             CurrentStock = summary != null ? summary.CurrentStock : 0,
                             LastUpdated = summary != null ? summary.LastUpdated : null,
                             VersionStamp = x.inv.VersionStamp,
@@ -95,7 +94,6 @@ namespace Unity_Inventory.Domain.Features.Inventories
                             Name = x.inv.InventoryName,
                             BusinessId = x.inv.BusinessId,
                             Price = x.inv.Price,
-                            DeleteFlag = x.inv.DeleteFlag ?? false,
                             CurrentStock = summary != null ? summary.CurrentStock : 0,
                             LastUpdated = summary != null ? summary.LastUpdated : null,
                             VersionStamp = x.inv.VersionStamp,
@@ -134,7 +132,9 @@ namespace Unity_Inventory.Domain.Features.Inventories
                     InventoryName = request.Name,
                     Price = request.Price,
                     DeleteFlag = false,
-                    CategoryId = request.CategoryId
+                    CategoryId = request.CategoryId,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
 
                 _db.TblInventories.Add(inventory);
@@ -189,6 +189,7 @@ namespace Unity_Inventory.Domain.Features.Inventories
                 inventory.InventoryName = request.Name;
                 inventory.Price = request.Price;
                 inventory.CategoryId = request.CategoryId;
+                inventory.UpdatedAt = DateTime.UtcNow;
 
                 string oldImageId = null;
                 if (photoStream != null)
@@ -222,7 +223,6 @@ namespace Unity_Inventory.Domain.Features.Inventories
                     Name = inventory.InventoryName,
                     BusinessId = inventory.BusinessId,
                     Price = inventory.Price,
-                    DeleteFlag = inventory.DeleteFlag ?? false,
                     VersionStamp = inventory.VersionStamp,
                     StockVersionStamp = request.StockVersionStamp,
                     ImageUrl = inventory.ImageUrl,

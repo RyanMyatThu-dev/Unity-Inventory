@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState, useCallback, memo, useRef } from 'react';
 import api from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { cn } from '@/lib/utils';
 import { 
   Search, 
@@ -25,7 +28,9 @@ import {
   AlertCircle,
   Settings2,
   LayoutList,
-  LayoutGrid
+  LayoutGrid,
+  ChevronDown,
+  RotateCcw
 } from 'lucide-react';
 
 
@@ -206,6 +211,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -256,7 +262,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
       }
     } catch (error: any) {
       console.error('Failed to upload image:', error);
-      alert(error.response?.data?.message || 'Image upload failed');
+      toast.error(error.response?.data?.message || 'Image upload failed');
     } finally {
       setIsUploadingImage(false);
     }
@@ -292,7 +298,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
       }
     } catch (error: any) {
       console.error('Failed to update product:', error);
-      alert(error.response?.data?.message || 'Update failed');
+      toast.error(error.response?.data?.message || 'Update failed');
     } finally {
       setIsSubmitting(false);
     }
@@ -315,8 +321,9 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
         onUpdate();
         onClose();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update stock:', error);
+      toast.error(error.response?.data?.message || 'Stock update failed');
     } finally {
       setIsUpdatingStock(false);
     }
@@ -425,8 +432,8 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                             </select>
                          </div>
                         <div className="flex gap-2 pt-2">
-                           <button onClick={handleSaveInfo} disabled={isSubmitting} className="flex-1 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 shadow-lg dark:shadow-black/20 shadow-zinc-100">
-                              {isSubmitting ? 'Syncing...' : 'Commit Changes'}
+                           <button onClick={handleSaveInfo} disabled={isSubmitting} className="flex-1 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 shadow-lg dark:shadow-black/20 shadow-zinc-100 flex items-center justify-center gap-2">
+                              {isSubmitting ? <><Loader2 size={12} className="animate-spin" /> Syncing...</> : <><Save size={12} /> Commit Changes</>}
                            </button>
                            <button onClick={() => setIsEditing(false)} className="px-6 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700">Cancel</button>
                         </div>
@@ -493,9 +500,9 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                     <button 
                       disabled={isUpdatingStock || newStock === product.currentStock.toString()}
                       onClick={handleUpdateStock}
-                      className="px-8 py-3.5 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-emerald-700 disabled:opacity-20 transition-all shadow-xl dark:shadow-black/20 shadow-emerald-100"
+                      className="px-8 py-3.5 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-emerald-700 disabled:opacity-20 transition-all shadow-xl dark:shadow-black/20 shadow-emerald-100 flex items-center gap-2"
                     >
-                       {isUpdatingStock ? 'Syncing...' : 'Update Asset'}
+                       {isUpdatingStock ? <><Loader2 size={12} className="animate-spin" /> Syncing...</> : 'Update Asset'}
                     </button>
                  </div>
                  
@@ -508,7 +515,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
         </div>
 
         <div className="p-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
-           <button onClick={() => onDelete(product.id, product.versionStamp)} className="px-4 py-2 text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all">Archive Product</button>
+           <button disabled={isDeleting} onClick={async () => { setIsDeleting(true); await onDelete(product.id, product.versionStamp); setIsDeleting(false); }} className="px-4 py-2 text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all disabled:opacity-50 flex items-center gap-2">{isDeleting ? <><Loader2 size={12} className="animate-spin" /> Archiving...</> : 'Archive Product'}</button>
            <span className="text-[9px] text-zinc-400 font-semibold uppercase tracking-widest opacity-50">Confidential • Enterprise Product Record</span>
         </div>
       </div>
@@ -518,12 +525,39 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
 
 // --- Main Page ---
 export default function InventoryPage() {
+  const { currentBusinessId } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchTrigger, setSearchTrigger] = useState(0);
   const [viewType, setViewType] = useState<'table' | 'grid'>('table');
+  const [productToDelete, setProductToDelete] = useState<{ id: number, version: string } | null>(null);
+
+  // Filter state
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterCategoryId, setFilterCategoryId] = useState('');
+  const [filterMinPrice, setFilterMinPrice] = useState('');
+  const [filterMaxPrice, setFilterMaxPrice] = useState('');
+  const [filterMinStock, setFilterMinStock] = useState('');
+  const [filterMaxStock, setFilterMaxStock] = useState('');
+  const [filterSortBy, setFilterSortBy] = useState<'name' | 'price' | 'createdDate'>('name');
+  const [filterSortDesc, setFilterSortDesc] = useState(false);
+
+  const hasActiveFilters = filterCategoryId || filterMinPrice || filterMaxPrice || filterMinStock || filterMaxStock || filterSortBy !== 'name' || filterSortDesc;
+
+  const resetFilters = () => {
+    setFilterCategoryId('');
+    setFilterMinPrice('');
+    setFilterMaxPrice('');
+    setFilterMinStock('');
+    setFilterMaxStock('');
+    setFilterSortBy('name');
+    setFilterSortDesc(false);
+    setPage(1);
+  };
   
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -556,9 +590,17 @@ export default function InventoryPage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get('/inventories', {
-        params: { pageNumber: page, pageSize: 15, searchTerm: search }
-      });
+      const params: any = { pageNumber: page, pageSize: 15 };
+      if (search) params.name = search;
+      if (filterCategoryId) params.categoryId = parseInt(filterCategoryId);
+      if (filterMinPrice) params.minPrice = parseFloat(filterMinPrice);
+      if (filterMaxPrice) params.maxPrice = parseFloat(filterMaxPrice);
+      if (filterMinStock) params.minStockQuantity = parseInt(filterMinStock);
+      if (filterMaxStock) params.maxStockQuantity = parseInt(filterMaxStock);
+      params.sortBy = filterSortBy === 'name' ? 0 : filterSortBy === 'price' ? 1 : 2;
+      params.isDescending = filterSortDesc;
+
+      const response = await api.get('/search/products', { params });
       if (response.data.isSuccess) {
         const items = response.data.data || [];
         const mappedItems: Product[] = items.map((item: any) => ({
@@ -581,7 +623,7 @@ export default function InventoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, search, filterCategoryId, filterMinPrice, filterMaxPrice, filterMinStock, filterMaxStock, filterSortBy, filterSortDesc]);
 
   // Sync selected product with background updates
   useEffect(() => {
@@ -610,10 +652,11 @@ export default function InventoryPage() {
       const formData = new FormData();
       formData.append('name', newProduct.name);
       formData.append('price', newProduct.price);
+      formData.append('initialStock', newProduct.stock);
       if (newProduct.categoryId) {
         formData.append('categoryId', newProduct.categoryId);
       }
-      formData.append('businessId', '0');
+      formData.append('businessId', currentBusinessId?.toString() || '0');
 
       let response;
       if (newProductImage) {
@@ -629,29 +672,44 @@ export default function InventoryPage() {
         setNewProductImage(null);
         setNewProductImagePreview(null);
         fetchProducts();
+      } else {
+        toast.error(response.data.message || 'Failed to add product');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add product:', error);
+      toast.error(error.response?.data?.message || 'Failed to add product');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteProduct = useCallback(async (id: number, version: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    setProductToDelete({ id, version });
+  }, []);
+
+  const confirmDeleteProduct = async () => {
+    if (!productToDelete) return;
     try {
-      await api.delete(`/inventories/${id}`, { params: { version } });
-      setSelectedProduct(null);
-      fetchProducts();
-    } catch (error) {
+      const response = await api.delete(`/inventories/${productToDelete.id}`, { params: { version: productToDelete.version } });
+      if (response.data.isSuccess) {
+        setSelectedProduct(null);
+        fetchProducts();
+        toast.success('Product deleted successfully');
+      } else {
+        toast.error(response.data.message || 'Failed to delete product');
+      }
+    } catch (error: any) {
       console.error('Failed to delete product:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete product');
+    } finally {
+      setProductToDelete(null);
     }
-  }, [fetchProducts]);
+  };
 
   useEffect(() => {
-    const timer = setTimeout(() => { fetchProducts(); }, 300);
-    return () => clearTimeout(timer);
-  }, [fetchProducts]);
+    fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, searchTrigger]);
 
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-300">
@@ -665,39 +723,188 @@ export default function InventoryPage() {
         </button>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative max-w-md flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-          <input
-            type="text"
-            placeholder="Filter Product database..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-6 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-sm"
-          />
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 flex-1">
+            <div className="relative max-w-md flex-1 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                <input
+                  type="text"
+                  placeholder="Search products by name..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setSearch(searchInput);
+                      setPage(1);
+                      setSearchTrigger(prev => prev + 1);
+                    }
+                  }}
+                  className="w-full pl-12 pr-6 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-sm"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  setSearch(searchInput);
+                  setPage(1);
+                  setSearchTrigger(prev => prev + 1);
+                }}
+                className="px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border border-zinc-900 dark:border-zinc-100 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm hover:bg-zinc-800 dark:hover:bg-zinc-200 shrink-0"
+              >
+                Search
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-3 border rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm relative shrink-0",
+                showFilters || hasActiveFilters
+                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100"
+                  : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500"
+              )}
+            >
+              <Filter size={14} />
+              Filters
+              {hasActiveFilters && (
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full absolute top-2 right-2 animate-pulse" />
+              )}
+              <ChevronDown size={12} className={cn("transition-transform", showFilters && "rotate-180")} />
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-1 rounded-xl shadow-sm">
+            <button 
+              onClick={() => setViewType('table')}
+              className={cn(
+                "p-2 rounded-lg transition-all",
+                viewType === 'table' ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              )}
+            >
+              <LayoutList size={18} />
+            </button>
+            <button 
+              onClick={() => setViewType('grid')}
+              className={cn(
+                "p-2 rounded-lg transition-all",
+                viewType === 'grid' ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              )}
+            >
+              <LayoutGrid size={18} />
+            </button>
+          </div>
         </div>
-        
-        <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-1 rounded-xl shadow-sm">
-          <button 
-            onClick={() => setViewType('table')}
-            className={cn(
-              "p-2 rounded-lg transition-all",
-              viewType === 'table' ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            )}
-          >
-            <LayoutList size={18} />
-          </button>
-          <button 
-            onClick={() => setViewType('grid')}
-            className={cn(
-              "p-2 rounded-lg transition-all",
-              viewType === 'grid' ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            )}
-          >
-            <LayoutGrid size={18} />
-          </button>
-        </div>
+
+        {/* Filter Panel */}
+        {showFilters && (
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-5 shadow-sm animate-in slide-in-from-top-2 fade-in duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Advanced Filters</h4>
+              {hasActiveFilters && (
+                <button
+                  onClick={resetFilters}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all border border-zinc-200 dark:border-zinc-700"
+                >
+                  <RotateCcw size={10} />
+                  Reset All
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {/* Category */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Category</label>
+                <select
+                  value={filterCategoryId}
+                  onChange={(e) => { setFilterCategoryId(e.target.value); setPage(1); }}
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[10px] font-semibold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 appearance-none cursor-pointer transition-all"
+                >
+                  <option value="">All Categories</option>
+                  <CategoryOptions categories={categoryTree} />
+                </select>
+              </div>
+              {/* Min Price */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Min Price</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={filterMinPrice}
+                  onChange={(e) => { setFilterMinPrice(e.target.value); setPage(1); }}
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[10px] font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all"
+                />
+              </div>
+              {/* Max Price */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Max Price</label>
+                <input
+                  type="number"
+                  placeholder="∞"
+                  value={filterMaxPrice}
+                  onChange={(e) => { setFilterMaxPrice(e.target.value); setPage(1); }}
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[10px] font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all"
+                />
+              </div>
+              {/* Min Stock */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Min Stock</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={filterMinStock}
+                  onChange={(e) => { setFilterMinStock(e.target.value); setPage(1); }}
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[10px] font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all"
+                />
+              </div>
+              {/* Max Stock */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Max Stock</label>
+                <input
+                  type="number"
+                  placeholder="∞"
+                  value={filterMaxStock}
+                  onChange={(e) => { setFilterMaxStock(e.target.value); setPage(1); }}
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[10px] font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all"
+                />
+              </div>
+              {/* Sort */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Sort By</label>
+                <div className="flex gap-1">
+                  <select
+                    value={filterSortBy}
+                    onChange={(e) => { setFilterSortBy(e.target.value as any); setPage(1); }}
+                    className="flex-1 px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[10px] font-semibold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 appearance-none cursor-pointer transition-all"
+                  >
+                    <option value="name">Name</option>
+                    <option value="price">Price</option>
+                    <option value="createdDate">Date</option>
+                  </select>
+                  <button
+                    onClick={() => setFilterSortDesc(!filterSortDesc)}
+                    className={cn(
+                      "p-2 border rounded-lg transition-all",
+                      filterSortDesc
+                        ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100"
+                        : "bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400"
+                    )}
+                    title={filterSortDesc ? "Descending" : "Ascending"}
+                  >
+                    <ArrowUpDown size={12} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+      <div className="relative">
+        {loading && products.length > 0 && (
+          <div className="absolute inset-0 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-xl">
+            <Loader2 className="animate-spin text-zinc-400" size={24} />
+          </div>
+        )}
       {viewType === 'table' ? (
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
@@ -750,6 +957,7 @@ export default function InventoryPage() {
            )}
         </div>
       )}
+      </div>
 
       {!loading && products.length > 0 && (
         <div className="px-6 py-4 flex items-center justify-between border-t border-zinc-50 bg-zinc-50 dark:bg-zinc-800/20 rounded-xl mt-4 border border-zinc-200 dark:border-zinc-700 shadow-sm">
@@ -837,6 +1045,16 @@ export default function InventoryPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!productToDelete}
+        title="Delete Product"
+        description="Are you sure you want to delete this product? This action cannot be undone."
+        confirmText="Delete Product"
+        onConfirm={confirmDeleteProduct}
+        onCancel={() => setProductToDelete(null)}
+        isDestructive={true}
+      />
     </div>
   );
 }

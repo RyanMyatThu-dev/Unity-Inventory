@@ -13,7 +13,7 @@ public partial class TblInventory
 
     public decimal Price { get; set; }
 
-    public bool? DeleteFlag { get; set; }
+    public bool DeleteFlag { get; set; }
 
     public byte[] VersionStamp { get; set; } = null!;
 
@@ -22,6 +22,10 @@ public partial class TblInventory
     public string? ImageId { get; set; }
 
     public int? CategoryId { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
 
     public virtual TblBusiness Business { get; set; } = null!;
 
