@@ -68,33 +68,15 @@ namespace Unity_Inventory.Domain.Features.Search
             {
                 var query = _db.TblInventories
                     .AsNoTracking()
+                    .Include(p => p.Category)
                     .Where(p => p.BusinessId == request.BusinessId && !p.DeleteFlag);
 
                 // Filtering
                 if (request.CategoryId.HasValue)
                 {
-                    var allCategories = await _db.TblCategories
-                        .AsNoTracking()
-                        .Where(c => c.BusinessId == request.BusinessId && !c.DeleteFlag)
-                        .Select(c => new { c.CategoryId, c.ParentCategoryId })
-                        .ToListAsync();
+                    var includedCategoryIds = await GetAllSubCategoriesAsync(request.BusinessId, request.CategoryId.Value);
 
-                    var categoryIdsToSearch = new HashSet<int> { request.CategoryId.Value };
-                    var newFound = true;
-                    while (newFound)
-                    {
-                        newFound = false;
-                        var currentIds = categoryIdsToSearch.ToList();
-                        foreach (var cat in allCategories)
-                        {
-                            if (cat.ParentCategoryId.HasValue && currentIds.Contains(cat.ParentCategoryId.Value) && categoryIdsToSearch.Add(cat.CategoryId))
-                            {
-                                newFound = true;
-                            }
-                        }
-                    }
-
-                    query = query.Where(p => p.CategoryId.HasValue && categoryIdsToSearch.Contains(p.CategoryId.Value));
+                    query = query.Where(p => p.CategoryId.HasValue && includedCategoryIds.Contains(p.CategoryId.Value));
                 }
 
                 if (request.MinPrice.HasValue)
@@ -172,6 +154,32 @@ namespace Unity_Inventory.Domain.Features.Search
             {
                 return PagedResult<InventoriesDTO>.Failure(ex.Message);
             }
+        }
+
+        private async Task<HashSet<int>> GetAllSubCategoriesAsync(int businessId, int categoryId)
+        {
+            var allCategories = await _db.TblCategories
+                .AsNoTracking()
+                .Where(c => c.BusinessId == businessId && !c.DeleteFlag)
+                .ToListAsync();
+
+            bool addedNew = true;
+            var results = new HashSet<int> { categoryId };
+            while (addedNew)
+            {
+                addedNew = false;
+                var currentResults = results.ToList();
+                foreach (var category in allCategories)
+                {
+                    if(category.ParentCategoryId.HasValue &&
+                        results.Contains(category.ParentCategoryId.Value) && results.Add(category.CategoryId))
+                    {
+                        addedNew = true;
+
+                    }
+                }
+            }
+            return results;
         }
     }
 }   
