@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Unity_Inventory.Database.IMSDbContextModels;
+using Unity_Inventory.Domain.Features.Customers.Models;
 using Unity_Inventory.Domain.Features.Inventories.Models;
 using Unity_Inventory.Domain.Features.Search.Models;
 using Unity_Inventory.Shared;
@@ -18,9 +20,6 @@ namespace Unity_Inventory.Domain.Features.Search
         {
             _db = db;
         }
-
-
-
         public async Task<Result<List<CategoryDTO>>> SearchCategoryAsync(SearchCategoryRequestDTO request)
         {
             if (request == null)
@@ -56,6 +55,107 @@ namespace Unity_Inventory.Domain.Features.Search
             catch (Exception ex)
             {
                 return Result<List<CategoryDTO>>.Failure(ex.Message);
+            }
+        }
+
+        public async Task<PagedResult<CustomerDTO>> SearchCustomersAsync(SearchCustomerRequestDTO request)
+        {
+            if (request == null)
+                return PagedResult<CustomerDTO>.Failure("Search request cannot be null.");
+
+            try
+            {
+                var query = _db.TblCustomers
+                    .AsNoTracking()
+                    .Include(c => c.TblCustomerSummaries)
+                    .Where(c => c.BusinessId == request.BusinessId && !c.DeleteFlag);
+
+                if (!string.IsNullOrWhiteSpace(request.Name))
+                {
+                    query = query.Where(c => c.CustomerName.ToLower().Contains(request.Name.ToLower()));
+                } 
+
+                var combinedQuery = query.GroupJoin(
+                    _db.TblReports.Where(r => r.BusinessId == request.BusinessId)
+                    ,
+                    c => c.CustomerId,
+                    r => r.CustomerId,
+                    (customer, reports) => new { customer, reports })
+                    .Select( x => new
+                    {
+                        x.customer,
+                        sum = x.reports.Sum(r => (decimal?)r.TotalAmount) ?? 0,
+                        totalOrders = x.reports.Count(),
+                    });
+
+                if(request.MinTotalSpent.HasValue)
+                {
+                    combinedQuery = combinedQuery.Where(x => x.sum >= request.MinTotalSpent.Value);
+                }
+                if(request.MaxTotalSpent.HasValue)
+                {
+                    combinedQuery = combinedQuery.Where(x => x.sum <= request.MaxTotalSpent.Value);
+                }
+                if(request.MinTotalOrders.HasValue)
+                {
+                    combinedQuery = combinedQuery.Where(x => x.totalOrders >= request.MinTotalOrders.Value);
+                }
+                if(request.MaxTotalOrders.HasValue)
+                {
+                    combinedQuery = combinedQuery.Where(x => x.totalOrders <= request.MaxTotalOrders.Value);
+                }
+
+                if(request.TransactionPeriodStart.HasValue)
+                {
+                    combinedQuery = combinedQuery.Where(x => x.customer.TblCustomerSummaries.Any(s => s.LastTransactionDate >= request.TransactionPeriodStart.Value));
+                }
+                if(request.TransactionPeriodEnd.HasValue)
+                {
+                    combinedQuery = combinedQuery.Where(x => x.customer.TblCustomerSummaries.Any(s => s.LastTransactionDate <= request.TransactionPeriodEnd.Value));
+                }
+
+                combinedQuery = request.SortBy switch { SearchCustomerRequestDTO.SortCustomerOptions.name => request.IsDescending 
+                        ? combinedQuery.OrderByDescending(x => x.customer.CustomerName) 
+                        : combinedQuery.OrderBy(x => x.customer.CustomerName),
+                    SearchCustomerRequestDTO.SortCustomerOptions.totalOrders => request.IsDescending 
+                        ? combinedQuery.OrderByDescending(x => x.totalOrders)    
+                        : combinedQuery.OrderBy(x => x.totalOrders),
+                    SearchCustomerRequestDTO.SortCustomerOptions.totalSpent => request.IsDescending 
+                        ? combinedQuery.OrderByDescending(x => x.sum) 
+                        : combinedQuery.OrderBy(x => x.sum),
+                    SearchCustomerRequestDTO.SortCustomerOptions.lastTransactionDate => request.IsDescending 
+                        ? combinedQuery.OrderByDescending(x => x.customer.TblCustomerSummaries.Max(s => s.LastTransactionDate)) 
+                        : combinedQuery.OrderBy(x => x.customer.TblCustomerSummaries.Max(s => s.LastTransactionDate)),
+                    _ => request.IsDescending 
+                        ? combinedQuery.OrderByDescending(x => x.customer.CustomerName) 
+                        : combinedQuery.OrderBy(x => x.customer.CustomerName)
+                };
+                var totalCount = await combinedQuery.CountAsync();
+
+                var items = await combinedQuery
+                    .Skip((request.PageNumber - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .Select(x => new CustomerDTO
+                    {
+                        Id = x.customer.CustomerId,
+                        Name = x.customer.CustomerName,
+                        BusinessId = x.customer.BusinessId,
+                        Phone = x.customer.Phone,
+                        Address = x.customer.Address,
+                        TotalSpent = (int)x.sum,
+                        TotalOrders = x.totalOrders,
+                        LastTransactionDate = x.customer.TblCustomerSummaries.Max(s => s.LastTransactionDate),
+                        VersionStamp = x.customer.VersionStamp
+                    })
+                    .ToListAsync();
+
+                var pagination = new Pagination(request.PageNumber, request.PageSize, totalCount);
+                return PagedResult<CustomerDTO>.Success(items, pagination);
+
+            }
+            catch (Exception ex)
+            {
+                return PagedResult<CustomerDTO>.Failure(ex.Message);
             }
         }
 

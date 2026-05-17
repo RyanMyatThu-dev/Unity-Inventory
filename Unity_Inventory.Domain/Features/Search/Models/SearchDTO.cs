@@ -45,4 +45,25 @@ namespace Unity_Inventory.Domain.Features.Search.Models
         public int BusinessId { get; set; }
         public bool IsDescending { get; set; } = false;
     }
+
+    public class SearchCustomerRequestDTO : PaginationRequest
+    {
+        public string? Name { get; set; }
+        public int BusinessId { get; set; }
+        public bool IsDescending { get; set; } = false;
+        public int ? MinTotalOrders { get; set; }
+        public int ? MaxTotalOrders { get; set; }
+        public int ? MinTotalSpent { get; set; }
+        public int? MaxTotalSpent { get; set; }
+        public enum SortCustomerOptions
+        {
+            name,
+            totalOrders,
+            totalSpent,
+            lastTransactionDate
+        }
+        public SortCustomerOptions SortBy { get; set; } = 0;
+        public DateTime ? TransactionPeriodStart { get; set; }
+        public DateTime ? TransactionPeriodEnd { get; set; }
+    }
 }

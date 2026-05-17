@@ -15,6 +15,8 @@ namespace Unity_Inventory.Domain.Features.Customers.Models
         public string? Phone { get; set; }
         public string? Address { get; set; }
         public int TotalItems { get; set; }
+        public int TotalOrders { get; set; }
+        public int TotalSpent { get; set; }
         // From TblCustomerSummary
         public decimal? TotalPurchased { get; set; }
         public decimal? OutstandingBalance { get; set; }

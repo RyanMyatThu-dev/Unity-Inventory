@@ -47,6 +47,8 @@ namespace Unity_Inventory.Domain.Features.Customers
                             Phone = x.c.Phone,
                             Address = x.c.Address,
                             TotalItems = x.c.TotalItems ?? 0,
+                            TotalOrders = x.c.TotalItems ?? 0,
+                            TotalSpent = summary != null ? (int)summary.TotalPurchased : 0,
                             TotalPurchased = summary != null ? summary.TotalPurchased : 0,
                             OutstandingBalance = summary != null ? summary.OutstandingBalance : 0,
                             LastTransactionDate = summary != null ? summary.LastTransactionDate : null,
@@ -84,6 +86,8 @@ namespace Unity_Inventory.Domain.Features.Customers
                             Phone = x.c.Phone,
                             Address = x.c.Address,
                             TotalItems = x.c.TotalItems ?? 0,
+                            TotalOrders = x.c.TotalItems ?? 0,
+                            TotalSpent = summary != null ? (int)summary.TotalPurchased : 0,
                             TotalPurchased = summary != null ? summary.TotalPurchased : 0,
                             OutstandingBalance = summary != null ? summary.OutstandingBalance : 0,
                             LastTransactionDate = summary != null ? summary.LastTransactionDate : null,
@@ -127,6 +131,8 @@ namespace Unity_Inventory.Domain.Features.Customers
                     Phone = customer.Phone,
                     Address = customer.Address,
                     TotalItems = 0,
+                    TotalOrders = 0,
+                    TotalSpent = 0,
                     VersionStamp = customer.VersionStamp
                 });
             }
@@ -160,6 +166,8 @@ namespace Unity_Inventory.Domain.Features.Customers
                     Phone = customer.Phone,
                     Address = customer.Address,
                     TotalItems = customer.TotalItems ?? 0,
+                    TotalOrders = customer.TotalItems ?? 0,
+                    TotalSpent = 0,
                     VersionStamp = customer.VersionStamp
                 });
             }

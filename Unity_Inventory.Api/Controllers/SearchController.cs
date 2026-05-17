@@ -49,5 +49,18 @@ namespace Unity_Inventory.Api.Controllers
             var result = await _searchService.SearchCategoryAsync(request);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
+
+        [HttpGet("customers")]
+        [Permission("customers", "view")]
+        public async Task<IActionResult> SearchCustomers([FromQuery] SearchCustomerRequestDTO request)
+        {
+            var businessId = GetBusinessId();
+            if (businessId == 0) return BadRequest("Business not selected.");
+
+            request.BusinessId = businessId;
+
+            var result = await _searchService.SearchCustomersAsync(request);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
     }
 }

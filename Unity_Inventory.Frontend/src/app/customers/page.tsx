@@ -26,7 +26,11 @@ import {
   UserCheck,
   Settings2,
   LayoutList,
-  LayoutGrid
+  LayoutGrid,
+  Filter,
+  ArrowUpDown,
+  ChevronDown,
+  RotateCcw
 } from 'lucide-react';
 
 // --- Types ---
@@ -35,7 +39,9 @@ interface Customer {
   name: string;
   phone: string;
   address: string;
-  totalPurchased: number;
+  totalPurchased?: number;
+  totalSpent: number;
+  totalOrders: number;
   versionStamp: string;
 }
 
@@ -81,7 +87,7 @@ const CustomerRow = memo(({ customer, index, onSelect, onDelete }: {
       </div>
     </td>
     <td className="px-6 py-4 text-right text-xs font-bold text-zinc-900 dark:text-zinc-100">
-      {formatCurrency(customer.totalPurchased)}
+      {formatCurrency(customer.totalSpent)}
     </td>
     <td className="px-6 py-4 text-right">
       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -147,8 +153,8 @@ const CustomerCard = memo(({ customer, index, onSelect, onDelete }: {
     </div>
     
     <div className="pt-4 border-t border-zinc-50 mt-auto">
-      <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Lifetime Value</p>
-      <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tighter">{formatCurrency(customer.totalPurchased)}</p>
+      <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Lifetime Value ({customer.totalOrders} Orders)</p>
+      <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tighter">{formatCurrency(customer.totalSpent)}</p>
     </div>
   </div>
 ));
@@ -292,12 +298,12 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
 
            {/* Section 2: Financial Stats */}
            <div className="p-8 bg-zinc-900 rounded-3xl text-white shadow-2xl relative overflow-hidden">
-              <div className="relative z-10">
+               <div className="relative z-10">
                  <div className="flex items-center justify-between mb-4 opacity-50">
-                   <p className="text-[10px] font-bold uppercase tracking-widest">Lifetime Portfolio Value</p>
+                   <p className="text-[10px] font-bold uppercase tracking-widest">Lifetime Portfolio Value ({customer.totalOrders} Orders)</p>
                    <CreditCard size={18} />
                  </div>
-                 <p className="text-4xl font-bold tracking-tighter">{formatCurrency(customer.totalPurchased)}</p>
+                 <p className="text-4xl font-bold tracking-tighter">{formatCurrency(customer.totalSpent)}</p>
                  <div className="mt-4 h-1 w-full bg-white dark:bg-zinc-900/10 rounded-full overflow-hidden">
                     <div className="h-full bg-emerald-400 w-3/4 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
                  </div>
@@ -356,10 +362,33 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerToDelete, setCustomerToDelete] = useState<{ id: number, version: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchTrigger, setSearchTrigger] = useState(0);
   const [viewType, setViewType] = useState<'table' | 'grid'>('table');
+  
+  // Filter state
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterMinSpent, setFilterMinSpent] = useState('');
+  const [filterMaxSpent, setFilterMaxSpent] = useState('');
+  const [filterMinOrders, setFilterMinOrders] = useState('');
+  const [filterMaxOrders, setFilterMaxOrders] = useState('');
+  const [filterSortBy, setFilterSortBy] = useState<'name' | 'totalOrders' | 'totalSpent' | 'lastTransactionDate'>('name');
+  const [filterSortDesc, setFilterSortDesc] = useState(false);
+
+  const hasActiveFilters = filterMinSpent || filterMaxSpent || filterMinOrders || filterMaxOrders || filterSortBy !== 'name' || filterSortDesc;
+
+  const resetFilters = () => {
+    setFilterMinSpent('');
+    setFilterMaxSpent('');
+    setFilterMinOrders('');
+    setFilterMaxOrders('');
+    setFilterSortBy('name');
+    setFilterSortDesc(false);
+    setPage(1);
+  };
   
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -369,9 +398,16 @@ export default function CustomersPage() {
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get('/customers', {
-        params: { pageNumber: page, pageSize: 15, searchTerm: search, businessId: currentBusinessId }
-      });
+      const params: any = { pageNumber: page, pageSize: 15, businessId: currentBusinessId };
+      if (search) params.name = search;
+      if (filterMinSpent) params.minTotalSpent = parseFloat(filterMinSpent);
+      if (filterMaxSpent) params.maxTotalSpent = parseFloat(filterMaxSpent);
+      if (filterMinOrders) params.minTotalOrders = parseInt(filterMinOrders);
+      if (filterMaxOrders) params.maxTotalOrders = parseInt(filterMaxOrders);
+      params.sortBy = filterSortBy === 'name' ? 0 : filterSortBy === 'totalOrders' ? 1 : filterSortBy === 'totalSpent' ? 2 : 3;
+      params.isDescending = filterSortDesc;
+
+      const response = await api.get('/search/customers', { params });
       if (response.data.isSuccess) {
         const items: Customer[] = response.data.data || [];
         setCustomers(items);
@@ -383,7 +419,7 @@ export default function CustomersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, currentBusinessId]);
+  }, [page, search, filterMinSpent, filterMaxSpent, filterMinOrders, filterMaxOrders, filterSortBy, filterSortDesc, currentBusinessId]);
 
   // Sync selected customer with background updates
   useEffect(() => {
@@ -445,9 +481,9 @@ export default function CustomersPage() {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => { fetchCustomers(); }, 300);
-    return () => clearTimeout(timer);
-  }, [fetchCustomers]);
+    fetchCustomers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, searchTrigger]);
 
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-300">
@@ -461,20 +497,59 @@ export default function CustomersPage() {
         </button>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative max-w-md flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-          <input
-            type="text"
-            placeholder="Filter relationship database..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-6 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-sm"
-          />
-        </div>
-        
-        <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-1 rounded-xl shadow-sm">
-          <button 
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 flex-1">
+            <div className="relative max-w-md flex-1 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                <input
+                  type="text"
+                  placeholder="Filter relationship database..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setSearch(searchInput);
+                      setPage(1);
+                      setSearchTrigger(prev => prev + 1);
+                    }
+                  }}
+                  className="w-full pl-12 pr-6 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-sm"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  setSearch(searchInput);
+                  setPage(1);
+                  setSearchTrigger(prev => prev + 1);
+                }}
+                className="px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border border-zinc-900 dark:border-zinc-100 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm hover:bg-zinc-800 dark:hover:bg-zinc-200 shrink-0"
+              >
+                Search
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-3 border rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm relative shrink-0",
+                showFilters || hasActiveFilters
+                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100"
+                  : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500"
+              )}
+            >
+              <Filter size={14} />
+              Filters
+              {hasActiveFilters && (
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full absolute top-2 right-2 animate-pulse" />
+              )}
+              <ChevronDown size={12} className={cn("transition-transform", showFilters && "rotate-180")} />
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-1 rounded-xl shadow-sm">
+            <button 
             onClick={() => setViewType('table')}
             className={cn(
               "p-2 rounded-lg transition-all",
@@ -493,6 +568,99 @@ export default function CustomersPage() {
             <LayoutGrid size={18} />
           </button>
         </div>
+      </div>
+
+        {/* Filter Panel */}
+        {showFilters && (
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-5 shadow-sm animate-in slide-in-from-top-2 fade-in duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Advanced Filters</h4>
+              {hasActiveFilters && (
+                <button
+                  onClick={resetFilters}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all border border-zinc-200 dark:border-zinc-700"
+                >
+                  <RotateCcw size={10} />
+                  Reset All
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {/* Min Spent */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Min LTV (MMK)</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={filterMinSpent}
+                  onChange={(e) => { setFilterMinSpent(e.target.value); setPage(1); }}
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[10px] font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all"
+                />
+              </div>
+              {/* Max Spent */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Max LTV (MMK)</label>
+                <input
+                  type="number"
+                  placeholder="∞"
+                  value={filterMaxSpent}
+                  onChange={(e) => { setFilterMaxSpent(e.target.value); setPage(1); }}
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[10px] font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all"
+                />
+              </div>
+              {/* Min Orders */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Min Orders</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={filterMinOrders}
+                  onChange={(e) => { setFilterMinOrders(e.target.value); setPage(1); }}
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[10px] font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all"
+                />
+              </div>
+              {/* Max Orders */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Max Orders</label>
+                <input
+                  type="number"
+                  placeholder="∞"
+                  value={filterMaxOrders}
+                  onChange={(e) => { setFilterMaxOrders(e.target.value); setPage(1); }}
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[10px] font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all"
+                />
+              </div>
+              {/* Sort */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Sort By</label>
+                <div className="flex gap-1">
+                  <select
+                    value={filterSortBy}
+                    onChange={(e) => { setFilterSortBy(e.target.value as any); setPage(1); }}
+                    className="flex-1 px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[10px] font-semibold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 appearance-none cursor-pointer transition-all"
+                  >
+                    <option value="name">Name</option>
+                    <option value="totalSpent">LTV Spent</option>
+                    <option value="totalOrders">Total Orders</option>
+                    <option value="lastTransactionDate">Last Active</option>
+                  </select>
+                  <button
+                    onClick={() => setFilterSortDesc(!filterSortDesc)}
+                    className={cn(
+                      "p-2 border rounded-lg transition-all",
+                      filterSortDesc
+                        ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100"
+                        : "bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400"
+                    )}
+                    title={filterSortDesc ? "Descending" : "Ascending"}
+                  >
+                    <ArrowUpDown size={12} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="relative">
