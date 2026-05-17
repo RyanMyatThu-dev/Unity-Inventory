@@ -161,7 +161,7 @@ const InventoryCard = memo(({ product, index, onSelect, onDelete }: {
         {index}
       </div>
       {product.imageUrl ? (
-        <img src={product.imageUrl} alt="" className="w-full h-full object-cover" />
+        <img src={product.imageUrl} alt="" className="w-full h-full object-contain p-2" />
       ) : (
         <Package size={32} className="text-zinc-200" />
       )}
@@ -251,6 +251,9 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
       formData.append('VersionStamp', product.versionStamp);
       if (product.stockVersionStamp) {
         formData.append('StockVersionStamp', product.stockVersionStamp);
+      }
+      if (product.categoryId) {
+        formData.append('CategoryId', product.categoryId.toString());
       }
       formData.append('photoFile', imageFile);
 

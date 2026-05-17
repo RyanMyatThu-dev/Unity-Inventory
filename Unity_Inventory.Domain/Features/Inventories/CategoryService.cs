@@ -23,7 +23,7 @@ namespace Unity_Inventory.Domain.Features.Inventories
             try
             {
                 var categories = await _db.TblCategories
-                    .Where(c => c.BusinessId == businessId)
+                    .Where(c => c.BusinessId == businessId && !c.DeleteFlag)
                     .Select(c => new CategoryDTO
                     {
                         CategoryId = c.CategoryId,
@@ -47,7 +47,7 @@ namespace Unity_Inventory.Domain.Features.Inventories
             try
             {
                 var allCategories = await _db.TblCategories
-                    .Where(c => c.BusinessId == businessId)
+                    .Where(c => c.BusinessId == businessId && !c.DeleteFlag)
                     .ToListAsync();
 
                 var categoryDtos = allCategories.Select(c => new CategoryDTO
@@ -187,7 +187,7 @@ namespace Unity_Inventory.Domain.Features.Inventories
                 if (hasInventories) return Result<bool>.Failure("Cannot delete category with associated products.");
 
                 // Check if it has subcategories
-                var hasSubCategories = await _db.TblCategories.AnyAsync(c => c.ParentCategoryId == id);
+                var hasSubCategories = await _db.TblCategories.AnyAsync(c => c.ParentCategoryId == id && !c.DeleteFlag);
                 if (hasSubCategories) return Result<bool>.Failure("Cannot delete category with subcategories.");
 
                 category.DeleteFlag = true;

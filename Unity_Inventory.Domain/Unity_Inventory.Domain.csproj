@@ -17,5 +17,8 @@
     <ProjectReference Include="..\Unity_Inventory.Database\Unity_Inventory.Database.csproj" />
     <ProjectReference Include="..\Unity_Inventory.Shared\Unity_Inventory.Shared.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Features\Summary\Models\" />
+  </ItemGroup>
 
 </Project>
