@@ -33,6 +33,8 @@ public partial class IMSDbContext : DbContext
 
     public virtual DbSet<TblRolePermission> TblRolePermissions { get; set; }
 
+    public virtual DbSet<TblSummaryArchive> TblSummaryArchives { get; set; }
+
     public virtual DbSet<TblUser> TblUsers { get; set; }
 
     public virtual DbSet<TblUserBusiness> TblUserBusinesses { get; set; }
@@ -310,6 +312,40 @@ public partial class IMSDbContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.TblRolePermissionUsers)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK_Permission_User");
+        });
+
+        modelBuilder.Entity<TblSummaryArchive>(entity =>
+        {
+            entity.HasKey(e => e.SummaryId);
+
+            entity.ToTable("Tbl_SummaryArchives");
+
+            entity.HasIndex(e => e.BusinessId, "IX_Tbl_SummaryArchives_BusinessId");
+
+            entity.HasIndex(e => new { e.BusinessId, e.SummaryType, e.PeriodStartDate, e.PeriodEndDate }, "IX_Tbl_SummaryArchives_Lookup");
+
+            entity.HasIndex(e => new { e.BusinessId, e.PeriodStartDate, e.PeriodEndDate }, "IX_Tbl_SummaryArchives_Period");
+
+            entity.Property(e => e.AverageOrderValue).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.GeneratedAt)
+                .HasPrecision(0)
+                .HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.Source)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasDefaultValue("Hangfire");
+            entity.Property(e => e.SummaryType)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.TopCustomerName).HasMaxLength(50);
+            entity.Property(e => e.TopCustomerTotal).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.TopInventoryName).HasMaxLength(50);
+            entity.Property(e => e.TotalRevenue).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.Business).WithMany(p => p.TblSummaryArchives)
+                .HasForeignKey(d => d.BusinessId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Tbl_SummaryArchives_Business");
         });
 
         modelBuilder.Entity<TblUser>(entity =>
