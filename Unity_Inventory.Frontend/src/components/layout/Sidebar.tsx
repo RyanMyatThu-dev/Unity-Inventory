@@ -21,7 +21,8 @@ import {
   Loader2,
   LogOut,
   UserCog,
-  LayoutList
+  LayoutList,
+  TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UnityLogo } from '@/components/ui/UnityLogo';
@@ -31,7 +32,8 @@ const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Inventory', href: '/inventory', icon: Package },
   { name: 'Categories', href: '/inventory/categories', icon: LayoutList },
-  { name: 'Report', href: '/sales', icon: FileText },
+  { name: 'Sales Ledger', href: '/sales', icon: FileText },
+  { name: 'Sales Summaries', href: '/sales/summaries', icon: TrendingUp },
   { name: 'Customers', href: '/customers', icon: Users },
   { name: 'Team & Permissions', href: '/users', icon: UserCog, ownerOnly: true },
 ];
