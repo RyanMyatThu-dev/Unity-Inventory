@@ -20,6 +20,7 @@ using Unity_Inventory.Domain.Features.PhotoUpload;
 using Unity_Inventory.Domain.Features.Dashboard;
 using Unity_Inventory.Domain.Features.Authorization;
 using Unity_Inventory.Domain.Features.Search;
+using Unity_Inventory.Domain.Features.Summary;
 
 
 namespace Unity_Inventory.Domain.Features
@@ -51,6 +52,7 @@ namespace Unity_Inventory.Domain.Features
             builder.Services.AddScoped<IPermissionService, PermissionService>();
             builder.Services.AddScoped<ICategoryService, CategoryService>();
             builder.Services.AddScoped<ISearchService, SearchService>();
+            builder.Services.AddScoped<ISummaryService, SummaryService>();
 
         }
     }
