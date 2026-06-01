@@ -137,6 +137,13 @@ The system utilizes a modern dual-frontend approach: the **Next.js SPA Portal** 
 | POST | `/api/sales/reports` | Execute a new order transaction | Yes | `sales:create` |
 | DELETE | `/api/sales/reports/{id}` | Delete sales records | Yes | `sales:delete` |
 
+### Sales Summary (`/api/summary`)
+| Method | Endpoint | Description | Auth | Permission |
+|--------|----------|-------------|------|------------|
+| GET | `/api/summary/sales` | Get sales summary with filtering (type, date range) | Yes | `summary:view` |
+| POST | `/api/summary/sales/generate` | Generate and store a sales summary | Yes | `summary:create` |
+| GET | `/api/summary/sales/history` | Get historical sales summaries | Yes | `summary:view` |
+
 ### Categories (`/api/categories`)
 | Method | Endpoint | Description | Auth | Permission |
 |--------|----------|-------------|------|------------|
