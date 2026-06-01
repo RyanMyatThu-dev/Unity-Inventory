@@ -34,20 +34,31 @@ namespace Unity_Inventory.Domain.Features.Sales
                     .OrderByDescending(r => r.ReportDate)
                     .Skip((paginationRequest.PageNumber - 1) * paginationRequest.PageSize)
                     .Take(paginationRequest.PageSize)
-                    .Select(r => new ReportDTO
+                    .Select(r => new
                     {
                         Id = r.ReportId,
                         BusinessId = r.BusinessId,
                         CustomerId = r.CustomerId,
                         CustomerName = r.Customer.CustomerName,
-                        ReportDate = r.ReportDate ?? DateTime.Now,
+                        ReportDate = r.ReportDate,
                         TotalAmount = r.TotalAmount,
                         Remarks = r.Remarks
                     })
                     .ToListAsync();
 
+                var dtos = items.Select(r => new ReportDTO
+                {
+                    Id = r.Id,
+                    BusinessId = r.BusinessId,
+                    CustomerId = r.CustomerId,
+                    CustomerName = r.CustomerName,
+                    ReportDate = r.ReportDate ?? DateTime.UtcNow,
+                    TotalAmount = r.TotalAmount,
+                    Remarks = r.Remarks
+                }).ToList();
+
                 var pagination = new Pagination(paginationRequest.PageNumber, paginationRequest.PageSize, totalCount);
-                return PagedResult<ReportDTO>.Success(items, pagination);
+                return PagedResult<ReportDTO>.Success(dtos, pagination);
             }
             catch (Exception ex)
             {
@@ -75,7 +86,7 @@ namespace Unity_Inventory.Domain.Features.Sales
                     BusinessId = report.BusinessId,
                     CustomerId = report.CustomerId,
                     CustomerName = report.Customer.CustomerName,
-                    ReportDate = report.ReportDate ?? DateTime.Now,
+                    ReportDate = report.ReportDate ?? DateTime.UtcNow,
                     TotalAmount = report.TotalAmount,
                     Remarks = report.Remarks,
                     Vouchers = report.TblVouchers.Select(v => new VoucherDTO
@@ -110,7 +121,7 @@ namespace Unity_Inventory.Domain.Features.Sales
                 {
                     BusinessId = request.BusinessId,
                     CustomerId = request.CustomerId,
-                    ReportDate = request.ReportDate ?? DateTime.Now,
+                    ReportDate = request.ReportDate ?? DateTime.UtcNow,
                     Remarks = request.Remarks,
                     TotalAmount = request.Vouchers.Sum(v => v.Quantity * v.SellPrice)
                 };
@@ -142,7 +153,7 @@ namespace Unity_Inventory.Domain.Features.Sales
                             BusinessId = request.BusinessId,
                             InventoryId = vReq.InventoryId,
                             CurrentStock = -vReq.Quantity, // Assuming stock can go negative if not initialized
-                            LastUpdated = DateTime.Now
+                            LastUpdated = DateTime.UtcNow
                         };
                         _db.TblInventorySummaries.Add(invSummary);
                     }

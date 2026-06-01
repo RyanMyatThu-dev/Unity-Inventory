@@ -295,8 +295,8 @@ const NewSaleModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
 
   const fetchCustomers = useCallback(async () => {
     try {
-      const res = await api.get('/customers', { 
-        params: { pageNumber: customerPage, pageSize: 8, searchTerm: customerSearch } 
+      const res = await api.get('/customers', {
+        params: { pageNumber: customerPage, pageSize: 8, search: customerSearch }
       });
       setCustomers(res.data.data || []);
       setCustomerTotalPages(res.data.pagination?.totalPages || 1);
@@ -568,9 +568,11 @@ export default function SalesPage() {
   const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get('/sales/reports', {
-        params: { pageNumber: page, pageSize: 15, searchTerm: search }
-      });
+      const params: any = { pageNumber: page, pageSize: 15 };
+      if (search) {
+        params.search = search;
+      }
+      const response = await api.get('/sales/reports', { params });
       if (response.data.isSuccess) {
         setReports(response.data.data || []);
         setTotalPages(response.data.pagination?.totalPages || 1);

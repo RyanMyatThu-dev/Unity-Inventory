@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 using Unity_Inventory.Database.IMSDbContextModels;
 using Unity_Inventory.Domain.Features.Authorization.Models;
 using Unity_Inventory.Shared;

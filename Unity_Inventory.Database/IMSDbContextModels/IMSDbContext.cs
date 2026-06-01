@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,6 +6,11 @@ namespace Unity_Inventory.Database.IMSDbContextModels;
 
 public partial class IMSDbContext : DbContext
 {
+    static IMSDbContext()
+    {
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+    }
+
     public IMSDbContext()
     {
     }
@@ -44,8 +49,7 @@ public partial class IMSDbContext : DbContext
     public virtual DbSet<TblVoucher> TblVouchers { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=.;Database=IMS_NEW;User Id=sa;Password=sasa@123;TrustServerCertificate=True");
+        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=IMS_DB;Username=postgres;Password=sasa@123");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -73,7 +77,7 @@ public partial class IMSDbContext : DbContext
             entity.HasIndex(e => new { e.BusinessId, e.CategoryName }, "UQ_Category_Name").IsUnique();
 
             entity.Property(e => e.CategoryName).HasMaxLength(100);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("timezone('utc', now())");
             entity.Property(e => e.Description).HasMaxLength(255);
 
             entity.HasOne(d => d.Business).WithMany(p => p.TblCategories)
@@ -95,7 +99,7 @@ public partial class IMSDbContext : DbContext
             entity.HasIndex(e => e.BusinessId, "IX_Tbl_Customers_BusinessId");
 
             entity.Property(e => e.Address).HasMaxLength(50);
-            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.CreatedAt);
             entity.Property(e => e.CustomerName).HasMaxLength(50);
             entity.Property(e => e.ImageId)
                 .HasMaxLength(255)
@@ -107,9 +111,9 @@ public partial class IMSDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.TotalItems).HasDefaultValue(0);
-            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt);
             entity.Property(e => e.VersionStamp)
-                .IsRowVersion()
+                .ValueGeneratedOnAddOrUpdate()
                 .IsConcurrencyToken();
 
             entity.HasOne(d => d.Business).WithMany(p => p.TblCustomers)
@@ -158,7 +162,7 @@ public partial class IMSDbContext : DbContext
 
             entity.HasIndex(e => e.CustomerId, "IX_Tbl_CustomerSummary_CustomerId");
 
-            entity.Property(e => e.LastTransactionDate).HasColumnType("datetime");
+            entity.Property(e => e.LastTransactionDate);
             entity.Property(e => e.OutstandingBalance)
                 .HasDefaultValue(0.0m)
                 .HasColumnType("decimal(18, 2)");
@@ -187,7 +191,7 @@ public partial class IMSDbContext : DbContext
 
             entity.HasIndex(e => e.CategoryId, "IX_Tbl_Inventories_CategoryId");
 
-            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.CreatedAt);
             entity.Property(e => e.ImageId)
                 .HasMaxLength(255)
                 .IsUnicode(false);
@@ -196,9 +200,9 @@ public partial class IMSDbContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.InventoryName).HasMaxLength(50);
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt);
             entity.Property(e => e.VersionStamp)
-                .IsRowVersion()
+                .ValueGeneratedOnAddOrUpdate()
                 .IsConcurrencyToken();
 
             entity.HasOne(d => d.Business).WithMany(p => p.TblInventories)
@@ -223,10 +227,9 @@ public partial class IMSDbContext : DbContext
 
             entity.Property(e => e.CurrentStock).HasDefaultValue(0);
             entity.Property(e => e.LastUpdated)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+                .HasDefaultValueSql("timezone('utc', now())");
             entity.Property(e => e.VersionStamp)
-                .IsRowVersion()
+                .ValueGeneratedOnAddOrUpdate()
                 .IsConcurrencyToken();
 
             entity.HasOne(d => d.Business).WithMany(p => p.TblInventorySummaries)
@@ -252,8 +255,8 @@ public partial class IMSDbContext : DbContext
 
             entity.Property(e => e.Remarks).HasMaxLength(200);
             entity.Property(e => e.ReportDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+                .HasColumnType("timestamp without time zone")
+                .HasDefaultValueSql("timezone('utc', now())");
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.Business).WithMany(p => p.TblReports)
@@ -281,12 +284,12 @@ public partial class IMSDbContext : DbContext
 
             entity.HasIndex(e => new { e.BusinessId, e.RoleName, e.UserId, e.MenuCode, e.ActionCode }, "UQ_Permission")
                 .IsUnique()
-                .HasFilter("([RoleName] IS NOT NULL AND [UserId] IS NOT NULL)");
+                .HasFilter("(\"RoleName\" IS NOT NULL AND \"UserId\" IS NOT NULL)");
 
             entity.Property(e => e.ActionCode)
                 .HasMaxLength(50)
                 .IsUnicode(false);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("timezone('utc', now())");
             entity.Property(e => e.IsAllowed).HasDefaultValue(true);
             entity.Property(e => e.MenuCode)
                 .HasMaxLength(100)
@@ -329,7 +332,7 @@ public partial class IMSDbContext : DbContext
             entity.Property(e => e.AverageOrderValue).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.GeneratedAt)
                 .HasPrecision(0)
-                .HasDefaultValueSql("(sysutcdatetime())");
+                .HasDefaultValueSql("timezone('utc', now())");
             entity.Property(e => e.Source)
                 .HasMaxLength(50)
                 .IsUnicode(false)
@@ -360,8 +363,7 @@ public partial class IMSDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+                .HasDefaultValueSql("timezone('utc', now())");
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.ImageId)
                 .HasMaxLength(255)
@@ -371,7 +373,7 @@ public partial class IMSDbContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.Name).HasMaxLength(50);
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
-            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt);
             entity.Property(e => e.Username).HasMaxLength(50);
         });
 
@@ -408,9 +410,8 @@ public partial class IMSDbContext : DbContext
             entity.HasIndex(e => e.UserId, "IX_Tbl_UserTokens_UserId");
 
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.ExpiryDate).HasColumnType("datetime");
+                .HasDefaultValueSql("timezone('utc', now())");
+            entity.Property(e => e.ExpiryDate);
             entity.Property(e => e.IsRevoked).HasDefaultValue(false);
             entity.Property(e => e.RefreshToken).HasMaxLength(500);
             entity.Property(e => e.TokenHash).HasMaxLength(500);

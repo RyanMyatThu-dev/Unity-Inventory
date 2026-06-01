@@ -30,6 +30,7 @@ The system is currently fully scaffolded with a rich multi-tenant backend and du
 - [x] **Analytical Dashboard**: KPI aggregation (Revenue velocity, active workspace users, top-selling inventory catalog items, and sales graphs).
 - [x] **Cloudinary Media Pipeline**: Direct file stream uploads to Cloudinary returning CDN assets for customer profile cards and inventory views.
 - [x] **Transactional Sales**: Core transactions mapping order reports (`TblReport`), voucher details (`TblVoucher`), inventory stock decrements, and customer spending summaries.
+- [x] **PostgreSQL Switch Alignment**: Resolved the database-level timestamp comparison conflict between the schema (`timestamp without time zone`) and EF Core configuration. Configured Npgsql's legacy timestamp behavior globally and decoupled service projections.
 
 ### C. Advanced RBAC Permission Engine
 - [x] **Precedence Resolvers**: Custom evaluation logic prioritizing specific User overrides (`UserId != null`) over generic Role boundaries (`UserId == null`).

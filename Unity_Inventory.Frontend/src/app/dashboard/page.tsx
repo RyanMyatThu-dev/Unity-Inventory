@@ -132,16 +132,16 @@ export default function DashboardPage() {
       : data.salesTrends?.yearlySales || [];
 
   const topCustomers = customerRange === 'month'
-    ? data.customerStats.topCustomersThisMonth || []
+    ? (data?.customerStats?.topCustomersThisMonth || [])
     : customerRange === 'year'
-      ? data.customerStats.topCustomersThisYear || []
-      : data.customerStats.topCustomersAllTime || [];
+      ? (data?.customerStats?.topCustomersThisYear || [])
+      : (data?.customerStats?.topCustomersAllTime || []);
 
   const kpis = [
-    { label: 'Total Revenue', value: formatCurrency(data.revenue.totalRevenue), icon: DollarSign, sub: 'Lifetime Earnings', href: '/sales', color: 'text-zinc-900 dark:text-zinc-100' },
-    { label: 'Monthly Revenue', value: formatCurrency(data.revenue.monthlyRevenue), icon: TrendingUp, sub: 'Current Cycle', href: '/sales', color: 'text-emerald-600 dark:text-emerald-400' },
-    { label: 'Active Clients', value: data.customerStats.totalCustomers.toString(), icon: Users, sub: 'Loyalty Base', href: '/customers', color: 'text-zinc-900 dark:text-zinc-100' },
-    { label: 'Global Stock', value: data.productStats.totalProducts.toString(), icon: Package, sub: 'Active Products', href: '/inventory', color: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Total Revenue', value: formatCurrency(data?.revenue?.totalRevenue ?? 0), icon: DollarSign, sub: 'Lifetime Earnings', href: '/sales', color: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Monthly Revenue', value: formatCurrency(data?.revenue?.monthlyRevenue ?? 0), icon: TrendingUp, sub: 'Current Cycle', href: '/sales', color: 'text-emerald-600 dark:text-emerald-400' },
+    { label: 'Active Clients', value: (data?.customerStats?.totalCustomers ?? 0).toString(), icon: Users, sub: 'Loyalty Base', href: '/customers', color: 'text-zinc-900 dark:text-zinc-100' },
+    { label: 'Global Stock', value: (data?.productStats?.totalProducts ?? 0).toString(), icon: Package, sub: 'Active Products', href: '/inventory', color: 'text-zinc-900 dark:text-zinc-100' },
   ];
 
   return (
@@ -269,7 +269,7 @@ export default function DashboardPage() {
               <Link href="/inventory" className="text-[9px] font-bold text-zinc-900 dark:text-zinc-100  uppercase tracking-widest hover:underline">Full Catalog</Link>
             </div>
             <div className="space-y-2">
-              {data.productStats.topSellingProducts.slice(0, 4).map((p, i) => (
+              {(data?.productStats?.topSellingProducts || []).slice(0, 4).map((p, i) => (
                 <div key={i} className="flex items-center gap-3 group cursor-pointer">
                   <div className="w-10 h-10 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 dark:border-zinc-700 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-zinc-900 dark:group-hover:border-zinc-200 dark:border-zinc-700 transition-all">
                     {p.imageUrl ? <img src={p.imageUrl} alt="" className="w-full h-full object-cover" /> : <Package size={16} className="text-zinc-300 dark:text-zinc-600" />}

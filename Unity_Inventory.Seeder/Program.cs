@@ -35,7 +35,7 @@ internal static class Program
         }
 
         var options = new DbContextOptionsBuilder<IMSDbContext>()
-            .UseSqlServer(connectionString)
+            .UseNpgsql(connectionString)
             .Options;
 
         await using var db = new IMSDbContext(options);
@@ -45,6 +45,32 @@ internal static class Program
 
         Console.WriteLine("EnsureCreated (applies current EF model)…");
         await db.Database.EnsureCreatedAsync();
+
+        Console.WriteLine("Applying PostgreSQL triggers for VersionStamp...");
+        await db.Database.ExecuteSqlRawAsync(@"
+CREATE OR REPLACE FUNCTION update_version_stamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.""VersionStamp"" := decode(md5(random()::text), 'hex');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_update_customer_version ON ""Tbl_Customers"";
+CREATE TRIGGER trigger_update_customer_version
+BEFORE INSERT OR UPDATE ON ""Tbl_Customers""
+FOR EACH ROW EXECUTE FUNCTION update_version_stamp();
+
+DROP TRIGGER IF EXISTS trigger_update_inventory_version ON ""Tbl_Inventories"";
+CREATE TRIGGER trigger_update_inventory_version
+BEFORE INSERT OR UPDATE ON ""Tbl_Inventories""
+FOR EACH ROW EXECUTE FUNCTION update_version_stamp();
+
+DROP TRIGGER IF EXISTS trigger_update_invsummary_version ON ""Tbl_InventorySummary"";
+CREATE TRIGGER trigger_update_invsummary_version
+BEFORE INSERT OR UPDATE ON ""Tbl_InventorySummary""
+FOR EACH ROW EXECUTE FUNCTION update_version_stamp();
+");
 
         // Passwords satisfy domain UserService rules: length >= 6, upper, lower, digit.
         var owner = new TblUser

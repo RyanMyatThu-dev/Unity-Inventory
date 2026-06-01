@@ -29,7 +29,7 @@ namespace Unity_Inventory.Domain.Features
         public static void AddDomain(this WebApplicationBuilder builder)
         {
             builder.Services.AddDbContext<Unity_Inventory.Database.IMSDbContextModels.IMSDbContext>(options => 
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             //cloudinary config
             var cloudName = builder.Configuration["Cloudinary:CloudName"]?.Trim();
