@@ -1,6 +1,8 @@
 using CloudinaryDotNet;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Hangfire;
+using Hangfire.PostgreSql;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,6 +34,18 @@ namespace Unity_Inventory.Domain.Features
             builder.Services.AddDbContext<Unity_Inventory.Database.IMSDbContextModels.IMSDbContext>(options => 
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            // Register Hangfire with PostgreSQL storage
+            builder.Services.AddHangfire(configuration => configuration
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UsePostgreSqlStorage(options =>
+                {
+                    options.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"));
+                }));
+
+            builder.Services.AddHangfireServer();
+
             //cloudinary config
             var cloudName = builder.Configuration["Cloudinary:CloudName"]?.Trim();
             var apiKey = builder.Configuration["Cloudinary:ApiKey"]?.Trim();
@@ -53,6 +67,7 @@ namespace Unity_Inventory.Domain.Features
             builder.Services.AddScoped<ICategoryService, CategoryService>();
             builder.Services.AddScoped<ISearchService, SearchService>();
             builder.Services.AddScoped<ISummaryService, SummaryService>();
+            builder.Services.AddHttpClient<IAiService, AiService>();
 
         }
     }

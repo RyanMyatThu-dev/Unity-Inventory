@@ -48,6 +48,9 @@ The system is currently fully scaffolded with a rich multi-tenant backend and du
 - [x] **Summary Storage**: Utilized existing TblSummaryArchive table for persisting generated summaries
 - [x] **Summary API**: Created RESTful endpoints for retrieving and generating sales summaries
 - [x] **Business Intelligence**: Enhanced analytics capabilities with pre-calculated summary data for improved dashboard performance
+- [x] **Hangfire Recurring Summary Jobs**: Installed and configured PostgreSQL-backed Hangfire server in `FeaturesManager.cs` and `Program.cs`. Scheduled recurring DAILY, MONTHLY, and YEARLY jobs to compile analytics automatically.
+- [x] **Custom Summary Cadence**: Expanded the domain compilation engine to support on-demand CUSTOM date ranges (`from` -> `to`) through the API and Next.js frontend filters.
+- [x] **Gemini AI Synthesis Integration**: Implemented `AiService` invoking the Google Gemini 2.5 Flash API to compile custom summaries, featuring micro-interactive UI loading states and robust simulated local fallbacks.
 
 ---
 

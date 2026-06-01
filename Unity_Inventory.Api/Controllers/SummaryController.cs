@@ -37,9 +37,12 @@ namespace Unity_Inventory.Api.Controllers
             if (string.IsNullOrEmpty(summaryType))
                 summaryType = "MONTHLY"; // Default to monthly
 
-            var validTypes = new[] { "DAILY", "WEEKLY", "MONTHLY", "YEARLY" };
+            var validTypes = new[] { "DAILY", "WEEKLY", "MONTHLY", "YEARLY", "CUSTOM" };
             if (!validTypes.Contains(summaryType.ToUpper()))
                 return BadRequest($"Invalid summary type. Valid types are: {string.Join(", ", validTypes)}");
+
+            if (summaryType.ToUpper() == "CUSTOM" && (!periodStartDate.HasValue || !periodEndDate.HasValue))
+                return BadRequest("Start and End dates are required for CUSTOM summary type.");
 
             // If no dates provided, use current period based on summaryType
             DateOnly startDate, endDate;
@@ -115,17 +118,32 @@ namespace Unity_Inventory.Api.Controllers
         [HttpGet("sales/history")]
         [Permission("summary", "view")]
         public async Task<IActionResult> GetSalesSummaryHistory(
-            [FromQuery] string summaryType, // DAILY, WEEKLY, MONTHLY, YEARLY
+            [FromQuery] string summaryType, // DAILY, WEEKLY, MONTHLY, YEARLY, CUSTOM
             [FromQuery] int limit = 10)
         {
             var businessId = GetCurrentBusinessId();
             if (businessId == 0)
                 return BadRequest("Business ID not found.");
 
-            // For history, we might want to query TblSummaryArchive directly
-            // For now, we'll return empty as this would require extending the service
-            // In a full implementation, this would call _summaryService.GetSalesSummaryHistoryAsync
-            return Ok(Result<List<SalesSummaryDto>>.Success(new List<SalesSummaryDto>()));
+            if (string.IsNullOrEmpty(summaryType))
+                summaryType = "MONTHLY";
+
+            var result = await _summaryService.GetSalesSummaryHistoryAsync(businessId, summaryType.ToUpper(), limit);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        // Analyze sales summary using Gemini AI
+        [HttpPost("sales/analyze")]
+        [Permission("summary", "view")]
+        public async Task<IActionResult> AnalyzeSalesSummary(
+            [FromBody] SalesSummaryDto summaryDto,
+            [FromServices] IAiService aiService)
+        {
+            if (summaryDto == null)
+                return BadRequest("Summary details are required.");
+
+            var result = await aiService.AnalyzeSummaryAsync(summaryDto);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         #region Helper Method

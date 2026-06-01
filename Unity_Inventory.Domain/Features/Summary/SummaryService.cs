@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -67,7 +67,7 @@ namespace Unity_Inventory.Domain.Features.Summary
             }
         }
 
-        public async Task<Result<SalesSummaryDto>> GenerateAndStoreSalesSummaryAsync(int businessId, string summaryType, DateOnly periodStartDate, DateOnly periodEndDate)
+        public async Task<Result<SalesSummaryDto>> GenerateAndStoreSalesSummaryAsync(int businessId, string summaryType, DateOnly periodStartDate, DateOnly periodEndDate, string source = "API")
         {
             using var transaction = await _db.Database.BeginTransactionAsync();
             try
@@ -105,7 +105,7 @@ namespace Unity_Inventory.Domain.Features.Summary
                     existingSummary.TopInventoryQuantitySold = summary.TopProductQuantitySold;
                     // Note: TopProductRevenue not directly stored in TblSummaryArchive
                     existingSummary.GeneratedAt = DateTime.UtcNow;
-                    existingSummary.Source = "API";
+                    existingSummary.Source = source;
                 }
                 else
                 {
@@ -129,7 +129,7 @@ namespace Unity_Inventory.Domain.Features.Summary
                         TopInventoryQuantitySold = summary.TopProductQuantitySold,
                         // TopProductRevenue not directly stored
                         GeneratedAt = DateTime.UtcNow,
-                        Source = "API"
+                        Source = source
                     };
 
                     _db.TblSummaryArchives.Add(summaryArchive);
@@ -277,6 +277,82 @@ namespace Unity_Inventory.Domain.Features.Summary
             catch (Exception ex)
             {
                 return Result<SalesSummaryDto>.Failure(ex.Message);
+            }
+        }
+
+        public async Task<Result<List<SalesSummaryDto>>> GetSalesSummaryHistoryAsync(int businessId, string summaryType, int limit = 10)
+        {
+            try
+            {
+                var summaries = await _db.TblSummaryArchives
+                    .Where(s => s.BusinessId == businessId && s.SummaryType == summaryType.ToUpper())
+                    .OrderByDescending(s => s.PeriodStartDate)
+                    .Take(limit)
+                    .Select(s => new SalesSummaryDto
+                    {
+                        SummaryId = s.SummaryId,
+                        BusinessId = s.BusinessId,
+                        SummaryType = s.SummaryType,
+                        PeriodStartDate = s.PeriodStartDate,
+                        PeriodEndDate = s.PeriodEndDate,
+                        TotalRevenue = s.TotalRevenue,
+                        AverageOrderValue = s.AverageOrderValue,
+                        TotalOrders = s.TotalOrders,
+                        TotalItemsSold = s.TotalItemsSold,
+                        UniqueCustomers = 0, // Calculated separately or left as 0 since not stored
+                        TopCustomerId = s.TopCustomerId,
+                        TopCustomerName = s.TopCustomerName,
+                        TopCustomerTotal = s.TopCustomerTotal,
+                        TopProductId = s.TopInventoryId,
+                        TopProductName = s.TopInventoryName,
+                        TopProductQuantitySold = s.TopInventoryQuantitySold,
+                        TopProductRevenue = 0,
+                        GeneratedAt = s.GeneratedAt,
+                        Source = s.Source ?? "Unknown"
+                    })
+                    .ToListAsync();
+
+                return Result<List<SalesSummaryDto>>.Success(summaries);
+            }
+            catch (Exception ex)
+            {
+                return Result<List<SalesSummaryDto>>.Failure(ex.Message);
+            }
+        }
+
+        public async Task GenerateDailySummariesAsync()
+        {
+            var businesses = await _db.TblBusinesses.Select(b => b.BusinessId).ToListAsync();
+            var yesterday = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
+            foreach (var businessId in businesses)
+            {
+                await GenerateAndStoreSalesSummaryAsync(businessId, "DAILY", yesterday, yesterday, "Hangfire");
+            }
+        }
+
+        public async Task GenerateMonthlySummariesAsync()
+        {
+            var businesses = await _db.TblBusinesses.Select(b => b.BusinessId).ToListAsync();
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var lastMonth = today.AddMonths(-1);
+            var startDate = new DateOnly(lastMonth.Year, lastMonth.Month, 1);
+            var endDate = startDate.AddMonths(1).AddDays(-1);
+            foreach (var businessId in businesses)
+            {
+                await GenerateAndStoreSalesSummaryAsync(businessId, "MONTHLY", startDate, endDate, "Hangfire");
+            }
+        }
+
+        public async Task GenerateYearlySummariesAsync()
+        {
+            var businesses = await _db.TblBusinesses.Select(b => b.BusinessId).ToListAsync();
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var lastYear = today.Year - 1;
+            var startDate = new DateOnly(lastYear, 1, 1);
+            var endDate = new DateOnly(lastYear, 12, 31);
+            foreach (var businessId in businesses)
+            {
+                await GenerateAndStoreSalesSummaryAsync(businessId, "YEARLY", startDate, endDate, "Hangfire");
             }
         }
     }

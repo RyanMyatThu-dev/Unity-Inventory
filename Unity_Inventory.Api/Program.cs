@@ -1,12 +1,17 @@
 using Unity_Inventory.Domain.Features;
+using Unity_Inventory.Domain.Features.Summary;
 using Unity_Inventory.Shared.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Hangfire;
 using Scalar.AspNetCore;
 using System.Text;
 using Serilog;
 using Serilog.Events;
+
+// Must be set before any Npgsql connections are created (including Hangfire.PostgreSql)
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -108,6 +113,26 @@ app.UseAuthentication();
 app.UseMiddleware<TokenValidation>();
 
 app.UseAuthorization();
+
+app.UseHangfireDashboard();
+
+// Register Hangfire recurring jobs for automated sales summary compilations
+var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
+recurringJobManager.AddOrUpdate<ISummaryService>(
+    "daily-sales-summary",
+    service => service.GenerateDailySummariesAsync(),
+    Cron.Daily(1)); // 01:00 AM daily
+
+recurringJobManager.AddOrUpdate<ISummaryService>(
+    "monthly-sales-summary",
+    service => service.GenerateMonthlySummariesAsync(),
+    Cron.Monthly(1, 2)); // 02:00 AM on the 1st of the month
+
+recurringJobManager.AddOrUpdate<ISummaryService>(
+    "yearly-sales-summary",
+    service => service.GenerateYearlySummariesAsync(),
+    Cron.Yearly(1, 1, 3)); // 03:00 AM on Jan 1st
+
 app.MapControllers();
 
 try

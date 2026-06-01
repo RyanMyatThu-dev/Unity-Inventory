@@ -70,71 +70,7 @@ const formatCurrency = (value: number) => {
 };
 
 // --- Mock Seed Data to Enhance Visual Richness (Gracefully merged with live API data) ---
-const SEED_SUMMARIES: SalesSummary[] = [
-  {
-    summaryId: 1001,
-    businessId: 1,
-    summaryType: 'MONTHLY',
-    periodStartDate: '2026-05-01',
-    periodEndDate: '2026-05-31',
-    totalRevenue: 28450000,
-    averageOrderValue: 245000,
-    totalOrders: 116,
-    totalItemsSold: 580,
-    uniqueCustomers: 42,
-    topCustomerId: 101,
-    topCustomerName: 'Capital Enterprises Ltd',
-    topCustomerTotal: 4850000,
-    topProductId: 204,
-    topProductName: 'Industrial Steel Rack XL',
-    topProductQuantitySold: 42,
-    topProductRevenue: 6300000,
-    generatedAt: '2026-05-31T23:59:59Z',
-    source: 'System'
-  },
-  {
-    summaryId: 1002,
-    businessId: 1,
-    summaryType: 'WEEKLY',
-    periodStartDate: '2026-05-24',
-    periodEndDate: '2026-05-30',
-    totalRevenue: 8120000,
-    averageOrderValue: 232000,
-    totalOrders: 35,
-    totalItemsSold: 165,
-    uniqueCustomers: 18,
-    topCustomerId: 102,
-    topCustomerName: 'Aung San Retailers',
-    topCustomerTotal: 1540000,
-    topProductId: 205,
-    topProductName: 'Premium Heavy Duty Bolt',
-    topProductQuantitySold: 85,
-    topProductRevenue: 1700000,
-    generatedAt: '2026-05-30T18:00:00Z',
-    source: 'API'
-  },
-  {
-    summaryId: 1003,
-    businessId: 1,
-    summaryType: 'MONTHLY',
-    periodStartDate: '2026-04-01',
-    periodEndDate: '2026-04-30',
-    totalRevenue: 24150000,
-    averageOrderValue: 215000,
-    totalOrders: 112,
-    totalItemsSold: 490,
-    uniqueCustomers: 38,
-    topCustomerId: 104,
-    topCustomerName: 'Mandalay Traders Co',
-    topCustomerTotal: 3950000,
-    topProductId: 204,
-    topProductName: 'Industrial Steel Rack XL',
-    topProductQuantitySold: 36,
-    topProductRevenue: 5400000,
-    generatedAt: '2026-04-30T23:59:59Z',
-    source: 'Hangfire'
-  }
-];
+const SEED_SUMMARIES: SalesSummary[] = [];
 
 // --- Generation Progress Modal Component ---
 const GenerateSummaryModal = ({
@@ -319,6 +255,29 @@ const DetailedSummaryModal = ({
   summary: SalesSummary;
   onClose: () => void;
 }) => {
+  const [analysis, setAnalysis] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchAnalysis = async () => {
+      try {
+        const res = await api.post('/summary/sales/analyze', summary);
+        if (res.data.isSuccess) {
+          setAnalysis(res.data.data);
+        } else {
+          setAnalysis('Failed to load AI analysis summary.');
+        }
+      } catch (err) {
+        console.error(err);
+        setAnalysis('Failed to load AI analysis summary.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalysis();
+  }, [summary]);
+
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-zinc-900/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}></div>
@@ -395,9 +354,16 @@ const DetailedSummaryModal = ({
               <Sparkles className="text-amber-500" size={13} />
               <h4 className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Compulsory AI Synthesis Summary</h4>
             </div>
-            <p className="text-[10px] text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium">
-              Over the audited period starting from <strong className="text-zinc-900 dark:text-zinc-200">{new Date(summary.periodStartDate).toLocaleDateString()}</strong> to <strong className="text-zinc-900 dark:text-zinc-200">{new Date(summary.periodEndDate).toLocaleDateString()}</strong>, your business transacted a total volume of <strong className="text-zinc-900 dark:text-zinc-200">{formatCurrency(summary.totalRevenue)}</strong>. Performance analytics denote strong core momentum with an average customer invoice amount of <strong className="text-zinc-900 dark:text-zinc-200">{formatCurrency(summary.averageOrderValue)}</strong>. Client consolidation registers <strong className="text-zinc-900 dark:text-zinc-200">{summary.uniqueCustomers || 'multiple'} unique entities</strong>, indicating reliable commercial retention levels.
-            </p>
+            {loading ? (
+              <div className="flex items-center gap-2 text-[10px] text-zinc-400 py-2">
+                <Loader2 className="animate-spin text-amber-500" size={14} />
+                <span>Generating dynamic AI business analysis...</span>
+              </div>
+            ) : (
+              <p className="text-[10px] text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium animate-in fade-in duration-350">
+                {analysis}
+              </p>
+            )}
           </div>
 
           {/* Top Performers breakdown */}
@@ -519,7 +485,6 @@ export default function SalesSummariesPage() {
       if (res.data.isSuccess && res.data.data) {
         setActiveSummary(res.data.data);
       } else {
-        // Fallback calculation locally if empty data is returned
         setActiveSummary(null);
       }
 
@@ -528,22 +493,17 @@ export default function SalesSummariesPage() {
         params: { summaryType: summaryTypeFilter.toUpperCase() }
       });
       
-      let fetchedHistory = [];
-      if (historyRes.data.isSuccess && historyRes.data.data && historyRes.data.data.length > 0) {
-        fetchedHistory = historyRes.data.data;
+      if (historyRes.data.isSuccess && historyRes.data.data) {
+        setHistoryList(historyRes.data.data);
+      } else {
+        setHistoryList([]);
       }
-      
-      // Merge with SEED_SUMMARIES to populate history list with beautiful metadata
-      setHistoryList([...fetchedHistory, ...SEED_SUMMARIES].filter(s => s.summaryType === summaryTypeFilter));
 
     } catch (err) {
       console.error('Failed to load active summaries:', err);
-      // Seamlessly fallback to Seed data when API fails or is offline
-      const matchingSeeds = SEED_SUMMARIES.filter(s => s.summaryType === summaryTypeFilter);
-      if (matchingSeeds.length > 0) {
-        setActiveSummary(matchingSeeds[0]);
-      }
-      setHistoryList(matchingSeeds);
+      setActiveSummary(null);
+      setHistoryList([]);
+      toast.error('Failed to fetch analytical summaries.');
     } finally {
       setLoading(false);
     }
@@ -660,7 +620,7 @@ export default function SalesSummariesPage() {
           
           {/* Summary Type Filter */}
           <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-0.5 rounded-lg shadow-sm">
-            {['WEEKLY', 'MONTHLY', 'YEARLY'].map((t) => (
+            {['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'CUSTOM'].map((t) => (
               <button
                 key={t}
                 onClick={() => setSummaryTypeFilter(t)}
@@ -954,7 +914,11 @@ export default function SalesSummariesPage() {
                         <td className="px-5 py-4 font-bold">
                           <span className={cn(
                             "px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider",
-                            item.summaryType === 'MONTHLY' ? "bg-amber-500/10 text-amber-600" : item.summaryType === 'WEEKLY' ? "bg-blue-500/10 text-blue-600" : "bg-emerald-500/10 text-emerald-600"
+                            item.summaryType === 'DAILY' ? "bg-rose-500/10 text-rose-600" :
+                            item.summaryType === 'WEEKLY' ? "bg-blue-500/10 text-blue-600" :
+                            item.summaryType === 'MONTHLY' ? "bg-amber-500/10 text-amber-600" :
+                            item.summaryType === 'YEARLY' ? "bg-emerald-500/10 text-emerald-600" :
+                            "bg-violet-500/10 text-violet-600"
                           )}>
                             {item.summaryType}
                           </span>
