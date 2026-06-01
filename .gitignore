@@ -56,3 +56,4 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 /Unity_Inventory.Api/.vs
+/Context/Features/*
