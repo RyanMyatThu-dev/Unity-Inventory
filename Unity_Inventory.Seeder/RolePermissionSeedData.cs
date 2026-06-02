@@ -13,10 +13,11 @@ internal static class RolePermissionSeedData
         "customerprices",
         "categories",
         "users",
-        "business"
+        "business",
+        "summary"
     ];
 
-    private static readonly string[] Actions = ["view", "create", "edit", "delete"];
+    private static readonly string[] Actions = ["view", "create", "edit", "delete", "analyze"];
 
     /// <summary>
     /// Role-only rows (UserId always null). GrantedByUserId is the seed owner account.
@@ -73,5 +74,8 @@ internal static class RolePermissionSeedData
         ("sales", "create"),
         ("customerprices", "view"),
         ("categories", "view"),
+        ("summary", "view"),
+        ("summary", "create"),
+        ("summary", "analyze"),
     ];
 }

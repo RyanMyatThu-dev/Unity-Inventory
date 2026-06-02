@@ -20,13 +20,19 @@ namespace Unity_Inventory.Domain.Features.Sales
             _db = db;
         }
 
-        public async Task<PagedResult<ReportDTO>> GetReportsByBusinessIdAsync(PaginationRequest paginationRequest, int businessId)
+        public async Task<PagedResult<ReportDTO>> GetReportsByBusinessIdAsync(PaginationRequest paginationRequest, int businessId, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
                 var query = _db.TblReports
                     .Include(r => r.Customer)
                     .Where(r => r.BusinessId == businessId);
+
+                if (startDate.HasValue)
+                    query = query.Where(r => r.ReportDate >= startDate.Value);
+
+                if (endDate.HasValue)
+                    query = query.Where(r => r.ReportDate <= endDate.Value);
 
                 var totalCount = await query.CountAsync();
 
@@ -145,20 +151,27 @@ namespace Unity_Inventory.Domain.Features.Sales
                     // Update Inventory Summary
                     var invSummary = await _db.TblInventorySummaries
                         .FirstOrDefaultAsync(s => s.InventoryId == vReq.InventoryId && s.BusinessId == request.BusinessId);
-                    
+
                     if (invSummary == null)
                     {
+                        // Prevent negative stock from sales
+                        if (vReq.Quantity < 0)
+                            return Result<ReportDTO>.Failure("Invalid quantity. Cannot process negative quantity.");
+
                         invSummary = new TblInventorySummary
                         {
                             BusinessId = request.BusinessId,
                             InventoryId = vReq.InventoryId,
-                            CurrentStock = -vReq.Quantity, // Assuming stock can go negative if not initialized
+                            CurrentStock = 0,
                             LastUpdated = DateTime.UtcNow
                         };
                         _db.TblInventorySummaries.Add(invSummary);
                     }
                     else
                     {
+                        if (invSummary.CurrentStock < vReq.Quantity)
+                            return Result<ReportDTO>.Failure($"Insufficient stock for product. Available: {invSummary.CurrentStock}, Required: {vReq.Quantity}.");
+
                         invSummary.CurrentStock -= vReq.Quantity;
                         invSummary.LastUpdated = DateTime.Now;
                     }

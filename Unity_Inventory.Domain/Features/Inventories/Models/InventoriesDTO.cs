@@ -31,11 +31,13 @@ namespace Unity_Inventory.Domain.Features.Inventories.Models
         [MaxLength(150)]
         public string Name { get; set; } = string.Empty;
         [Required]
+        [Range(0.0, double.MaxValue, ErrorMessage = "Price cannot be negative.")]
         public decimal Price { get; set; }
 
         [Required]
         public int BusinessId { get; set; }
         public int? CategoryId { get; set; }
+        [Range(0, int.MaxValue, ErrorMessage = "Initial stock cannot be negative.")]
         public int InitialStock { get; set; }
 
     }
@@ -48,6 +50,7 @@ namespace Unity_Inventory.Domain.Features.Inventories.Models
         [MaxLength(150)]
         public string Name { get; set; } = string.Empty;
         [Required]
+        [Range(0.0, double.MaxValue, ErrorMessage = "Price cannot be negative.")]
         public decimal Price { get; set; }
 
         [Required]
@@ -64,6 +67,7 @@ namespace Unity_Inventory.Domain.Features.Inventories.Models
         [Required]
         public int BusinessId { get; set; }
         [Required]
+        [Range(0, int.MaxValue, ErrorMessage = "Stock quantity cannot be negative.")]
         public int CurrentStock { get; set; }
 
         public byte[]? StockVersionStamp { get; set; }

@@ -565,6 +565,15 @@ export default function SalesPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
 
+  const [selectedPreset, setSelectedPreset] = useState<string>('ALL');
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
+
+  const handlePresetChange = (preset: string) => {
+    setSelectedPreset(preset);
+    setPage(1);
+  };
+
   const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
@@ -572,6 +581,34 @@ export default function SalesPage() {
       if (search) {
         params.search = search;
       }
+
+      let startDate: string | undefined = undefined;
+      let endDate: string | undefined = undefined;
+      const today = new Date();
+
+      if (selectedPreset === 'THIS_WEEK') {
+        const day = today.getDay();
+        const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(today.setDate(diff));
+        monday.setHours(0, 0, 0, 0);
+        startDate = monday.toISOString().split('T')[0];
+        endDate = new Date().toISOString().split('T')[0];
+      } else if (selectedPreset === 'THIS_MONTH') {
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        startDate = firstDay.toISOString().split('T')[0];
+        endDate = new Date().toISOString().split('T')[0];
+      } else if (selectedPreset === 'THIS_YEAR') {
+        const firstDayOfYear = new Date(today.getFullYear(), 0, 1);
+        startDate = firstDayOfYear.toISOString().split('T')[0];
+        endDate = new Date().toISOString().split('T')[0];
+      } else if (selectedPreset === 'CUSTOM') {
+        if (customStartDate) startDate = customStartDate;
+        if (customEndDate) endDate = customEndDate;
+      }
+
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+
       const response = await api.get('/sales/reports', { params });
       if (response.data.isSuccess) {
         setReports(response.data.data || []);
@@ -583,7 +620,7 @@ export default function SalesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, search, selectedPreset, customStartDate, customEndDate]);
 
   useEffect(() => {
     const timer = setTimeout(() => { fetchReports(); }, 300);
@@ -602,24 +639,73 @@ export default function SalesPage() {
         </button>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative max-w-sm flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
-          <input
-            type="text"
-            placeholder="Filter ledger..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-zinc-900 dark:focus:border-zinc-500 transition-all shadow-sm"
-          />
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-sm">
+        <div className="flex flex-wrap items-center gap-3 flex-1">
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+            <input
+              type="text"
+              placeholder="Filter ledger..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-zinc-900 dark:focus:border-zinc-500 transition-all"
+            />
+          </div>
+
+          <div className="flex items-center gap-1 bg-zinc-100/60 dark:bg-zinc-800/40 p-0.5 rounded-lg border border-zinc-200/50 dark:border-zinc-700/30">
+            {[
+              { id: 'ALL', label: 'All Time' },
+              { id: 'THIS_WEEK', label: 'This Week' },
+              { id: 'THIS_MONTH', label: 'This Month' },
+              { id: 'THIS_YEAR', label: 'This Year' },
+              { id: 'CUSTOM', label: 'Custom' }
+            ].map((preset) => (
+              <button
+                key={preset.id}
+                onClick={() => handlePresetChange(preset.id)}
+                className={cn(
+                  "px-3 py-1.5 rounded-md text-[8px] font-bold uppercase tracking-wider transition-all",
+                  selectedPreset === preset.id
+                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+                )}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
+          {selectedPreset === 'CUSTOM' && (
+            <div className="flex items-center gap-1.5 animate-in fade-in slide-in-from-left-3 duration-250">
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => {
+                  setCustomStartDate(e.target.value);
+                  setPage(1);
+                }}
+                className="px-2 py-1 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 rounded-md text-[9px] font-bold text-zinc-900 dark:text-zinc-100 outline-none"
+              />
+              <span className="text-[8px] font-bold text-zinc-400 uppercase">To</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => {
+                  setCustomEndDate(e.target.value);
+                  setPage(1);
+                }}
+                className="px-2 py-1 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 rounded-md text-[9px] font-bold text-zinc-900 dark:text-zinc-100 outline-none"
+              />
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-1 rounded-lg shadow-sm">
+        <div className="flex items-center gap-1 bg-zinc-100/60 dark:bg-zinc-800/40 p-0.5 rounded-lg border border-zinc-200/50 dark:border-zinc-700/30">
           <button 
             onClick={() => setViewType('table')}
             className={cn(
-              "p-1.5 rounded transition-all",
-              viewType === 'table' ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              "p-1.5 rounded-md transition-all",
+              viewType === 'table' ? "bg-white text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100 shadow-sm" : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-450"
             )}
           >
             <LayoutList size={14} />
@@ -627,8 +713,8 @@ export default function SalesPage() {
           <button 
             onClick={() => setViewType('grid')}
             className={cn(
-              "p-1.5 rounded transition-all",
-              viewType === 'grid' ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              "p-1.5 rounded-md transition-all",
+              viewType === 'grid' ? "bg-white text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100 shadow-sm" : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-450"
             )}
           >
             <LayoutGrid size={14} />

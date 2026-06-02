@@ -30,12 +30,12 @@ namespace Unity_Inventory.Api.Controllers
 
         [HttpGet("reports")]
         [Permission("sales", "view")]
-        public async Task<IActionResult> GetReports([FromQuery] PaginationRequest request)
+        public async Task<IActionResult> GetReports([FromQuery] PaginationRequest request, [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
         {
             var businessId = GetBusinessId();
             if (businessId == 0) return BadRequest("Business not selected.");
 
-            var result = await _salesService.GetReportsByBusinessIdAsync(request, businessId);
+            var result = await _salesService.GetReportsByBusinessIdAsync(request, businessId, startDate, endDate);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

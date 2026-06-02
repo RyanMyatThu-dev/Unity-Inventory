@@ -272,6 +272,11 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
   };
 
   const handleSaveInfo = async () => {
+    const parsedPrice = parseFloat(editForm.price);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      toast.error("Price cannot be negative.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const formData = new FormData();
@@ -308,6 +313,11 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
   };
 
   const handleUpdateStock = async () => {
+    const parsedStock = parseInt(newStock);
+    if (isNaN(parsedStock) || parsedStock < 0) {
+      toast.error("Stock quantity cannot be negative.");
+      return;
+    }
     setIsUpdatingStock(true);
     try {
       const response = await api.post('/inventories/update-stock', {
@@ -417,6 +427,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-400">MMK</span>
                         <input
                           type="number"
+                          min="0"
                           value={editForm.price}
                           onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
                           className="w-full pl-14 pr-4 py-2 text-base font-semibold text-zinc-900 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 transition-all"
@@ -495,6 +506,8 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                   <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Manual Override Value</label>
                   <input
                     type="number"
+                    min="0"
+                    step="1"
                     value={newStock}
                     onChange={(e) => setNewStock(e.target.value)}
                     className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl font-bold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-1 focus:ring-emerald-500 transition-all text-xl"
@@ -548,8 +561,9 @@ export default function InventoryPage() {
   const [filterMaxStock, setFilterMaxStock] = useState('');
   const [filterSortBy, setFilterSortBy] = useState<'name' | 'price' | 'createdDate'>('name');
   const [filterSortDesc, setFilterSortDesc] = useState(false);
+  const [lowStockOnly, setLowStockOnly] = useState(false);
 
-  const hasActiveFilters = filterCategoryId || filterMinPrice || filterMaxPrice || filterMinStock || filterMaxStock || filterSortBy !== 'name' || filterSortDesc;
+  const hasActiveFilters = filterCategoryId || filterMinPrice || filterMaxPrice || filterMinStock || filterMaxStock || filterSortBy !== 'name' || filterSortDesc || lowStockOnly;
 
   const resetFilters = () => {
     setFilterCategoryId('');
@@ -559,6 +573,7 @@ export default function InventoryPage() {
     setFilterMaxStock('');
     setFilterSortBy('name');
     setFilterSortDesc(false);
+    setLowStockOnly(false);
     setPage(1);
   };
 
@@ -593,17 +608,23 @@ export default function InventoryPage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { pageNumber: page, pageSize: 15 };
-      if (search) params.name = search;
-      if (filterCategoryId) params.categoryId = parseInt(filterCategoryId);
-      if (filterMinPrice) params.minPrice = parseFloat(filterMinPrice);
-      if (filterMaxPrice) params.maxPrice = parseFloat(filterMaxPrice);
-      if (filterMinStock) params.minStockQuantity = parseInt(filterMinStock);
-      if (filterMaxStock) params.maxStockQuantity = parseInt(filterMaxStock);
-      params.sortBy = filterSortBy === 'name' ? 0 : filterSortBy === 'price' ? 1 : 2;
-      params.isDescending = filterSortDesc;
+      let response;
+      if (lowStockOnly) {
+        response = await api.get('/inventories/low-stock', { params: { threshold: 10 } });
+      } else {
+        const params: any = { pageNumber: page, pageSize: 15 };
+        if (search) params.name = search;
+        if (filterCategoryId) params.categoryId = parseInt(filterCategoryId);
+        if (filterMinPrice) params.minPrice = parseFloat(filterMinPrice);
+        if (filterMaxPrice) params.maxPrice = parseFloat(filterMaxPrice);
+        if (filterMinStock) params.minStockQuantity = parseInt(filterMinStock);
+        if (filterMaxStock) params.maxStockQuantity = parseInt(filterMaxStock);
+        params.sortBy = filterSortBy === 'name' ? 0 : filterSortBy === 'price' ? 1 : 2;
+        params.isDescending = filterSortDesc;
 
-      const response = await api.get('/search/products', { params });
+        response = await api.get('/search/products', { params });
+      }
+
       if (response.data.isSuccess) {
         const items = response.data.data || [];
         const mappedItems: Product[] = items.map((item: any) => ({
@@ -618,7 +639,7 @@ export default function InventoryPage() {
           categoryName: item.categoryName
         }));
         setProducts(mappedItems);
-        setTotalPages(response.data.pagination?.totalPages || 1);
+        setTotalPages(lowStockOnly ? 1 : (response.data.pagination?.totalPages || 1));
       }
     } catch (error) {
       console.error('Failed to fetch products:', error);
@@ -626,7 +647,7 @@ export default function InventoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, filterCategoryId, filterMinPrice, filterMaxPrice, filterMinStock, filterMaxStock, filterSortBy, filterSortDesc]);
+  }, [page, search, filterCategoryId, filterMinPrice, filterMaxPrice, filterMinStock, filterMaxStock, filterSortBy, filterSortDesc, lowStockOnly]);
 
   // Sync selected product with background updates
   useEffect(() => {
@@ -650,6 +671,17 @@ export default function InventoryPage() {
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    const parsedPrice = parseFloat(newProduct.price);
+    const parsedStock = parseInt(newProduct.stock);
+
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      toast.error("Price cannot be negative.");
+      return;
+    }
+    if (isNaN(parsedStock) || parsedStock < 0) {
+      toast.error("Initial stock cannot be negative.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const formData = new FormData();
@@ -774,6 +806,22 @@ export default function InventoryPage() {
                 <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full absolute top-2 right-2 animate-pulse" />
               )}
               <ChevronDown size={12} className={cn("transition-transform", showFilters && "rotate-180")} />
+            </button>
+
+            <button
+              onClick={() => {
+                setLowStockOnly(!lowStockOnly);
+                setPage(1);
+              }}
+              className={cn(
+                "flex items-center gap-2 px-4 py-3 border rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm relative shrink-0",
+                lowStockOnly
+                  ? "bg-amber-600 border-amber-600 text-white dark:bg-amber-500 dark:border-amber-500"
+                  : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500"
+              )}
+            >
+              <AlertCircle size={14} />
+              Low Stock Only
             </button>
           </div>
 
@@ -1034,11 +1082,11 @@ export default function InventoryPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest px-1">Unit Price</label>
-                  <input required type="number" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} placeholder="0.00" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-inner" />
+                  <input required type="number" min="0" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} placeholder="0.00" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-inner" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest px-1">Initial Stock</label>
-                  <input required type="number" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })} placeholder="0" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-inner" />
+                  <input required type="number" min="0" step="1" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })} placeholder="0" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-350 dark:placeholder:text-zinc-650 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-inner" />
                 </div>
               </div>
               <button disabled={isSubmitting} type="submit" className="w-full py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-xl dark:shadow-black/40 shadow-zinc-200 mt-4">

@@ -134,7 +134,7 @@ namespace Unity_Inventory.Api.Controllers
 
         // Analyze sales summary using Gemini AI
         [HttpPost("sales/analyze")]
-        [Permission("summary", "view")]
+        [Permission("summary", "analyze")]
         public async Task<IActionResult> AnalyzeSalesSummary(
             [FromBody] SalesSummaryDto summaryDto,
             [FromServices] IAiService aiService)

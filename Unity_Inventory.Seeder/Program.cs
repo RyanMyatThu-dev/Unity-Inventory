@@ -132,6 +132,29 @@ FOR EACH ROW EXECUTE FUNCTION update_version_stamp();
         Console.WriteLine("Generating presentation demo data...");
         await SeedDemoDataAsync(db, business.BusinessId);
 
+        // Generate initial summaries for the seeded data
+        var endDate = DateTime.UtcNow.Date;
+        var yesterday = endDate.AddDays(-1);
+        var lastMonthStart = new DateTime(endDate.Year, endDate.Month, 1).AddMonths(-1);
+        var lastMonthEnd = lastMonthStart.AddMonths(1).AddDays(-1);
+        var lastYearStart = new DateTime(endDate.Year - 1, 1, 1);
+        var lastYearEnd = new DateTime(endDate.Year - 1, 12, 31);
+
+        await GenerateAndStoreSummaryAsync(db, business.BusinessId, "DAILY",
+            DateOnly.FromDateTime(yesterday),
+            DateOnly.FromDateTime(yesterday),
+            "Seeder");
+
+        await GenerateAndStoreSummaryAsync(db, business.BusinessId, "MONTHLY",
+            DateOnly.FromDateTime(lastMonthStart),
+            DateOnly.FromDateTime(lastMonthEnd),
+            "Seeder");
+
+        await GenerateAndStoreSummaryAsync(db, business.BusinessId, "YEARLY",
+            DateOnly.FromDateTime(lastYearStart),
+            DateOnly.FromDateTime(lastYearEnd),
+            "Seeder");
+
         Console.WriteLine();
         Console.WriteLine("Seed complete.");
         Console.WriteLine($"  Business: {business.BusinessName} (Id={business.BusinessId})");
@@ -142,6 +165,131 @@ FOR EACH ROW EXECUTE FUNCTION update_version_stamp();
         Console.WriteLine($"  Role permissions: {permissions.Count} rows (UserId null; Owner full CRUD per module, Admin minus users/business delete, Staff read + sales create).");
         return 0;
     }
+        // Helper method to generate and store sales summary
+        static async Task GenerateAndStoreSummaryAsync(IMSDbContext db, int businessId, string summaryType, DateOnly periodStartDate, DateOnly periodEndDate, string source)
+        {
+            // Convert DateOnly to DateTime for querying
+            var startDateTime = periodStartDate.ToDateTime(TimeOnly.MinValue);
+            var endDateTime = periodEndDate.ToDateTime(TimeOnly.MaxValue);
+
+            // Get reports within the period
+            var reportsQuery = db.TblReports
+                .Include(r => r.Customer)
+                .Where(r => r.BusinessId == businessId
+                        && r.ReportDate >= startDateTime
+                        && r.ReportDate <= endDateTime);
+
+            var reportsList = await reportsQuery.ToListAsync();
+
+            if (!reportsList.Any())
+            {
+                // No data to summarize
+                return;
+            }
+
+            // Get voucher details for these reports
+            var reportIds = reportsList.Select(r => r.ReportId).ToList();
+            var vouchersList = await db.TblVouchers
+                .Include(v => v.Inventory)
+                .Where(v => reportIds.Contains(v.ReportId) && v.BusinessId == businessId)
+                .ToListAsync();
+
+            // Calculate metrics
+            var totalRevenue = reportsList.Sum(r => r.TotalAmount);
+            var totalOrders = reportsList.Count;
+            var averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+            var totalItemsSold = vouchersList.Sum(v => v.Quantity);
+            var uniqueCustomers = reportsList.Select(r => r.CustomerId).Distinct().Count();
+
+            // Top customer
+            var topCustomer = reportsList
+                .GroupBy(r => new { r.CustomerId, r.Customer.CustomerName })
+                .Select(g => new
+                {
+                    CustomerId = g.Key.CustomerId,
+                    CustomerName = g.Key.CustomerName,
+                    TotalSpent = g.Sum(r => r.TotalAmount)
+                })
+                .OrderByDescending(g => g.TotalSpent)
+                .FirstOrDefault();
+
+            // Top product by quantity sold
+            var topProductByQuantity = vouchersList
+                .GroupBy(v => new { v.InventoryId, v.Inventory.InventoryName })
+                .Select(g => new
+                {
+                    InventoryId = g.Key.InventoryId,
+                    InventoryName = g.Key.InventoryName,
+                    TotalQuantity = g.Sum(v => v.Quantity),
+                    TotalRevenue = g.Sum(v => v.Quantity * v.SellPrice)
+                })
+                .OrderByDescending(g => g.TotalQuantity)
+                .FirstOrDefault();
+
+            // Top product by revenue
+            var topProductByRevenue = vouchersList
+                .GroupBy(v => new { v.InventoryId, v.Inventory.InventoryName })
+                .Select(g => new
+                {
+                    InventoryId = g.Key.InventoryId,
+                    InventoryName = g.Key.InventoryName,
+                    TotalQuantity = g.Sum(v => v.Quantity),
+                    TotalRevenue = g.Sum(v => v.Quantity * v.SellPrice)
+                })
+                .OrderByDescending(g => g.TotalRevenue)
+                .FirstOrDefault();
+
+            // Check if we already have a summary for this period/type
+            var existingSummary = await db.TblSummaryArchives
+                .FirstOrDefaultAsync(s => s.BusinessId == businessId
+                                        && s.SummaryType == summaryType
+                                        && s.PeriodStartDate == periodStartDate
+                                        && s.PeriodEndDate == periodEndDate);
+
+            if (existingSummary != null)
+            {
+                // Update existing summary
+                existingSummary.TotalRevenue = totalRevenue;
+                existingSummary.AverageOrderValue = averageOrderValue;
+                existingSummary.TotalOrders = totalOrders;
+                existingSummary.TotalItemsSold = totalItemsSold;
+                existingSummary.TopCustomerId = topCustomer?.CustomerId;
+                existingSummary.TopCustomerName = topCustomer?.CustomerName;
+                existingSummary.TopCustomerTotal = topCustomer?.TotalSpent;
+                existingSummary.TopInventoryId = topProductByQuantity?.InventoryId;
+                existingSummary.TopInventoryName = topProductByQuantity?.InventoryName;
+                existingSummary.TopInventoryQuantitySold = topProductByQuantity?.TotalQuantity;
+                existingSummary.GeneratedAt = DateTime.UtcNow;
+                existingSummary.Source = source;
+            }
+            else
+            {
+                // Create new summary archive record
+                var summaryArchive = new TblSummaryArchive
+                {
+                    BusinessId = businessId,
+                    SummaryType = summaryType,
+                    PeriodStartDate = periodStartDate,
+                    PeriodEndDate = periodEndDate,
+                    TotalRevenue = totalRevenue,
+                    AverageOrderValue = averageOrderValue,
+                    TotalOrders = totalOrders,
+                    TotalItemsSold = totalItemsSold,
+                    TopCustomerId = topCustomer?.CustomerId,
+                    TopCustomerName = topCustomer?.CustomerName,
+                    TopCustomerTotal = topCustomer?.TotalSpent,
+                    TopInventoryId = topProductByQuantity?.InventoryId,
+                    TopInventoryName = topProductByQuantity?.InventoryName,
+                    TopInventoryQuantitySold = topProductByQuantity?.TotalQuantity,
+                    GeneratedAt = DateTime.UtcNow,
+                    Source = source
+                };
+
+                db.TblSummaryArchives.Add(summaryArchive);
+            }
+
+            await db.SaveChangesAsync();
+        }
 
     private static async Task SeedDemoDataAsync(IMSDbContext db, int businessId)
     {
@@ -286,6 +434,12 @@ FOR EACH ROW EXECUTE FUNCTION update_version_stamp();
             if (currentDay.DayOfWeek == DayOfWeek.Sunday || currentDay.DayOfWeek == DayOfWeek.Saturday)
             {
                 salesToday = rnd.Next(2, 10); // more sales on weekends
+            }
+
+            // Force at least one sale in the last 2 days for demo purposes
+            if (currentDay >= endDate.AddDays(-1) && salesToday == 0)
+            {
+                salesToday = 1;
             }
 
             for (int s = 0; s < salesToday; s++)

@@ -124,6 +124,17 @@ namespace Unity_Inventory.Api.Controllers
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
+        [HttpGet("low-stock")]
+        [Permission("inventory", "view")]
+        public async Task<IActionResult> GetLowStockItems([FromQuery] int threshold = 10)
+        {
+            var businessId = GetBusinessId();
+            if (businessId == 0) return BadRequest("Business not selected.");
+
+            var result = await _inventoryService.GetLowStockItemsAsync(businessId, threshold);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
         [HttpPost("update-stock")]
         [Permission("inventory", "edit")]
         public async Task<IActionResult> UpdateStock([FromBody] UpdateStockRequest request)

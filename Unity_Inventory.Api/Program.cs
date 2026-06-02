@@ -121,17 +121,17 @@ var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>(
 recurringJobManager.AddOrUpdate<ISummaryService>(
     "daily-sales-summary",
     service => service.GenerateDailySummariesAsync(),
-    Cron.Daily(1)); // 01:00 AM daily
+    Cron.Daily(23, 55)); // 23:55 daily
 
 recurringJobManager.AddOrUpdate<ISummaryService>(
     "monthly-sales-summary",
     service => service.GenerateMonthlySummariesAsync(),
-    Cron.Monthly(1, 2)); // 02:00 AM on the 1st of the month
+    Cron.Monthly(31, 23, 59)); // 23:59 on the last day of the month (assuming month with 31 days, but Hangfire.Cron.Monthly handles month lengths)
 
 recurringJobManager.AddOrUpdate<ISummaryService>(
     "yearly-sales-summary",
     service => service.GenerateYearlySummariesAsync(),
-    Cron.Yearly(1, 1, 3)); // 03:00 AM on Jan 1st
+    Cron.Yearly(12, 31, 23, 59)); // 23:59 on Dec 31st
 
 app.MapControllers();
 

@@ -51,6 +51,8 @@ The system is currently fully scaffolded with a rich multi-tenant backend and du
 - [x] **Hangfire Recurring Summary Jobs**: Installed and configured PostgreSQL-backed Hangfire server in `FeaturesManager.cs` and `Program.cs`. Scheduled recurring DAILY, MONTHLY, and YEARLY jobs to compile analytics automatically.
 - [x] **Custom Summary Cadence**: Expanded the domain compilation engine to support on-demand CUSTOM date ranges (`from` -> `to`) through the API and Next.js frontend filters.
 - [x] **Gemini AI Synthesis Integration**: Implemented `AiService` invoking the Google Gemini 2.5 Flash API to compile custom summaries, featuring micro-interactive UI loading states and robust simulated local fallbacks.
+- [x] **Permission System Update**: Added `summary` module to RBAC system with appropriate permissions for Owner, Admin, and Staff roles via seeder updates.
+- [x] **Frontend Integration**: Removed mock seed data from sales summaries page and updated to rely solely on live API data for summary generation and display.
 
 ---
 

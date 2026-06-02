@@ -120,6 +120,9 @@ namespace Unity_Inventory.Domain.Features.Inventories
         {
             try
             {
+                if (request.Price < 0)
+                    return Result<InventoriesDTO>.Failure("Price cannot be negative.");
+
                 if (request.CategoryId.HasValue)
                 {
                     var categoryExists = await _db.TblCategories.AnyAsync(c => c.CategoryId == request.CategoryId && c.BusinessId == request.BusinessId);
@@ -139,7 +142,10 @@ namespace Unity_Inventory.Domain.Features.Inventories
 
                 _db.TblInventories.Add(inventory);
 
-                if(request.InitialStock > 0)
+                if (request.InitialStock < 0)
+                    return Result<InventoriesDTO>.Failure("Initial stock cannot be negative.");
+
+                if (request.InitialStock > 0)
                 {
                     var summary = new TblInventorySummary
                     {
@@ -174,6 +180,9 @@ namespace Unity_Inventory.Domain.Features.Inventories
         {
             try
             {
+                if (request.Price < 0)
+                    return Result<InventoriesDTO>.Failure("Price cannot be negative.");
+
                 var inventory = await _db.TblInventories.FindAsync(request.Id);
                 if (inventory == null || inventory.DeleteFlag == true)
                     return Result<InventoriesDTO>.Failure("Inventory item not found.");
@@ -267,6 +276,9 @@ namespace Unity_Inventory.Domain.Features.Inventories
 
         public async Task<Result<bool>> UpdateStockAsync(UpdateStockRequest request)
         {
+            if (request.CurrentStock < 0)
+                return Result<bool>.Failure("Stock quantity cannot be negative.");
+
             try
             {
                 var summary = await _db.TblInventorySummaries
@@ -305,8 +317,51 @@ namespace Unity_Inventory.Domain.Features.Inventories
             }
         }
 
+        public async Task<Result<List<InventoriesDTO>>> GetLowStockItemsAsync(int businessId, int threshold)
+        {
+            try
+            {
+                var items = await _db.TblInventories
+                    .Where(i => i.BusinessId == businessId && i.DeleteFlag != true)
+                    .GroupJoin(
+                        _db.TblInventorySummaries.Where(s => s.BusinessId == businessId),
+                        inv => inv.InventoryId,
+                        sum => sum.InventoryId,
+                        (inv, sums) => new { inv, sums })
+                    .SelectMany(
+                        x => x.sums.DefaultIfEmpty(),
+                        (x, summary) => new InventoriesDTO
+                        {
+                            Id = x.inv.InventoryId,
+                            Name = x.inv.InventoryName,
+                            BusinessId = x.inv.BusinessId,
+                            Price = x.inv.Price,
+                            CurrentStock = summary != null ? summary.CurrentStock : 0,
+                            LastUpdated = summary != null ? summary.LastUpdated : null,
+                            VersionStamp = x.inv.VersionStamp,
+                            StockVersionStamp = summary != null ? summary.VersionStamp : null,
+                            ImageUrl = x.inv.ImageUrl,
+                            ImageId = x.inv.ImageId,
+                            CategoryId = x.inv.CategoryId,
+                            CategoryName = x.inv.Category != null ? x.inv.Category.CategoryName : null
+                        })
+                    .Where(i => i.CurrentStock <= threshold)
+                    .OrderBy(i => i.CurrentStock)
+                    .ToListAsync();
+
+                return Result<List<InventoriesDTO>>.Success(items);
+            }
+            catch (Exception ex)
+            {
+                return Result<List<InventoriesDTO>>.Failure(ex.Message);
+            }
+        }
+
         public async Task<Result<InventoriesDTO>> CreateProductWithPhotoAsync(CreateProductRequest request, Stream photoStream, string fileName)
         {
+            if (request.Price < 0)
+                return Result<InventoriesDTO>.Failure("Price cannot be negative.");
+
             var existingProduct = await _db.TblInventories.FirstOrDefaultAsync
                 (i => i.InventoryName == request.Name && i.BusinessId == request.BusinessId && i.DeleteFlag != true);
 
@@ -352,6 +407,9 @@ namespace Unity_Inventory.Domain.Features.Inventories
                 };
 
                 _db.TblInventories.Add(newProduct);
+
+                if (request.InitialStock < 0)
+                    return Result<InventoriesDTO>.Failure("Initial stock cannot be negative.");
 
                 if(request.InitialStock > 0)
                 {

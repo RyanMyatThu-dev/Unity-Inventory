@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
@@ -8,8 +8,6 @@ import {
   TrendingUp,
   Plus,
   Calendar,
-  ChevronDown,
-  Download,
   ArrowUpRight,
   Activity,
   DollarSign,
@@ -19,28 +17,22 @@ import {
   Loader2,
   Sparkles,
   Clock,
-  ChevronRight,
-  ChevronLeft,
-  Trash2,
   Eye,
   X,
   FileText,
-  CheckCircle2,
   AlertCircle
 } from 'lucide-react';
 import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip
 } from 'recharts';
 import { toast } from 'sonner';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+
 
 // --- Types ---
 interface SalesSummary {
@@ -69,8 +61,7 @@ const formatCurrency = (value: number) => {
   return `${(value || 0).toLocaleString()} MMK`;
 };
 
-// --- Mock Seed Data to Enhance Visual Richness (Gracefully merged with live API data) ---
-const SEED_SUMMARIES: SalesSummary[] = [];
+// Removed mock seed data as per plan - using live API data only
 
 // --- Generation Progress Modal Component ---
 const GenerateSummaryModal = ({
@@ -128,10 +119,11 @@ const GenerateSummaryModal = ({
         }
       }, 2300);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
       setTimeout(() => {
         console.error(err);
-        toast.error(err.response?.data?.message || 'An error occurred during summary generation');
+        toast.error(error.response?.data?.message || 'An error occurred during summary generation');
         setIsSubmitting(false);
       }, 2300);
     }
@@ -420,19 +412,7 @@ const DetailedSummaryModal = ({
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/40 flex justify-end gap-2">
-          <button
-            onClick={() => {
-              toast.success('Sales analysis exported as PDF');
-              onClose();
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-md"
-          >
-            <Download size={12} />
-            Download PDF Report
-          </button>
-        </div>
+
       </div>
     </div>
   );
@@ -456,10 +436,27 @@ export default function SalesSummariesPage() {
     return new Date().toISOString().split('T')[0];
   });
 
+  // Create a display-safe fallback for summary details to avoid layout thrashing on empty states
+  const displaySummary = React.useMemo(() => {
+    return activeSummary || {
+      summaryId: 0,
+      businessId: 0,
+      summaryType: summaryTypeFilter,
+      periodStartDate: periodStartDate,
+      periodEndDate: periodEndDate,
+      totalRevenue: 0,
+      averageOrderValue: 0,
+      totalOrders: 0,
+      totalItemsSold: 0,
+      uniqueCustomers: 0,
+      generatedAt: '',
+      source: 'N/A'
+    };
+  }, [activeSummary, summaryTypeFilter, periodStartDate, periodEndDate]);
+
   // Modal States
   const [isGenModalOpen, setIsGenModalOpen] = useState(false);
   const [selectedSummary, setSelectedSummary] = useState<SalesSummary | null>(null);
-  const [deleteCandidate, setDeleteCandidate] = useState<SalesSummary | null>(null);
 
   // Check if User is allowed to generate summaries (Owner or Admin roles)
   const isCreateAllowed = React.useMemo(() => {
@@ -474,11 +471,14 @@ export default function SalesSummariesPage() {
     setLoading(true);
     try {
       // Query parameters for GET /api/summary/sales
-      const params = {
-        summaryType: summaryTypeFilter.toUpperCase(),
-        periodStartDate: periodStartDate,
-        periodEndDate: periodEndDate
+      const params: Record<string, string> = {
+        summaryType: summaryTypeFilter.toUpperCase()
       };
+
+      if (summaryTypeFilter === 'CUSTOM') {
+        params.periodStartDate = periodStartDate;
+        params.periodEndDate = periodEndDate;
+      }
 
       const res = await api.get('/summary/sales', { params });
       
@@ -511,46 +511,20 @@ export default function SalesSummariesPage() {
 
   // Trigger loading on filter changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadActiveSummary();
   }, [loadActiveSummary]);
 
-  // Preset Date range handlers
-  const handleApplyPreset = (preset: 'month' | 'week' | 'year') => {
-    const today = new Date();
-    let start = new Date();
-    
-    if (preset === 'month') {
-      start = new Date(today.getFullYear(), today.getMonth(), 1);
-    } else if (preset === 'week') {
-      // Start of current week (Monday)
-      const day = today.getDay();
-      const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-      start = new Date(today.setDate(diff));
-    } else if (preset === 'year') {
-      start = new Date(today.getFullYear(), 0, 1);
-    }
 
-    setPeriodStartDate(start.toISOString().split('T')[0]);
-    setPeriodEndDate(new Date().toISOString().split('T')[0]);
-  };
-
-  // Mock comparison growth helper based on Seed values
-  const growthRate = React.useMemo(() => {
-    if (!activeSummary) return 0;
-    // Calculate a dummy growth percentage relative to history averages
-    if (activeSummary.summaryType === 'MONTHLY') return 18.4;
-    if (activeSummary.summaryType === 'WEEKLY') return -3.2;
-    return 12.8;
-  }, [activeSummary]);
 
   // Generate dynamic chart data based on active summary metrics for rich visual rendering
   const telemetryChartData = React.useMemo(() => {
-    if (!activeSummary || activeSummary.totalRevenue === 0) return [];
+    if (!displaySummary || displaySummary.totalRevenue === 0) return [];
     
-    const rev = activeSummary.totalRevenue;
-    const ords = activeSummary.totalOrders;
+    const rev = displaySummary.totalRevenue;
+    const ords = displaySummary.totalOrders;
 
-    if (activeSummary.summaryType === 'WEEKLY') {
+    if (displaySummary.summaryType === 'WEEKLY') {
       return [
         { name: 'Mon', revenue: rev * 0.12, orders: Math.max(1, Math.round(ords * 0.12)) },
         { name: 'Tue', revenue: rev * 0.18, orders: Math.max(1, Math.round(ords * 0.18)) },
@@ -569,15 +543,9 @@ export default function SalesSummariesPage() {
       { name: 'Week 3', revenue: rev * 0.25, orders: Math.max(1, Math.round(ords * 0.25)) },
       { name: 'Week 4', revenue: rev * 0.23, orders: Math.max(1, Math.round(ords * 0.23)) }
     ];
-  }, [activeSummary]);
+  }, [displaySummary]);
 
-  // Delete summary item locally to keep frontend operational
-  const handleDeleteSummary = () => {
-    if (!deleteCandidate) return;
-    setHistoryList(prev => prev.filter(item => item.summaryId !== deleteCandidate.summaryId));
-    toast.success(`Summary ID #${deleteCandidate.summaryId} purged from history log`);
-    setDeleteCandidate(null);
-  };
+
 
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-300 pb-20">
@@ -594,81 +562,23 @@ export default function SalesSummariesPage() {
           </p>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          {activeSummary && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 rounded-xl text-[9px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-450 shadow-sm animate-in fade-in duration-200">
+              <Calendar size={12} className="text-zinc-400" />
+              <span>
+                {new Date(activeSummary.periodStartDate).toLocaleDateString()} &mdash; {new Date(activeSummary.periodEndDate).toLocaleDateString()}
+              </span>
+            </div>
+          )}
           {isCreateAllowed && (
             <button
               onClick={() => setIsGenModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-md"
+              className="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-md shrink-0"
             >
               <Plus size={14} /> New Summary
             </button>
           )}
-          <button
-            onClick={() => {
-              toast.success('Analytical summaries list exported successfully.');
-            }}
-            className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all shadow-sm"
-          >
-            <Download size={14} /> Export List
-          </button>
-        </div>
-      </div>
-
-      {/* Modern Filter Panel */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-zinc-50/50 dark:bg-zinc-900/30 p-4 border border-zinc-200/60 dark:border-zinc-800 rounded-xl">
-        <div className="flex flex-wrap items-center gap-3">
-          
-          {/* Summary Type Filter */}
-          <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-0.5 rounded-lg shadow-sm">
-            {['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'CUSTOM'].map((t) => (
-              <button
-                key={t}
-                onClick={() => setSummaryTypeFilter(t)}
-                className={cn(
-                  "px-3 py-1.5 rounded-md text-[9px] font-bold uppercase tracking-wider transition-all",
-                  summaryTypeFilter === t
-                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
-                )}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-
-          {/* Quick Preset Buttons */}
-          <div className="flex items-center gap-1">
-            <button onClick={() => handleApplyPreset('week')} className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-400 dark:text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-100 text-[8px] font-bold uppercase tracking-widest rounded transition-all">This Week</button>
-            <button onClick={() => handleApplyPreset('month')} className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-400 dark:text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-100 text-[8px] font-bold uppercase tracking-widest rounded transition-all">This Month</button>
-            <button onClick={() => handleApplyPreset('year')} className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-400 dark:text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-100 text-[8px] font-bold uppercase tracking-widest rounded transition-all">This Year</button>
-          </div>
-        </div>
-
-        {/* Explicit Custom Date Picker */}
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <input
-              type="date"
-              value={periodStartDate}
-              onChange={(e) => setPeriodStartDate(e.target.value)}
-              className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-md text-[9px] font-bold text-zinc-900 dark:text-zinc-100 outline-none"
-            />
-          </div>
-          <span className="text-[9px] font-bold text-zinc-400 uppercase">To</span>
-          <div className="relative">
-            <input
-              type="date"
-              value={periodEndDate}
-              onChange={(e) => setPeriodEndDate(e.target.value)}
-              className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-md text-[9px] font-bold text-zinc-900 dark:text-zinc-100 outline-none"
-            />
-          </div>
-          <button
-            onClick={loadActiveSummary}
-            className="p-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded hover:opacity-90 text-[9px] font-bold uppercase tracking-widest shadow-sm"
-          >
-            Apply
-          </button>
         </div>
       </div>
 
@@ -684,7 +594,7 @@ export default function SalesSummariesPage() {
             <div className="h-[350px] bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl" />
           </div>
         </div>
-      ) : activeSummary ? (
+      ) : (
         <div className="space-y-6 animate-in fade-in duration-300">
           
           {/* Active Summary Dash: KPI Cards Row */}
@@ -696,17 +606,11 @@ export default function SalesSummariesPage() {
                 <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-500">
                   <DollarSign size={16} />
                 </div>
-                <div className={cn(
-                  "flex items-center gap-0.5 text-[9px] font-bold rounded px-1.5 py-0.5",
-                  growthRate > 0 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400" : "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400"
-                )}>
-                  {growthRate > 0 ? '+' : ''}{growthRate}%
-                </div>
               </div>
               <div className="space-y-1">
                 <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Aggregate Revenue</p>
                 <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
-                  {formatCurrency(activeSummary.totalRevenue)}
+                  {formatCurrency(displaySummary.totalRevenue)}
                 </h3>
                 <p className="text-[9px] text-zinc-400 font-semibold italic">Net gross over current cycles</p>
               </div>
@@ -723,7 +627,7 @@ export default function SalesSummariesPage() {
               <div className="space-y-1">
                 <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Average Ticket Value</p>
                 <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
-                  {formatCurrency(activeSummary.averageOrderValue)}
+                  {formatCurrency(displaySummary.averageOrderValue)}
                 </h3>
                 <p className="text-[9px] text-zinc-400 font-semibold italic">AOV ratio per transaction</p>
               </div>
@@ -740,9 +644,9 @@ export default function SalesSummariesPage() {
               <div className="space-y-1">
                 <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Invoice Volume</p>
                 <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
-                  {activeSummary.totalOrders} Invoices
+                  {displaySummary.totalOrders} Invoices
                 </h3>
-                <p className="text-[9px] text-zinc-400 font-semibold italic">{activeSummary.totalItemsSold} stock units sold</p>
+                <p className="text-[9px] text-zinc-400 font-semibold italic">{displaySummary.totalItemsSold} stock units sold</p>
               </div>
             </div>
 
@@ -757,7 +661,7 @@ export default function SalesSummariesPage() {
               <div className="space-y-1">
                 <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Active Client Scope</p>
                 <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
-                  {activeSummary.uniqueCustomers} Unique Clients
+                  {displaySummary.uniqueCustomers} Unique Clients
                 </h3>
                 <p className="text-[9px] text-zinc-400 font-semibold italic">Registered accounts count</p>
               </div>
@@ -770,7 +674,7 @@ export default function SalesSummariesPage() {
             
             {/* Visual Analytics */}
             <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm flex flex-col min-h-[350px]">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-zinc-100 dark:border-zinc-800/60">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 bg-zinc-900 dark:bg-zinc-100 rounded-full" />
                   <div>
@@ -778,47 +682,99 @@ export default function SalesSummariesPage() {
                     <p className="text-[8px] text-zinc-400 font-bold uppercase mt-0.5">Cadence distribution index</p>
                   </div>
                 </div>
+
+                {/* Cadence controls and Date picker */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1 bg-zinc-100/60 dark:bg-zinc-800/40 p-0.5 rounded-lg border border-zinc-200/50 dark:border-zinc-700/30">
+                    {['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'CUSTOM'].map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => setSummaryTypeFilter(t)}
+                        className={cn(
+                          "px-2.5 py-1 rounded-md text-[8px] font-bold uppercase tracking-wider transition-all",
+                          summaryTypeFilter === t
+                            ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm"
+                            : "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+                        )}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+
+                  {summaryTypeFilter === 'CUSTOM' && (
+                    <div className="flex items-center gap-1.5 animate-in fade-in slide-in-from-right-3 duration-250">
+                      <input
+                        type="date"
+                        value={periodStartDate}
+                        onChange={(e) => setPeriodStartDate(e.target.value)}
+                        className="px-2 py-1 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 rounded-md text-[9px] font-bold text-zinc-900 dark:text-zinc-100 outline-none"
+                      />
+                      <span className="text-[8px] font-bold text-zinc-400 uppercase">To</span>
+                      <input
+                        type="date"
+                        value={periodEndDate}
+                        onChange={(e) => setPeriodEndDate(e.target.value)}
+                        className="px-2 py-1 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 rounded-md text-[9px] font-bold text-zinc-900 dark:text-zinc-100 outline-none"
+                      />
+                      <button
+                        onClick={loadActiveSummary}
+                        className="px-2.5 py-1 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded text-[8px] font-bold uppercase tracking-widest shadow-sm hover:opacity-90 transition-opacity"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="flex-1 h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={telemetryChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#18181b" stopOpacity={0.08}/>
-                        <stop offset="95%" stopColor="#18181b" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f1f1" />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: '#a1a1aa', fontSize: 9, fontWeight: 700 }}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: '#a1a1aa', fontSize: 9, fontWeight: 700 }}
-                      tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: '8px',
-                        border: 'none',
-                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
-                        fontSize: '9px',
-                        fontWeight: 800,
-                        backgroundColor: '#18181b',
-                        color: '#fff'
-                      }}
-                      itemStyle={{ color: '#fff' }}
-                      formatter={(v: any) => [formatCurrency(Number(v)), 'REVENUE']}
-                    />
-                    <Area type="monotone" dataKey="revenue" stroke="#18181b" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              {telemetryChartData.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl p-8 bg-zinc-50/30 dark:bg-zinc-950/10 min-h-[220px]">
+                  <AlertCircle className="text-zinc-300 dark:text-zinc-600 mb-2 animate-pulse" size={24} />
+                  <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">No transaction data available</p>
+                  <p className="text-[8px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-1">Try selecting a different cadence or custom range</p>
+                </div>
+              ) : (
+                <div className="flex-1 h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={telemetryChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#18181b" stopOpacity={0.08}/>
+                          <stop offset="95%" stopColor="#18181b" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f1f1" />
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#a1a1aa', fontSize: 9, fontWeight: 700 }}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#a1a1aa', fontSize: 9, fontWeight: 700 }}
+                        tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: '8px',
+                          border: 'none',
+                          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
+                          fontSize: '9px',
+                          fontWeight: 800,
+                          backgroundColor: '#18181b',
+                          color: '#fff'
+                        }}
+                        itemStyle={{ color: '#fff' }}
+                        formatter={(v: unknown) => [formatCurrency(Number(v as number)), 'REVENUE']}
+                      />
+                      <Area type="monotone" dataKey="revenue" stroke="#18181b" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </div>
 
             {/* Sidebar Intelligence (AI Insights + Leaders) */}
@@ -834,7 +790,7 @@ export default function SalesSummariesPage() {
                   <h5 className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Active System Insights</h5>
                 </div>
                 <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-normal font-medium">
-                  Aggregate sales logged at <strong className="text-zinc-800 dark:text-zinc-200">{formatCurrency(activeSummary.totalRevenue)}</strong> with growth trends auditing positively. High-retention customers moved a volume index of <strong className="text-zinc-800 dark:text-zinc-200">{activeSummary.totalItemsSold} stock items</strong>. Performance ratio suggests robust average ticket size.
+                  Aggregate sales logged at <strong className="text-zinc-800 dark:text-zinc-200">{formatCurrency(displaySummary.totalRevenue)}</strong> with growth trends auditing positively. High-retention customers moved a volume index of <strong className="text-zinc-800 dark:text-zinc-200">{displaySummary.totalItemsSold} stock items</strong>. Performance ratio suggests robust average ticket size.
                 </p>
               </div>
 
@@ -842,11 +798,11 @@ export default function SalesSummariesPage() {
               <div className="space-y-3.5">
                 <div className="border-t border-zinc-100 dark:border-zinc-800/60 pt-3">
                   <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">Primary Product Driver</span>
-                  {activeSummary.topProductName ? (
+                  {displaySummary.topProductName ? (
                     <div className="flex items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-950/20 border border-zinc-200/20 dark:border-zinc-800/50 p-2.5 rounded-lg">
                       <div className="min-w-0">
-                        <p className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 truncate uppercase">{activeSummary.topProductName}</p>
-                        <p className="text-[8px] text-zinc-400 font-bold uppercase mt-0.5">{activeSummary.topProductQuantitySold} Units Dispatched</p>
+                        <p className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 truncate uppercase">{displaySummary.topProductName}</p>
+                        <p className="text-[8px] text-zinc-400 font-bold uppercase mt-0.5">{displaySummary.topProductQuantitySold} Units Dispatched</p>
                       </div>
                       <span className="text-[9px] font-black text-zinc-900 dark:text-zinc-100 shrink-0">TOP</span>
                     </div>
@@ -857,12 +813,12 @@ export default function SalesSummariesPage() {
 
                 <div className="border-t border-zinc-100 dark:border-zinc-800/60 pt-3">
                   <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">Highest Value Client</span>
-                  {activeSummary.topCustomerName ? (
+                  {displaySummary.topCustomerName ? (
                     <div className="flex items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-950/20 border border-zinc-200/20 dark:border-zinc-800/50 p-2.5 rounded-lg">
                       <div className="min-w-0">
-                        <p className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 truncate uppercase">{activeSummary.topCustomerName}</p>
-                        {activeSummary.topCustomerTotal && (
-                          <p className="text-[8px] text-emerald-600 dark:text-emerald-400 font-bold uppercase mt-0.5">{formatCurrency(activeSummary.topCustomerTotal)}</p>
+                        <p className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 truncate uppercase">{displaySummary.topCustomerName}</p>
+                        {displaySummary.topCustomerTotal && (
+                          <p className="text-[8px] text-emerald-600 dark:text-emerald-400 font-bold uppercase mt-0.5">{formatCurrency(displaySummary.topCustomerTotal)}</p>
                         )}
                       </div>
                       <span className="text-[9px] font-black text-zinc-900 dark:text-zinc-100 shrink-0">KEY</span>
@@ -897,7 +853,7 @@ export default function SalesSummariesPage() {
                       <th className="px-5 py-4 text-[9px] font-bold text-zinc-400 uppercase tracking-widest text-right">Gross Total</th>
                       <th className="px-5 py-4 text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Primary Product Driver</th>
                       <th className="px-5 py-4 text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Generated Via</th>
-                      <th className="px-5 py-4 text-[9px] font-bold text-zinc-400 uppercase tracking-widest text-right">Actions</th>
+                      <th className="px-5 py-4 text-[9px] font-bold text-zinc-400 uppercase tracking-widest text-right">View</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
@@ -940,19 +896,13 @@ export default function SalesSummariesPage() {
                             >
                               <Eye size={12} />
                             </button>
-                            <button
-                              onClick={() => setDeleteCandidate(item)}
-                              className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded text-zinc-300 hover:text-rose-500 transition-colors"
-                            >
-                              <Trash2 size={12} />
-                            </button>
                           </div>
                         </td>
                       </tr>
                     ))}
                     {historyList.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="px-5 py-12 text-center text-zinc-400 uppercase font-bold italic">
+                        <td colSpan={6} className="px-5 py-12 text-center text-zinc-400 uppercase font-bold italic">
                           No archived summaries matching these filters could be retrieved.
                         </td>
                       </tr>
@@ -963,26 +913,6 @@ export default function SalesSummariesPage() {
             </div>
           </div>
 
-        </div>
-      ) : (
-        /* Empty State */
-        <div className="flex flex-col items-center justify-center p-20 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-900">
-          <div className="w-12 h-12 rounded-full bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 mb-4 animate-bounce">
-            <AlertCircle size={20} />
-          </div>
-          <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">No Summaries Calculated</h3>
-          <p className="text-[9px] text-zinc-400 font-semibold uppercase tracking-wider mt-1.5 text-center leading-relaxed">
-            There are no pre-compiled executive summaries matching the selected CADENCE and DATES.<br />
-            Generate a new summary to initiate analytics monitoring.
-          </p>
-          {isCreateAllowed && (
-            <button
-              onClick={() => setIsGenModalOpen(true)}
-              className="mt-6 flex items-center gap-1.5 px-4 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-md"
-            >
-              <Plus size={12} /> Generate Analytics Now
-            </button>
-          )}
         </div>
       )}
 
@@ -1002,16 +932,7 @@ export default function SalesSummariesPage() {
         />
       )}
 
-      {/* Purge Deletion Dialog */}
-      <ConfirmDialog
-        isOpen={deleteCandidate !== null}
-        title="Purge Analytical Summary"
-        description={`You are about to delete the historical record summary for period ${deleteCandidate ? new Date(deleteCandidate.periodStartDate).toLocaleDateString() : ''} - ${deleteCandidate ? new Date(deleteCandidate.periodEndDate).toLocaleDateString() : ''}. This operation is irreversible. Proceed?`}
-        confirmText="Purge Summary"
-        onConfirm={handleDeleteSummary}
-        onCancel={() => setDeleteCandidate(null)}
-        isDestructive={true}
-      />
+
 
     </div>
   );

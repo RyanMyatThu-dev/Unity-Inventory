@@ -18,5 +18,6 @@ namespace Unity_Inventory.Domain.Features.Inventories
         Task<Result<InventoriesDTO>> UpdateInventoryAsync(UpdateProductRequest request, Stream photoStream, string fileName);
         Task<Result<bool>> DeleteInventoryAsync(int id, byte[] version);
         Task<Result<bool>> UpdateStockAsync(UpdateStockRequest request);
+        Task<Result<List<InventoriesDTO>>> GetLowStockItemsAsync(int businessId, int threshold);
     }
 }
