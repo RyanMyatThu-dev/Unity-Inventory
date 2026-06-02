@@ -34,8 +34,32 @@ namespace Unity_Inventory.Domain.Features.Summary.Models
         public int? TopProductQuantitySold { get; set; }
         public decimal? TopProductRevenue { get; set; }
 
+        // Ranking insights for BI-style daily/period dashboards
+        public List<SalesSummaryCustomerRankDto> CustomerRanks { get; set; } = new();
+        public List<SalesSummaryProductRankDto> ProductRanks { get; set; } = new();
+
         // Metadata
         public DateTime GeneratedAt { get; set; }
         public string Source { get; set; } = null!; // API, Hangfire, etc.
+    }
+
+    public class SalesSummaryCustomerRankDto
+    {
+        public int Rank { get; set; }
+        public int CustomerId { get; set; }
+        public string CustomerName { get; set; } = string.Empty;
+        public decimal TotalRevenue { get; set; }
+        public int TotalOrders { get; set; }
+        public decimal PercentageOfRevenue { get; set; }
+    }
+
+    public class SalesSummaryProductRankDto
+    {
+        public int Rank { get; set; }
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public int QuantitySold { get; set; }
+        public decimal Revenue { get; set; }
+        public decimal PercentageOfRevenue { get; set; }
     }
 }

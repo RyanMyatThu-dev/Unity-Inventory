@@ -33,8 +33,7 @@ namespace Unity_Inventory.Domain.Features.Summary
 
                 if (archivedSummary != null)
                 {
-                    // Return the archived summary
-                    return Result<SalesSummaryDto>.Success(new SalesSummaryDto
+                    var summary = new SalesSummaryDto
                     {
                         SummaryId = archivedSummary.SummaryId,
                         BusinessId = archivedSummary.BusinessId,
@@ -55,7 +54,10 @@ namespace Unity_Inventory.Domain.Features.Summary
                         TopProductRevenue = 0, // This would need to be calculated or stored separately
                         GeneratedAt = archivedSummary.GeneratedAt,
                         Source = archivedSummary.Source ?? "Unknown"
-                    });
+                    };
+
+                    await EnrichSummaryRankingsAsync(summary);
+                    return Result<SalesSummaryDto>.Success(summary);
                 }
 
                 // If no archived summary, calculate on the fly
@@ -212,42 +214,12 @@ namespace Unity_Inventory.Domain.Features.Summary
                 var totalItemsSold = vouchers.Sum(v => v.Quantity);
                 var uniqueCustomers = reports.Select(r => r.CustomerId).Distinct().Count();
 
-                // Top customer
-                var topCustomer = reports
-                    .GroupBy(r => new { r.CustomerId, r.Customer.CustomerName })
-                    .Select(g => new
-                    {
-                        CustomerId = g.Key.CustomerId,
-                        CustomerName = g.Key.CustomerName,
-                        TotalSpent = g.Sum(r => r.TotalAmount)
-                    })
-                    .OrderByDescending(g => g.TotalSpent)
-                    .FirstOrDefault();
-
-                // Top product by quantity sold
-                var topProductByQuantity = vouchers
-                    .GroupBy(v => new { v.InventoryId, v.Inventory.InventoryName })
-                    .Select(g => new
-                    {
-                        InventoryId = g.Key.InventoryId,
-                        InventoryName = g.Key.InventoryName,
-                        TotalQuantity = g.Sum(v => v.Quantity),
-                        TotalRevenue = g.Sum(v => v.Quantity * v.SellPrice)
-                    })
-                    .OrderByDescending(g => g.TotalQuantity)
-                    .FirstOrDefault();
-
-                // Top product by revenue
-                var topProductByRevenue = vouchers
-                    .GroupBy(v => new { v.InventoryId, v.Inventory.InventoryName })
-                    .Select(g => new
-                    {
-                        InventoryId = g.Key.InventoryId,
-                        InventoryName = g.Key.InventoryName,
-                        TotalQuantity = g.Sum(v => v.Quantity),
-                        TotalRevenue = g.Sum(v => v.Quantity * v.SellPrice)
-                    })
-                    .OrderByDescending(g => g.TotalRevenue)
+                var customerRanks = BuildCustomerRanks(reports, totalRevenue);
+                var productRanks = BuildProductRanks(vouchers, totalRevenue);
+                var topCustomer = customerRanks.FirstOrDefault();
+                var topProductByQuantity = productRanks
+                    .OrderByDescending(p => p.QuantitySold)
+                    .ThenByDescending(p => p.Revenue)
                     .FirstOrDefault();
 
                 var summary = new SalesSummaryDto
@@ -263,11 +235,13 @@ namespace Unity_Inventory.Domain.Features.Summary
                     UniqueCustomers = uniqueCustomers,
                     TopCustomerId = topCustomer?.CustomerId,
                     TopCustomerName = topCustomer?.CustomerName,
-                    TopCustomerTotal = topCustomer?.TotalSpent,
-                    TopProductId = topProductByQuantity?.InventoryId, // Using quantity-based top product
-                    TopProductName = topProductByQuantity?.InventoryName,
-                    TopProductQuantitySold = topProductByQuantity?.TotalQuantity,
-                    TopProductRevenue = topProductByRevenue?.TotalRevenue, // Using revenue-based top product revenue
+                    TopCustomerTotal = topCustomer?.TotalRevenue,
+                    TopProductId = topProductByQuantity?.ProductId,
+                    TopProductName = topProductByQuantity?.ProductName,
+                    TopProductQuantitySold = topProductByQuantity?.QuantitySold,
+                    TopProductRevenue = topProductByQuantity?.Revenue,
+                    CustomerRanks = customerRanks,
+                    ProductRanks = productRanks,
                     GeneratedAt = DateTime.UtcNow,
                     Source = "API"
                 };
@@ -278,6 +252,124 @@ namespace Unity_Inventory.Domain.Features.Summary
             {
                 return Result<SalesSummaryDto>.Failure(ex.Message);
             }
+        }
+
+        private async Task EnrichSummaryRankingsAsync(SalesSummaryDto summary)
+        {
+            var startDateTime = summary.PeriodStartDate.ToDateTime(TimeOnly.MinValue);
+            var endDateTime = summary.PeriodEndDate.ToDateTime(TimeOnly.MaxValue);
+
+            var reports = await _db.TblReports
+                .AsNoTracking()
+                .Include(r => r.Customer)
+                .Where(r => r.BusinessId == summary.BusinessId
+                        && r.ReportDate >= startDateTime
+                        && r.ReportDate <= endDateTime)
+                .ToListAsync();
+
+            if (!reports.Any())
+            {
+                summary.CustomerRanks = new();
+                summary.ProductRanks = new();
+                return;
+            }
+
+            var reportIds = reports.Select(r => r.ReportId).ToList();
+            var vouchers = await _db.TblVouchers
+                .AsNoTracking()
+                .Include(v => v.Inventory)
+                .Where(v => reportIds.Contains(v.ReportId) && v.BusinessId == summary.BusinessId)
+                .ToListAsync();
+
+            summary.UniqueCustomers = reports.Select(r => r.CustomerId).Distinct().Count();
+            summary.CustomerRanks = BuildCustomerRanks(reports, summary.TotalRevenue);
+            summary.ProductRanks = BuildProductRanks(vouchers, summary.TotalRevenue);
+
+            var topCustomer = summary.CustomerRanks.FirstOrDefault();
+            if (topCustomer != null)
+            {
+                summary.TopCustomerId = topCustomer.CustomerId;
+                summary.TopCustomerName = topCustomer.CustomerName;
+                summary.TopCustomerTotal = topCustomer.TotalRevenue;
+            }
+
+            var topProduct = summary.ProductRanks
+                .OrderByDescending(p => p.QuantitySold)
+                .ThenByDescending(p => p.Revenue)
+                .FirstOrDefault();
+
+            if (topProduct != null)
+            {
+                summary.TopProductId = topProduct.ProductId;
+                summary.TopProductName = topProduct.ProductName;
+                summary.TopProductQuantitySold = topProduct.QuantitySold;
+                summary.TopProductRevenue = topProduct.Revenue;
+            }
+        }
+
+        private static List<SalesSummaryCustomerRankDto> BuildCustomerRanks(List<TblReport> reports, decimal totalRevenue)
+        {
+            return reports
+                .GroupBy(r => new
+                {
+                    r.CustomerId,
+                    CustomerName = r.Customer?.CustomerName ?? "Walk-in Customer"
+                })
+                .Select(g => new
+                {
+                    g.Key.CustomerId,
+                    g.Key.CustomerName,
+                    TotalRevenue = g.Sum(r => r.TotalAmount),
+                    TotalOrders = g.Count()
+                })
+                .OrderByDescending(c => c.TotalRevenue)
+                .ThenBy(c => c.CustomerName)
+                .Take(10)
+                .Select((c, index) => new SalesSummaryCustomerRankDto
+                {
+                    Rank = index + 1,
+                    CustomerId = c.CustomerId,
+                    CustomerName = c.CustomerName,
+                    TotalRevenue = c.TotalRevenue,
+                    TotalOrders = c.TotalOrders,
+                    PercentageOfRevenue = CalculatePercentage(c.TotalRevenue, totalRevenue)
+                })
+                .ToList();
+        }
+
+        private static List<SalesSummaryProductRankDto> BuildProductRanks(List<TblVoucher> vouchers, decimal totalRevenue)
+        {
+            return vouchers
+                .GroupBy(v => new
+                {
+                    v.InventoryId,
+                    ProductName = v.Inventory?.InventoryName ?? "Unknown Product"
+                })
+                .Select(g => new
+                {
+                    ProductId = g.Key.InventoryId,
+                    g.Key.ProductName,
+                    QuantitySold = g.Sum(v => v.Quantity),
+                    Revenue = g.Sum(v => v.Quantity * v.SellPrice)
+                })
+                .OrderByDescending(p => p.Revenue)
+                .ThenByDescending(p => p.QuantitySold)
+                .Take(10)
+                .Select((p, index) => new SalesSummaryProductRankDto
+                {
+                    Rank = index + 1,
+                    ProductId = p.ProductId,
+                    ProductName = p.ProductName,
+                    QuantitySold = p.QuantitySold,
+                    Revenue = p.Revenue,
+                    PercentageOfRevenue = CalculatePercentage(p.Revenue, totalRevenue)
+                })
+                .ToList();
+        }
+
+        private static decimal CalculatePercentage(decimal value, decimal total)
+        {
+            return total <= 0 ? 0 : Math.Round(value / total * 100, 2);
         }
 
         public async Task<Result<List<SalesSummaryDto>>> GetSalesSummaryHistoryAsync(int businessId, string summaryType, int limit = 10)

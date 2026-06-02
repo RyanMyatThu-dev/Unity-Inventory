@@ -27,6 +27,11 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -54,13 +59,35 @@ interface SalesSummary {
   topProductName?: string;
   topProductQuantitySold?: number;
   topProductRevenue?: number;
+  customerRanks?: SalesSummaryCustomerRank[];
+  productRanks?: SalesSummaryProductRank[];
   generatedAt: string;
   source: string;
+}
+
+interface SalesSummaryCustomerRank {
+  rank: number;
+  customerId: number;
+  customerName: string;
+  totalRevenue: number;
+  totalOrders: number;
+  percentageOfRevenue: number;
+}
+
+interface SalesSummaryProductRank {
+  rank: number;
+  productId: number;
+  productName: string;
+  quantitySold: number;
+  revenue: number;
+  percentageOfRevenue: number;
 }
 
 const formatCurrency = (value: number) => {
   return `${(value || 0).toLocaleString()} MMK`;
 };
+
+const CHART_COLORS = ['#059669', '#2563eb', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2'];
 
 // Removed mock seed data as per plan - using live API data only
 
@@ -454,6 +481,8 @@ export default function SalesSummariesPage() {
       totalOrders: 0,
       totalItemsSold: 0,
       uniqueCustomers: 0,
+      customerRanks: [],
+      productRanks: [],
       generatedAt: '',
       source: 'N/A'
     };
@@ -549,6 +578,46 @@ export default function SalesSummariesPage() {
       { name: 'Week 4', revenue: rev * 0.23, orders: Math.max(1, Math.round(ords * 0.23)) }
     ];
   }, [displaySummary]);
+
+  const customerRankData = React.useMemo(() => {
+    const ranks = (displaySummary.customerRanks || []).map((customer) => ({
+      name: customer.customerName,
+      revenue: customer.totalRevenue,
+      orders: customer.totalOrders,
+      percentage: customer.percentageOfRevenue
+    }));
+
+    if (ranks.length > 0 || !displaySummary.topCustomerName) return ranks;
+
+    return [{
+      name: displaySummary.topCustomerName,
+      revenue: displaySummary.topCustomerTotal || 0,
+      orders: displaySummary.totalOrders,
+      percentage: displaySummary.totalRevenue > 0 ? ((displaySummary.topCustomerTotal || 0) / displaySummary.totalRevenue) * 100 : 0
+    }];
+  }, [displaySummary]);
+
+  const productRankData = React.useMemo(() => {
+    const ranks = (displaySummary.productRanks || []).map((product) => ({
+      name: product.productName,
+      revenue: product.revenue,
+      quantity: product.quantitySold,
+      percentage: product.percentageOfRevenue
+    }));
+
+    if (ranks.length > 0 || !displaySummary.topProductName) return ranks;
+
+    return [{
+      name: displaySummary.topProductName,
+      revenue: displaySummary.topProductRevenue || 0,
+      quantity: displaySummary.topProductQuantitySold || 0,
+      percentage: displaySummary.totalRevenue > 0 ? ((displaySummary.topProductRevenue || 0) / displaySummary.totalRevenue) * 100 : 0
+    }];
+  }, [displaySummary]);
+
+  const customerPieData = React.useMemo(() => customerRankData.slice(0, 6), [customerRankData]);
+  const productPieData = React.useMemo(() => productRankData.slice(0, 6), [productRankData]);
+  const hasDailyRankData = displaySummary.summaryType === 'DAILY' && (customerRankData.length > 0 || productRankData.length > 0);
 
 
 
@@ -733,7 +802,137 @@ export default function SalesSummariesPage() {
                 </div>
               </div>
 
-              {telemetryChartData.length === 0 ? (
+              {hasDailyRankData ? (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                  <div className="min-h-[230px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/10 p-4">
+                    <div className="mb-3">
+                      <h5 className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-widest">Customer Revenue Share</h5>
+                      <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Daily contribution mix</p>
+                    </div>
+                    <ResponsiveContainer width="100%" height={180}>
+                      <PieChart>
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: '8px',
+                            border: 'none',
+                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
+                            fontSize: '9px',
+                            fontWeight: 800,
+                            backgroundColor: isDark ? '#18181b' : '#fafafa',
+                            color: isDark ? '#fff' : '#18181b'
+                          }}
+                          formatter={(v: unknown, name: unknown) => [formatCurrency(Number(v)), String(name)]}
+                        />
+                        <Pie data={customerPieData} dataKey="revenue" nameKey="name" innerRadius={45} outerRadius={72} paddingAngle={2}>
+                          {customerPieData.map((entry, index) => (
+                            <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="min-h-[230px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/10 p-4">
+                    <div className="mb-3">
+                      <h5 className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-widest">Top Customers</h5>
+                      <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Ranked by paid revenue</p>
+                    </div>
+                    <ResponsiveContainer width="100%" height={180}>
+                      <BarChart data={customerRankData.slice(0, 5)} layout="vertical" margin={{ top: 0, right: 12, left: 8, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                        <XAxis type="number" hide />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          width={88}
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: isDark ? '#a1a1aa' : '#71717a', fontSize: 9, fontWeight: 700 }}
+                          tickFormatter={(v) => String(v).length > 12 ? `${String(v).slice(0, 12)}...` : String(v)}
+                        />
+                        <Tooltip
+                          cursor={{ fill: isDark ? '#27272a' : '#f4f4f5' }}
+                          contentStyle={{
+                            borderRadius: '8px',
+                            border: 'none',
+                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
+                            fontSize: '9px',
+                            fontWeight: 800,
+                            backgroundColor: isDark ? '#18181b' : '#fafafa',
+                            color: isDark ? '#fff' : '#18181b'
+                          }}
+                          formatter={(v: unknown) => [formatCurrency(Number(v)), 'REVENUE']}
+                        />
+                        <Bar dataKey="revenue" radius={[0, 5, 5, 0]} fill="#2563eb" barSize={16} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="min-h-[230px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/10 p-4">
+                    <div className="mb-3">
+                      <h5 className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-widest">Product Revenue Mix</h5>
+                      <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Top item contribution</p>
+                    </div>
+                    <ResponsiveContainer width="100%" height={180}>
+                      <PieChart>
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: '8px',
+                            border: 'none',
+                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
+                            fontSize: '9px',
+                            fontWeight: 800,
+                            backgroundColor: isDark ? '#18181b' : '#fafafa',
+                            color: isDark ? '#fff' : '#18181b'
+                          }}
+                          formatter={(v: unknown, name: unknown) => [formatCurrency(Number(v)), String(name)]}
+                        />
+                        <Pie data={productPieData} dataKey="revenue" nameKey="name" innerRadius={45} outerRadius={72} paddingAngle={2}>
+                          {productPieData.map((entry, index) => (
+                            <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="min-h-[230px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/10 p-4">
+                    <div className="mb-3">
+                      <h5 className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-widest">Top Items Sold</h5>
+                      <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Ranked by units moved</p>
+                    </div>
+                    <ResponsiveContainer width="100%" height={180}>
+                      <BarChart data={productRankData.slice(0, 5).sort((a, b) => b.quantity - a.quantity)} layout="vertical" margin={{ top: 0, right: 12, left: 8, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                        <XAxis type="number" allowDecimals={false} hide />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          width={88}
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: isDark ? '#a1a1aa' : '#71717a', fontSize: 9, fontWeight: 700 }}
+                          tickFormatter={(v) => String(v).length > 12 ? `${String(v).slice(0, 12)}...` : String(v)}
+                        />
+                        <Tooltip
+                          cursor={{ fill: isDark ? '#27272a' : '#f4f4f5' }}
+                          contentStyle={{
+                            borderRadius: '8px',
+                            border: 'none',
+                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
+                            fontSize: '9px',
+                            fontWeight: 800,
+                            backgroundColor: isDark ? '#18181b' : '#fafafa',
+                            color: isDark ? '#fff' : '#18181b'
+                          }}
+                          formatter={(v: unknown) => [`${Number(v)} units`, 'SOLD']}
+                        />
+                        <Bar dataKey="quantity" radius={[0, 5, 5, 0]} fill="#059669" barSize={16} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              ) : telemetryChartData.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl p-8 bg-zinc-50/30 dark:bg-zinc-950/10 min-h-[220px]">
                   <AlertCircle className="text-zinc-300 dark:text-zinc-600 mb-2 animate-pulse" size={24} />
                   <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">No transaction data available</p>
