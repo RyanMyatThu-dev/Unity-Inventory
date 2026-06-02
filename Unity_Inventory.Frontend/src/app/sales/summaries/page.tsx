@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTheme } from 'next-themes';
 import api from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
@@ -421,10 +422,14 @@ const DetailedSummaryModal = ({
 // --- Primary Page Component ---
 export default function SalesSummariesPage() {
   const { user } = useAuth();
+  const { theme, resolvedTheme } = useTheme();
   const [activeSummary, setActiveSummary] = useState<SalesSummary | null>(null);
   const [historyList, setHistoryList] = useState<SalesSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [summaryTypeFilter, setSummaryTypeFilter] = useState<string>('MONTHLY');
+
+  const currentTheme = resolvedTheme || theme;
+  const isDark = currentTheme === 'dark';
   
   // Date Range Quick Presets
   const [periodStartDate, setPeriodStartDate] = useState<string>(() => {
@@ -740,21 +745,21 @@ export default function SalesSummariesPage() {
                     <AreaChart data={telemetryChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#18181b" stopOpacity={0.08}/>
-                          <stop offset="95%" stopColor="#18181b" stopOpacity={0}/>
+                          <stop offset="5%" stopColor={isDark ? "#fafafa" : "#18181b"} stopOpacity={0.08}/>
+                          <stop offset="95%" stopColor={isDark ? "#fafafa" : "#18181b"} stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f1f1" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f1f1f1"} />
                       <XAxis
                         dataKey="name"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#a1a1aa', fontSize: 9, fontWeight: 700 }}
+                        tick={{ fill: isDark ? '#71717a' : '#a1a1aa', fontSize: 9, fontWeight: 700 }}
                       />
                       <YAxis
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#a1a1aa', fontSize: 9, fontWeight: 700 }}
+                        tick={{ fill: isDark ? '#71717a' : '#a1a1aa', fontSize: 9, fontWeight: 700 }}
                         tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                       />
                       <Tooltip
@@ -764,13 +769,13 @@ export default function SalesSummariesPage() {
                           boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
                           fontSize: '9px',
                           fontWeight: 800,
-                          backgroundColor: '#18181b',
-                          color: '#fff'
+                          backgroundColor: isDark ? '#18181b' : '#fafafa',
+                          color: isDark ? '#fff' : '#18181b'
                         }}
-                        itemStyle={{ color: '#fff' }}
+                        itemStyle={{ color: isDark ? '#fff' : '#18181b' }}
                         formatter={(v: unknown) => [formatCurrency(Number(v as number)), 'REVENUE']}
                       />
-                      <Area type="monotone" dataKey="revenue" stroke="#18181b" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
+                      <Area type="monotone" dataKey="revenue" stroke={isDark ? "#fafafa" : "#18181b"} strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
