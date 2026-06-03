@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Unity_Inventory.Api.Filters;
+using Hangfire;
+using Hangfire.Storage;
 
 namespace Unity_Inventory.Api.Controllers
 {
@@ -65,8 +67,11 @@ namespace Unity_Inventory.Api.Controllers
                         endDate = startDate.AddMonths(1).AddDays(-1);
                         break;
                     case "YEARLY":
-                        startDate = new DateOnly(today.Year, 1, 1);
-                        endDate = new DateOnly(today.Year, 12, 31);
+                        // GenerateYearlySummariesAsync stores LAST YEAR (today.Year - 1),
+                        // so the API default range must match that to keep graphs/archives consistent.
+                        var lastYear = today.Year - 1;
+                        startDate = new DateOnly(lastYear, 1, 1);
+                        endDate = new DateOnly(lastYear, 12, 31);
                         break;
                     default:
                         startDate = today;
@@ -82,6 +87,38 @@ namespace Unity_Inventory.Api.Controllers
 
             var result = await _summaryService.GetSalesSummaryAsync(businessId, summaryType.ToUpper(), startDate, endDate);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        // Get status and execution details of Hangfire recurring summary compiler jobs
+        [HttpGet("scheduler/status")]
+        [Permission("summary", "view")]
+        public IActionResult GetSchedulerStatus()
+        {
+            try
+            {
+                using var connection = JobStorage.Current.GetConnection();
+                var recurringJobs = connection.GetRecurringJobs();
+                
+                var jobs = recurringJobs
+                    .Where(j => j.Id.Contains("summary"))
+                    .Select(j => new
+                    {
+                        JobId = j.Id,
+                        Cron = j.Cron,
+                        NextExecution = j.NextExecution,
+                        LastExecution = j.LastExecution,
+                        LastJobId = j.LastJobId,
+                        LastJobState = j.LastJobState,
+                        TimeZoneId = j.TimeZoneId,
+                        Error = j.Error
+                    }).ToList();
+
+                return Ok(Result<object>.Success(jobs));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(Result<object>.Failure(ex.Message));
+            }
         }
 
         // Generate and store a sales summary (manual trigger)

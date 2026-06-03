@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,12 +25,19 @@ namespace Unity_Inventory.Domain.Features.Summary
         {
             try
             {
-                // First check if we have a pre-generated summary in the archive
-                var archivedSummary = await _db.TblSummaryArchives
-                    .FirstOrDefaultAsync(s => s.BusinessId == businessId
-                                            && s.SummaryType == summaryType
-                                            && s.PeriodStartDate == periodStartDate
-                                            && s.PeriodEndDate == periodEndDate);
+                // Check if the period is completed. If it's ongoing (ends today or in the future), calculate on the fly for real-time data.
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                bool isOngoing = periodEndDate >= today;
+
+                TblSummaryArchive? archivedSummary = null;
+                if (!isOngoing)
+                {
+                    archivedSummary = await _db.TblSummaryArchives
+                        .FirstOrDefaultAsync(s => s.BusinessId == businessId
+                                                && s.SummaryType == summaryType
+                                                && s.PeriodStartDate == periodStartDate
+                                                && s.PeriodEndDate == periodEndDate);
+                }
 
                 if (archivedSummary != null)
                 {
@@ -242,6 +250,7 @@ namespace Unity_Inventory.Domain.Features.Summary
                     TopProductRevenue = topProductByQuantity?.Revenue,
                     CustomerRanks = customerRanks,
                     ProductRanks = productRanks,
+                    SalesTrend = BuildSalesTrend(reports, summaryType, periodStartDate),
                     GeneratedAt = DateTime.UtcNow,
                     Source = "API"
                 };
@@ -305,6 +314,8 @@ namespace Unity_Inventory.Domain.Features.Summary
                 summary.TopProductQuantitySold = topProduct.QuantitySold;
                 summary.TopProductRevenue = topProduct.Revenue;
             }
+
+            summary.SalesTrend = BuildSalesTrend(reports, summary.SummaryType, summary.PeriodStartDate);
         }
 
         private static List<SalesSummaryCustomerRankDto> BuildCustomerRanks(List<TblReport> reports, decimal totalRevenue)
@@ -370,6 +381,128 @@ namespace Unity_Inventory.Domain.Features.Summary
         private static decimal CalculatePercentage(decimal value, decimal total)
         {
             return total <= 0 ? 0 : Math.Round(value / total * 100, 2);
+        }
+
+        private static List<SalesTrendPointDto> BuildSalesTrend(List<TblReport> reports, string summaryType, DateOnly periodStartDate)
+        {
+            var trend = new List<SalesTrendPointDto>();
+            if (string.IsNullOrEmpty(summaryType) || !reports.Any()) return trend;
+
+            switch (summaryType.ToUpper())
+            {
+                case "DAILY":
+                    var reportsByHour = reports.Where(r => r.ReportDate.HasValue).GroupBy(r => r.ReportDate!.Value.Hour).ToDictionary(g => g.Key, g => g.ToList());
+                    for (int h = 0; h < 24; h++)
+                    {
+                        var label = $"{h:D2}:00";
+                        decimal rev = 0;
+                        int ords = 0;
+                        if (reportsByHour.TryGetValue(h, out var hrReports))
+                        {
+                            rev = hrReports.Sum(r => r.TotalAmount);
+                            ords = hrReports.Count;
+                        }
+                        trend.Add(new SalesTrendPointDto { Label = label, Revenue = rev, Orders = ords });
+                    }
+                    break;
+
+                case "WEEKLY":
+                    var daysOfWeek = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday };
+                    var reportsByDay = reports.Where(r => r.ReportDate.HasValue).GroupBy(r => r.ReportDate!.Value.DayOfWeek).ToDictionary(g => g.Key, g => g.ToList());
+                    foreach (var day in daysOfWeek)
+                    {
+                        var label = day.ToString().Substring(0, 3); // "Mon", "Tue", etc.
+                        decimal rev = 0;
+                        int ords = 0;
+                        if (reportsByDay.TryGetValue(day, out var dayReports))
+                        {
+                            rev = dayReports.Sum(r => r.TotalAmount);
+                            ords = dayReports.Count;
+                        }
+                        trend.Add(new SalesTrendPointDto { Label = label, Revenue = rev, Orders = ords });
+                    }
+                    break;
+
+                case "MONTHLY":
+                    for (int w = 1; w <= 4; w++)
+                    {
+                        int startDay = (w - 1) * 7 + 1;
+                        int endDay = w == 4 ? DateTime.DaysInMonth(periodStartDate.Year, periodStartDate.Month) : w * 7;
+                        var weekReports = reports.Where(r => r.ReportDate.HasValue && r.ReportDate.Value.Day >= startDay && r.ReportDate.Value.Day <= endDay).ToList();
+                        trend.Add(new SalesTrendPointDto
+                        {
+                            Label = $"Week {w}",
+                            Revenue = weekReports.Sum(r => r.TotalAmount),
+                            Orders = weekReports.Count
+                        });
+                    }
+                    break;
+
+                case "YEARLY":
+                    var reportsByMonth = reports.Where(r => r.ReportDate.HasValue).GroupBy(r => r.ReportDate!.Value.Month).ToDictionary(g => g.Key, g => g.ToList());
+                    for (int m = 1; m <= 12; m++)
+                    {
+                        var label = CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(m);
+                        decimal rev = 0;
+                        int ords = 0;
+                        if (reportsByMonth.TryGetValue(m, out var monthReports))
+                        {
+                            rev = monthReports.Sum(r => r.TotalAmount);
+                            ords = monthReports.Count;
+                        }
+                        trend.Add(new SalesTrendPointDto { Label = label, Revenue = rev, Orders = ords });
+                    }
+                    break;
+
+                default:
+                    // CUSTOM or fallback: group by day if range <= 31 days, by month otherwise
+                    var minDate = reports.Min(r => r.ReportDate);
+                    var maxDate = reports.Max(r => r.ReportDate);
+                    if (minDate.HasValue && maxDate.HasValue)
+                    {
+                        var totalDays = (maxDate.Value.Date - minDate.Value.Date).Days;
+                        if (totalDays <= 31)
+                        {
+                            var reportsByDate = reports.Where(r => r.ReportDate.HasValue).GroupBy(r => r.ReportDate!.Value.Date).ToDictionary(g => g.Key, g => g.ToList());
+                            var current = minDate.Value.Date;
+                            while (current <= maxDate.Value.Date)
+                            {
+                                var label = current.ToString("MMM dd");
+                                decimal rev = 0;
+                                int ords = 0;
+                                if (reportsByDate.TryGetValue(current, out var dayReports))
+                                {
+                                    rev = dayReports.Sum(r => r.TotalAmount);
+                                    ords = dayReports.Count;
+                                }
+                                trend.Add(new SalesTrendPointDto { Label = label, Revenue = rev, Orders = ords });
+                                current = current.AddDays(1);
+                            }
+                        }
+                        else
+                        {
+                            var reportsByYrMonth = reports.Where(r => r.ReportDate.HasValue).GroupBy(r => new { r.ReportDate!.Value.Year, r.ReportDate.Value.Month }).ToDictionary(g => g.Key, g => g.ToList());
+                            var current = new DateTime(minDate.Value.Year, minDate.Value.Month, 1);
+                            while (current <= maxDate.Value)
+                            {
+                                var label = current.ToString("MMM yyyy");
+                                decimal rev = 0;
+                                int ords = 0;
+                                var key = new { current.Year, current.Month };
+                                if (reportsByYrMonth.TryGetValue(key, out var monthReports))
+                                {
+                                    rev = monthReports.Sum(r => r.TotalAmount);
+                                    ords = monthReports.Count;
+                                }
+                                trend.Add(new SalesTrendPointDto { Label = label, Revenue = rev, Orders = ords });
+                                current = current.AddMonths(1);
+                            }
+                        }
+                    }
+                    break;
+            }
+
+            return trend;
         }
 
         public async Task<Result<List<SalesSummaryDto>>> GetSalesSummaryHistoryAsync(int businessId, string summaryType, int limit = 10)

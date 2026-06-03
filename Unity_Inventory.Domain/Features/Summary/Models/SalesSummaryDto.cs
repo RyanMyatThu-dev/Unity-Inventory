@@ -37,6 +37,7 @@ namespace Unity_Inventory.Domain.Features.Summary.Models
         // Ranking insights for BI-style daily/period dashboards
         public List<SalesSummaryCustomerRankDto> CustomerRanks { get; set; } = new();
         public List<SalesSummaryProductRankDto> ProductRanks { get; set; } = new();
+        public List<SalesTrendPointDto> SalesTrend { get; set; } = new();
 
         // Metadata
         public DateTime GeneratedAt { get; set; }

@@ -61,8 +61,26 @@ interface SalesSummary {
   topProductRevenue?: number;
   customerRanks?: SalesSummaryCustomerRank[];
   productRanks?: SalesSummaryProductRank[];
+  salesTrend?: SalesTrendPoint[];
   generatedAt: string;
   source: string;
+}
+
+interface SalesTrendPoint {
+  label: string;
+  revenue: number;
+  orders: number;
+}
+
+interface SchedulerJobStatus {
+  jobId: string;
+  cron: string;
+  nextExecution: string | null;
+  lastExecution: string | null;
+  lastJobId: string | null;
+  lastJobState: string | null;
+  timeZoneId: string;
+  error: string | null;
 }
 
 interface SalesSummaryCustomerRank {
@@ -446,6 +464,140 @@ const DetailedSummaryModal = ({
   );
 };
 
+const JobCountdown = ({ nextExecution }: { nextExecution: string | null }) => {
+  const [timeLeft, setTimeLeft] = useState<string>('');
+
+  useEffect(() => {
+    if (!nextExecution) {
+      setTimeLeft('Not scheduled');
+      return;
+    }
+
+    const calculateTimeLeft = () => {
+      const difference = +new Date(nextExecution) - +new Date();
+      if (difference <= 0) {
+        setTimeLeft('Running...');
+        return;
+      }
+
+      const hours = Math.floor(difference / (1000 * 60 * 60));
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+
+      const parts = [];
+      if (hours > 0) parts.push(`${hours}h`);
+      if (minutes > 0 || hours > 0) parts.push(`${minutes}m`);
+      parts.push(`${seconds}s`);
+
+      setTimeLeft(`in ${parts.join(' ')}`);
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(timer);
+  }, [nextExecution]);
+
+  return <span className="font-mono font-bold text-amber-500">{timeLeft}</span>;
+};
+
+const SchedulerJobsWidget = ({
+  jobs,
+  loading,
+  onRefresh,
+  isDark
+}: {
+  jobs: SchedulerJobStatus[];
+  loading: boolean;
+  onRefresh: () => void;
+  isDark: boolean;
+}) => {
+  const formatJobName = (jobId: string) => {
+    return jobId
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const getCronDescription = (cron: string) => {
+    if (cron.includes('23 55')) return 'Every day at 11:55 PM';
+    if (cron.includes('23 59') && cron.includes('31')) return 'Monthly at 11:59 PM';
+    if (cron.includes('12 31 23 59')) return 'Yearly on Dec 31st at 11:59 PM';
+    return cron;
+  };
+
+  return (
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-4 bg-zinc-900 dark:bg-zinc-100 rounded-full" />
+          <div>
+            <h4 className="text-[10px] font-bold text-zinc-900 dark:text-zinc-200 uppercase tracking-widest">Automated Summarizer Engine (Hangfire)</h4>
+            <p className="text-[8px] text-zinc-400 font-bold uppercase mt-0.5">Background task compiler schedule and telemetry</p>
+          </div>
+        </div>
+        <button
+          onClick={onRefresh}
+          disabled={loading}
+          className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors disabled:opacity-50"
+        >
+          <Activity size={12} className={cn(loading && "animate-spin text-zinc-900 dark:text-zinc-100")} />
+        </button>
+      </div>
+
+      {loading && jobs.length === 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-20 bg-zinc-50 dark:bg-zinc-850 border border-zinc-200/50 dark:border-zinc-800 rounded-xl" />
+          ))}
+        </div>
+      ) : jobs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-6 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
+          <Clock className="text-zinc-300 dark:text-zinc-600 mb-1" size={20} />
+          <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">No active compiler schedules found</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {jobs.map((job) => {
+            const isActive = job.lastJobState === 'Succeeded' || !job.error;
+            return (
+              <div
+                key={job.jobId}
+                className="group relative overflow-hidden bg-zinc-50/50 dark:bg-zinc-950/20 border border-zinc-200/50 dark:border-zinc-850 p-4 rounded-xl shadow-inner flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-tight truncate">{formatJobName(job.jobId)}</span>
+                    <span className={cn(
+                      "px-1.5 py-0.5 rounded-[4px] text-[7px] font-black uppercase tracking-widest shrink-0",
+                      isActive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-450" : "bg-rose-500/10 text-rose-600"
+                    )}>
+                      {isActive ? 'Active' : 'Error'}
+                    </span>
+                  </div>
+                  <p className="text-[9px] text-zinc-400 font-semibold">{getCronDescription(job.cron)}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mt-4 pt-2.5 border-t border-zinc-200/30 dark:border-zinc-800/50 text-[8px] font-bold uppercase tracking-wider text-zinc-400">
+                  <div>
+                    <span className="block text-[7px] text-zinc-400/85 mb-0.5">Last Run</span>
+                    <span className="text-zinc-700 dark:text-zinc-300">
+                      {job.lastExecution ? new Date(job.lastExecution).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[7px] text-zinc-400/85 mb-0.5">Next Run</span>
+                    <JobCountdown nextExecution={job.nextExecution} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // --- Primary Page Component ---
 export default function SalesSummariesPage() {
   const { user } = useAuth();
@@ -491,6 +643,27 @@ export default function SalesSummariesPage() {
   // Modal States
   const [isGenModalOpen, setIsGenModalOpen] = useState(false);
   const [selectedSummary, setSelectedSummary] = useState<SalesSummary | null>(null);
+
+  const [jobsStatus, setJobsStatus] = useState<SchedulerJobStatus[]>([]);
+  const [loadingJobs, setLoadingJobs] = useState<boolean>(true);
+
+  const loadSchedulerStatus = useCallback(async () => {
+    setLoadingJobs(true);
+    try {
+      const res = await api.get('/summary/scheduler/status');
+      if (res.data.isSuccess && res.data.data) {
+        setJobsStatus(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load scheduler status:', err);
+    } finally {
+      setLoadingJobs(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSchedulerStatus();
+  }, [loadSchedulerStatus]);
 
   // Check if User is allowed to generate summaries (Owner or Admin roles)
   const isCreateAllowed = React.useMemo(() => {
@@ -552,31 +725,20 @@ export default function SalesSummariesPage() {
 
 
   // Generate dynamic chart data based on active summary metrics for rich visual rendering
-  const telemetryChartData = React.useMemo(() => {
-    if (!displaySummary || displaySummary.totalRevenue === 0) return [];
-    
-    const rev = displaySummary.totalRevenue;
-    const ords = displaySummary.totalOrders;
+  type TelemetryPoint = { name: string; revenue: number; orders: number };
 
-    if (displaySummary.summaryType === 'WEEKLY') {
-      return [
-        { name: 'Mon', revenue: rev * 0.12, orders: Math.max(1, Math.round(ords * 0.12)) },
-        { name: 'Tue', revenue: rev * 0.18, orders: Math.max(1, Math.round(ords * 0.18)) },
-        { name: 'Wed', revenue: rev * 0.15, orders: Math.max(1, Math.round(ords * 0.15)) },
-        { name: 'Thu', revenue: rev * 0.22, orders: Math.max(1, Math.round(ords * 0.22)) },
-        { name: 'Fri', revenue: rev * 0.19, orders: Math.max(1, Math.round(ords * 0.19)) },
-        { name: 'Sat', revenue: rev * 0.14, orders: Math.max(1, Math.round(ords * 0.14)) },
-        { name: 'Sun', revenue: rev * 0.00, orders: 0 }
-      ];
+  const telemetryChartData = React.useMemo<TelemetryPoint[]>(() => {
+    if (!displaySummary) return [];
+
+    if (displaySummary.salesTrend && displaySummary.salesTrend.length > 0) {
+      return displaySummary.salesTrend.map(pt => ({
+        name: pt.label,
+        revenue: pt.revenue,
+        orders: pt.orders
+      }));
     }
 
-    // Default to monthly/yearly distribution format
-    return [
-      { name: 'Week 1', revenue: rev * 0.20, orders: Math.max(1, Math.round(ords * 0.20)) },
-      { name: 'Week 2', revenue: rev * 0.32, orders: Math.max(1, Math.round(ords * 0.32)) },
-      { name: 'Week 3', revenue: rev * 0.25, orders: Math.max(1, Math.round(ords * 0.25)) },
-      { name: 'Week 4', revenue: rev * 0.23, orders: Math.max(1, Math.round(ords * 0.23)) }
-    ];
+    return [];
   }, [displaySummary]);
 
   const customerRankData = React.useMemo(() => {
@@ -655,6 +817,9 @@ export default function SalesSummariesPage() {
           )}
         </div>
       </div>
+
+      {/* Scheduler status panel */}
+      <SchedulerJobsWidget jobs={jobsStatus} loading={loadingJobs} onRefresh={loadSchedulerStatus} isDark={isDark} />
 
       {loading ? (
         <div className="space-y-6 animate-pulse">
@@ -802,137 +967,7 @@ export default function SalesSummariesPage() {
                 </div>
               </div>
 
-              {hasDailyRankData ? (
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                  <div className="min-h-[230px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/10 p-4">
-                    <div className="mb-3">
-                      <h5 className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-widest">Customer Revenue Share</h5>
-                      <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Daily contribution mix</p>
-                    </div>
-                    <ResponsiveContainer width="100%" height={180}>
-                      <PieChart>
-                        <Tooltip
-                          contentStyle={{
-                            borderRadius: '8px',
-                            border: 'none',
-                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
-                            fontSize: '9px',
-                            fontWeight: 800,
-                            backgroundColor: isDark ? '#18181b' : '#fafafa',
-                            color: isDark ? '#fff' : '#18181b'
-                          }}
-                          formatter={(v: unknown, name: unknown) => [formatCurrency(Number(v)), String(name)]}
-                        />
-                        <Pie data={customerPieData} dataKey="revenue" nameKey="name" innerRadius={45} outerRadius={72} paddingAngle={2}>
-                          {customerPieData.map((entry, index) => (
-                            <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="min-h-[230px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/10 p-4">
-                    <div className="mb-3">
-                      <h5 className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-widest">Top Customers</h5>
-                      <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Ranked by paid revenue</p>
-                    </div>
-                    <ResponsiveContainer width="100%" height={180}>
-                      <BarChart data={customerRankData.slice(0, 5)} layout="vertical" margin={{ top: 0, right: 12, left: 8, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={isDark ? "#27272a" : "#e4e4e7"} />
-                        <XAxis type="number" hide />
-                        <YAxis
-                          type="category"
-                          dataKey="name"
-                          width={88}
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fill: isDark ? '#a1a1aa' : '#71717a', fontSize: 9, fontWeight: 700 }}
-                          tickFormatter={(v) => String(v).length > 12 ? `${String(v).slice(0, 12)}...` : String(v)}
-                        />
-                        <Tooltip
-                          cursor={{ fill: isDark ? '#27272a' : '#f4f4f5' }}
-                          contentStyle={{
-                            borderRadius: '8px',
-                            border: 'none',
-                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
-                            fontSize: '9px',
-                            fontWeight: 800,
-                            backgroundColor: isDark ? '#18181b' : '#fafafa',
-                            color: isDark ? '#fff' : '#18181b'
-                          }}
-                          formatter={(v: unknown) => [formatCurrency(Number(v)), 'REVENUE']}
-                        />
-                        <Bar dataKey="revenue" radius={[0, 5, 5, 0]} fill="#2563eb" barSize={16} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="min-h-[230px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/10 p-4">
-                    <div className="mb-3">
-                      <h5 className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-widest">Product Revenue Mix</h5>
-                      <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Top item contribution</p>
-                    </div>
-                    <ResponsiveContainer width="100%" height={180}>
-                      <PieChart>
-                        <Tooltip
-                          contentStyle={{
-                            borderRadius: '8px',
-                            border: 'none',
-                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
-                            fontSize: '9px',
-                            fontWeight: 800,
-                            backgroundColor: isDark ? '#18181b' : '#fafafa',
-                            color: isDark ? '#fff' : '#18181b'
-                          }}
-                          formatter={(v: unknown, name: unknown) => [formatCurrency(Number(v)), String(name)]}
-                        />
-                        <Pie data={productPieData} dataKey="revenue" nameKey="name" innerRadius={45} outerRadius={72} paddingAngle={2}>
-                          {productPieData.map((entry, index) => (
-                            <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="min-h-[230px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/10 p-4">
-                    <div className="mb-3">
-                      <h5 className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-widest">Top Items Sold</h5>
-                      <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Ranked by units moved</p>
-                    </div>
-                    <ResponsiveContainer width="100%" height={180}>
-                      <BarChart data={productRankData.slice(0, 5).sort((a, b) => b.quantity - a.quantity)} layout="vertical" margin={{ top: 0, right: 12, left: 8, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={isDark ? "#27272a" : "#e4e4e7"} />
-                        <XAxis type="number" allowDecimals={false} hide />
-                        <YAxis
-                          type="category"
-                          dataKey="name"
-                          width={88}
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fill: isDark ? '#a1a1aa' : '#71717a', fontSize: 9, fontWeight: 700 }}
-                          tickFormatter={(v) => String(v).length > 12 ? `${String(v).slice(0, 12)}...` : String(v)}
-                        />
-                        <Tooltip
-                          cursor={{ fill: isDark ? '#27272a' : '#f4f4f5' }}
-                          contentStyle={{
-                            borderRadius: '8px',
-                            border: 'none',
-                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
-                            fontSize: '9px',
-                            fontWeight: 800,
-                            backgroundColor: isDark ? '#18181b' : '#fafafa',
-                            color: isDark ? '#fff' : '#18181b'
-                          }}
-                          formatter={(v: unknown) => [`${Number(v)} units`, 'SOLD']}
-                        />
-                        <Bar dataKey="quantity" radius={[0, 5, 5, 0]} fill="#059669" barSize={16} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              ) : telemetryChartData.length === 0 ? (
+              {telemetryChartData.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl p-8 bg-zinc-50/30 dark:bg-zinc-950/10 min-h-[220px]">
                   <AlertCircle className="text-zinc-300 dark:text-zinc-600 mb-2 animate-pulse" size={24} />
                   <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">No transaction data available</p>
@@ -1035,6 +1070,162 @@ export default function SalesSummariesPage() {
 
             </div>
           </div>
+
+          {/* Detailed Product & Client Insights Section */}
+          {(customerRankData.length > 0 || productRankData.length > 0) && (
+            <div className="space-y-3.5 animate-in fade-in duration-300">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-zinc-900 dark:bg-zinc-100 rounded-full" />
+                <div>
+                  <h4 className="text-[10px] font-bold text-zinc-900 dark:text-zinc-200 uppercase tracking-widest">Detailed Product & Client Insights</h4>
+                  <p className="text-[8px] text-zinc-400 font-bold uppercase mt-0.5">Rankings & Contribution breakdown for selected period</p>
+                </div>
+              </div>
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  {/* Customer Revenue Share */}
+                  {customerPieData.length > 0 && (
+                    <div className="min-h-[230px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/10 p-4">
+                      <div className="mb-3">
+                        <h5 className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-widest">Customer Revenue Share</h5>
+                        <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Contribution mix</p>
+                      </div>
+                      <ResponsiveContainer width="100%" height={180}>
+                        <PieChart>
+                          <Tooltip
+                            contentStyle={{
+                              borderRadius: '8px',
+                              border: 'none',
+                              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
+                              fontSize: '9px',
+                              fontWeight: 800,
+                              backgroundColor: isDark ? '#18181b' : '#fafafa',
+                              color: isDark ? '#fff' : '#18181b'
+                            }}
+                            formatter={(v: unknown, name: unknown) => [formatCurrency(Number(v)), String(name)]}
+                          />
+                          <Pie data={customerPieData} dataKey="revenue" nameKey="name" innerRadius={45} outerRadius={72} paddingAngle={2}>
+                            {customerPieData.map((entry, index) => (
+                              <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+
+                  {/* Top Customers */}
+                  {customerRankData.length > 0 && (
+                    <div className="min-h-[230px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/10 p-4">
+                      <div className="mb-3">
+                        <h5 className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-widest">Top Customers</h5>
+                        <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Ranked by paid revenue</p>
+                      </div>
+                      <ResponsiveContainer width="100%" height={180}>
+                        <BarChart data={customerRankData.slice(0, 5)} layout="vertical" margin={{ top: 0, right: 12, left: 8, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                          <XAxis type="number" hide />
+                          <YAxis
+                            type="category"
+                            dataKey="name"
+                            width={88}
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: isDark ? '#a1a1aa' : '#71717a', fontSize: 9, fontWeight: 700 }}
+                            tickFormatter={(v) => String(v).length > 12 ? `${String(v).slice(0, 12)}...` : String(v)}
+                          />
+                          <Tooltip
+                            cursor={{ fill: isDark ? '#27272a' : '#f4f4f5' }}
+                            contentStyle={{
+                              borderRadius: '8px',
+                              border: 'none',
+                              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
+                              fontSize: '9px',
+                              fontWeight: 800,
+                              backgroundColor: isDark ? '#18181b' : '#fafafa',
+                              color: isDark ? '#fff' : '#18181b'
+                            }}
+                            formatter={(v: unknown) => [formatCurrency(Number(v)), 'REVENUE']}
+                          />
+                          <Bar dataKey="revenue" radius={[0, 5, 5, 0]} fill="#2563eb" barSize={16} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+
+                  {/* Product Revenue Mix */}
+                  {productPieData.length > 0 && (
+                    <div className="min-h-[230px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/10 p-4">
+                      <div className="mb-3">
+                        <h5 className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-widest">Product Revenue Mix</h5>
+                        <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Top item contribution</p>
+                      </div>
+                      <ResponsiveContainer width="100%" height={180}>
+                        <PieChart>
+                          <Tooltip
+                            contentStyle={{
+                              borderRadius: '8px',
+                              border: 'none',
+                              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
+                              fontSize: '9px',
+                              fontWeight: 800,
+                              backgroundColor: isDark ? '#18181b' : '#fafafa',
+                              color: isDark ? '#fff' : '#18181b'
+                            }}
+                            formatter={(v: unknown, name: unknown) => [formatCurrency(Number(v)), String(name)]}
+                          />
+                          <Pie data={productPieData} dataKey="revenue" nameKey="name" innerRadius={45} outerRadius={72} paddingAngle={2}>
+                            {productPieData.map((entry, index) => (
+                              <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+
+                  {/* Top Items Sold */}
+                  {productRankData.length > 0 && (
+                    <div className="min-h-[230px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/10 p-4">
+                      <div className="mb-3">
+                        <h5 className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-widest">Top Items Sold</h5>
+                        <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Ranked by units moved</p>
+                      </div>
+                      <ResponsiveContainer width="100%" height={180}>
+                        <BarChart data={productRankData.slice(0, 5).sort((a, b) => b.quantity - a.quantity)} layout="vertical" margin={{ top: 0, right: 12, left: 8, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                          <XAxis type="number" allowDecimals={false} hide />
+                          <YAxis
+                            type="category"
+                            dataKey="name"
+                            width={88}
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: isDark ? '#a1a1aa' : '#71717a', fontSize: 9, fontWeight: 700 }}
+                            tickFormatter={(v) => String(v).length > 12 ? `${String(v).slice(0, 12)}...` : String(v)}
+                          />
+                          <Tooltip
+                            cursor={{ fill: isDark ? '#27272a' : '#f4f4f5' }}
+                            contentStyle={{
+                              borderRadius: '8px',
+                              border: 'none',
+                              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
+                              fontSize: '9px',
+                              fontWeight: 800,
+                              backgroundColor: isDark ? '#18181b' : '#fafafa',
+                              color: isDark ? '#fff' : '#18181b'
+                            }}
+                            formatter={(v: unknown) => [`${Number(v)} units`, 'SOLD']}
+                          />
+                          <Bar dataKey="quantity" radius={[0, 5, 5, 0]} fill="#059669" barSize={16} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* History Section Table */}
           <div className="space-y-3.5">
