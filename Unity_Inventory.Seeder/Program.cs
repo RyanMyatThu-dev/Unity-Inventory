@@ -497,6 +497,11 @@ FOR EACH ROW EXECUTE FUNCTION update_version_stamp();
                 var invSummary = inventorySummaries.First(x => x.InventoryId == product.InventoryId);
                 if (invSummary.CurrentStock != null)
                 {
+                    // Prevent negative or near-zero stock during seed data generation by replenishing stock when low
+                    if (invSummary.CurrentStock - qty < 10)
+                    {
+                        invSummary.CurrentStock += rnd.Next(100, 300);
+                    }
                     invSummary.CurrentStock -= qty;
                 }
             }

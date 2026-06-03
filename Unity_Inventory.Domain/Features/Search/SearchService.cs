@@ -111,7 +111,8 @@ namespace Unity_Inventory.Domain.Features.Search
                 }
                 if(request.TransactionPeriodEnd.HasValue)
                 {
-                    combinedQuery = combinedQuery.Where(x => x.customer.TblCustomerSummaries.Any(s => s.LastTransactionDate <= request.TransactionPeriodEnd.Value));
+                    var endOfDay = request.TransactionPeriodEnd.Value.Date.AddDays(1).AddTicks(-1);
+                    combinedQuery = combinedQuery.Where(x => x.customer.TblCustomerSummaries.Any(s => s.LastTransactionDate <= endOfDay));
                 }
 
                 combinedQuery = request.SortBy switch { SearchCustomerRequestDTO.SortCustomerOptions.name => request.IsDescending 
@@ -189,7 +190,10 @@ namespace Unity_Inventory.Domain.Features.Search
                     query = query.Where(p => p.CreatedAt >= request.StartDate.Value);
 
                 if (request.EndDate.HasValue)
-                    query = query.Where(p => p.CreatedAt <= request.EndDate.Value);
+                {
+                    var endOfDay = request.EndDate.Value.Date.AddDays(1).AddTicks(-1);
+                    query = query.Where(p => p.CreatedAt <= endOfDay);
+                }
 
                 if (!string.IsNullOrWhiteSpace(request.Name))
                     query = query.Where(p => p.InventoryName.ToLower().Contains(request.Name.ToLower()));

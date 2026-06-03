@@ -80,6 +80,22 @@ const formatCurrency = (value: number) => {
   return `${(value || 0).toLocaleString()} MMK`;
 };
 
+const formatDateToDisplay = (dateInput: string | Date) => {
+  if (!dateInput) return 'N/A';
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return 'N/A';
+  
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+    const [year, month, day] = dateInput.split('-');
+    return `${day}-${month}-${year}`;
+  }
+  
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
 export default function DashboardPage() {
   const { theme, resolvedTheme } = useTheme();
   const [data, setData] = useState<DashboardData | null>(null);
@@ -150,7 +166,7 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tighter uppercase">Executive Dashboard</h1>
-          <p className="text-[10px] text-zinc-400 font-semibold tracking-widest uppercase mt-1">Real-time Enterprise Intelligence • {new Date().toLocaleDateString()}</p>
+          <p className="text-[10px] text-zinc-400 font-semibold tracking-widest uppercase mt-1">Real-time Enterprise Intelligence • {formatDateToDisplay(new Date())}</p>
         </div>
 
         {/* Quick Access Toolbar */}

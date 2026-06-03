@@ -53,7 +53,7 @@ namespace Unity_Inventory.Domain.Features.Dashboard
         {
             try
             {
-                var today = DateTime.UtcNow.Date;
+                var today = DateTime.Now.Date;
                 var startOfMonth = new DateTime(today.Year, today.Month, 1);
                 var startOfYear = new DateTime(today.Year, 1, 1);
 
@@ -135,7 +135,7 @@ namespace Unity_Inventory.Domain.Features.Dashboard
         {
             try
             {
-                var today = DateTime.UtcNow.Date;
+                var today = DateTime.Now.Date;
                 var startOfMonth = new DateTime(today.Year, today.Month, 1);
                 var startOfYear = new DateTime(today.Year, 1, 1);
 
@@ -195,7 +195,7 @@ namespace Unity_Inventory.Domain.Features.Dashboard
         {
             try
             {
-                var startDate = DateTime.UtcNow.AddDays(-7 * weeksBack);
+                var startDate = DateTime.Now.AddDays(-7 * weeksBack);
 
                 var rawData = await _db.TblReports
                     .AsNoTracking()
@@ -232,7 +232,7 @@ namespace Unity_Inventory.Domain.Features.Dashboard
         {
             try
             {
-                var startDate = DateTime.UtcNow.AddMonths(-monthsBack);
+                var startDate = DateTime.Now.AddMonths(-monthsBack);
                 return await _db.TblReports
                     .AsNoTracking()
                     .Where(r => r.BusinessId == businessId && r.ReportDate >= startDate)
@@ -259,7 +259,7 @@ namespace Unity_Inventory.Domain.Features.Dashboard
         {
             try
             {
-                var startDate = DateTime.UtcNow.AddYears(-yearsBack);
+                var startDate = DateTime.Now.AddYears(-yearsBack);
                 return await _db.TblReports
                     .AsNoTracking()
                     .Where(r => r.BusinessId == businessId && r.ReportDate >= startDate)
@@ -296,7 +296,10 @@ namespace Unity_Inventory.Domain.Features.Dashboard
                 query = query.Where(r => r.ReportDate.HasValue && r.ReportDate.Value >= startDate.Value);
 
             if (endDate.HasValue)
-                query = query.Where(r => r.ReportDate.HasValue && r.ReportDate.Value <= endDate.Value);
+            {
+                var endOfDay = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(r => r.ReportDate.HasValue && r.ReportDate.Value <= endOfDay);
+            }
 
             return await query
                 .GroupBy(r => new

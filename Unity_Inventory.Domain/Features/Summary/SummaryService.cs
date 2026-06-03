@@ -26,7 +26,7 @@ namespace Unity_Inventory.Domain.Features.Summary
             try
             {
                 // Check if the period is completed. If it's ongoing (ends today or in the future), calculate on the fly for real-time data.
-                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                var today = DateOnly.FromDateTime(DateTime.Now);
                 bool isOngoing = periodEndDate >= today;
 
                 TblSummaryArchive? archivedSummary = null;
@@ -114,7 +114,7 @@ namespace Unity_Inventory.Domain.Features.Summary
                     existingSummary.TopInventoryName = summary.TopProductName;
                     existingSummary.TopInventoryQuantitySold = summary.TopProductQuantitySold;
                     // Note: TopProductRevenue not directly stored in TblSummaryArchive
-                    existingSummary.GeneratedAt = DateTime.UtcNow;
+                    existingSummary.GeneratedAt = DateTime.Now;
                     existingSummary.Source = source;
                 }
                 else
@@ -138,7 +138,7 @@ namespace Unity_Inventory.Domain.Features.Summary
                         TopInventoryName = summary.TopProductName,
                         TopInventoryQuantitySold = summary.TopProductQuantitySold,
                         // TopProductRevenue not directly stored
-                        GeneratedAt = DateTime.UtcNow,
+                        GeneratedAt = DateTime.Now,
                         Source = source
                     };
 
@@ -203,7 +203,7 @@ namespace Unity_Inventory.Domain.Features.Summary
                         TotalOrders = 0,
                         TotalItemsSold = 0,
                         UniqueCustomers = 0,
-                        GeneratedAt = DateTime.UtcNow,
+                        GeneratedAt = DateTime.Now,
                         Source = "API"
                     });
                 }
@@ -251,7 +251,7 @@ namespace Unity_Inventory.Domain.Features.Summary
                     CustomerRanks = customerRanks,
                     ProductRanks = productRanks,
                     SalesTrend = BuildSalesTrend(reports, summaryType, periodStartDate),
-                    GeneratedAt = DateTime.UtcNow,
+                    GeneratedAt = DateTime.Now,
                     Source = "API"
                 };
 
@@ -394,7 +394,9 @@ namespace Unity_Inventory.Domain.Features.Summary
                     var reportsByHour = reports.Where(r => r.ReportDate.HasValue).GroupBy(r => r.ReportDate!.Value.Hour).ToDictionary(g => g.Key, g => g.ToList());
                     for (int h = 0; h < 24; h++)
                     {
-                        var label = $"{h:D2}:00";
+                        var hour12 = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+                        var amPm = h < 12 ? "AM" : "PM";
+                        var label = $"{hour12} {amPm}";
                         decimal rev = 0;
                         int ords = 0;
                         if (reportsByHour.TryGetValue(h, out var hrReports))
@@ -548,7 +550,7 @@ namespace Unity_Inventory.Domain.Features.Summary
         public async Task GenerateDailySummariesAsync()
         {
             var businesses = await _db.TblBusinesses.Select(b => b.BusinessId).ToListAsync();
-            var yesterday = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
+            var yesterday = DateOnly.FromDateTime(DateTime.Now.AddDays(-1));
             foreach (var businessId in businesses)
             {
                 await GenerateAndStoreSalesSummaryAsync(businessId, "DAILY", yesterday, yesterday, "Hangfire");
@@ -558,7 +560,7 @@ namespace Unity_Inventory.Domain.Features.Summary
         public async Task GenerateMonthlySummariesAsync()
         {
             var businesses = await _db.TblBusinesses.Select(b => b.BusinessId).ToListAsync();
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = DateOnly.FromDateTime(DateTime.Now);
             var lastMonth = today.AddMonths(-1);
             var startDate = new DateOnly(lastMonth.Year, lastMonth.Month, 1);
             var endDate = startDate.AddMonths(1).AddDays(-1);
@@ -571,7 +573,7 @@ namespace Unity_Inventory.Domain.Features.Summary
         public async Task GenerateYearlySummariesAsync()
         {
             var businesses = await _db.TblBusinesses.Select(b => b.BusinessId).ToListAsync();
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = DateOnly.FromDateTime(DateTime.Now);
             var lastYear = today.Year - 1;
             var startDate = new DateOnly(lastYear, 1, 1);
             var endDate = new DateOnly(lastYear, 12, 31);

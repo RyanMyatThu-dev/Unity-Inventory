@@ -38,6 +38,7 @@ import {
   Tooltip
 } from 'recharts';
 import { toast } from 'sonner';
+import { MyanmarDateInput } from '@/components/ui/MyanmarDateInput';
 
 
 // --- Types ---
@@ -105,6 +106,39 @@ const formatCurrency = (value: number) => {
   return `${(value || 0).toLocaleString()} MMK`;
 };
 
+const formatShortNumber = (value: number) => {
+  if (value >= 1e6) {
+    return `${(value / 1e6).toFixed(1).replace(/\.0$/, '')}M`;
+  }
+  if (value >= 1e3) {
+    return `${(value / 1e3).toFixed(1).replace(/\.0$/, '')}k`;
+  }
+  return (value || 0).toString();
+};
+
+const formatLocalDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatDateToDisplay = (dateInput: string | Date) => {
+  if (!dateInput) return 'N/A';
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return 'N/A';
+
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+    const [year, month, day] = dateInput.split('-');
+    return `${day}-${month}-${year}`;
+  }
+
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
 const CHART_COLORS = ['#059669', '#2563eb', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2'];
 
 // Removed mock seed data as per plan - using live API data only
@@ -122,10 +156,10 @@ const GenerateSummaryModal = ({
     const today = new Date();
     // Default start to first day of current month
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    return firstDay.toISOString().split('T')[0];
+    return formatLocalDate(firstDay);
   });
   const [periodEndDate, setPeriodEndDate] = useState<string>(() => {
-    return new Date().toISOString().split('T')[0];
+    return formatLocalDate(new Date());
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [progressMsg, setProgressMsg] = useState('');
@@ -136,10 +170,10 @@ const GenerateSummaryModal = ({
       toast.error('Please specify both start and end dates');
       return;
     }
-    
+
     setIsSubmitting(true);
     setProgressMsg('Extracting transactional logs...');
-    
+
     // Simulate multi-step analytical compilation for visual immersion
     setTimeout(() => setProgressMsg('Calculating cross-period revenue velocity...'), 600);
     setTimeout(() => setProgressMsg('Compiling inventory top-performer rankings...'), 1200);
@@ -236,30 +270,22 @@ const GenerateSummaryModal = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Period Start</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={12} />
-                  <input
-                    required
-                    type="date"
-                    value={periodStartDate}
-                    onChange={(e) => setPeriodStartDate(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 rounded-lg text-[10px] font-bold text-zinc-900 dark:text-zinc-100 outline-none focus:border-zinc-900 dark:focus:border-zinc-500 transition-all"
-                  />
-                </div>
+                <MyanmarDateInput
+                  required
+                  value={periodStartDate}
+                  onChange={setPeriodStartDate}
+                  className="w-full"
+                />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Period End</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={12} />
-                  <input
-                    required
-                    type="date"
-                    value={periodEndDate}
-                    onChange={(e) => setPeriodEndDate(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 rounded-lg text-[10px] font-bold text-zinc-900 dark:text-zinc-100 outline-none focus:border-zinc-900 dark:focus:border-zinc-500 transition-all"
-                  />
-                </div>
+                <MyanmarDateInput
+                  required
+                  value={periodEndDate}
+                  onChange={setPeriodEndDate}
+                  className="w-full"
+                />
               </div>
             </div>
 
@@ -320,7 +346,7 @@ const DetailedSummaryModal = ({
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-zinc-900/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}></div>
       <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 w-full max-w-2xl rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[85vh]">
-        
+
         {/* Header */}
         <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/20">
           <div className="flex items-center gap-3">
@@ -339,7 +365,7 @@ const DetailedSummaryModal = ({
 
         {/* Scrollable Contents */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          
+
           {/* Metadata Grid */}
           <div className="grid grid-cols-3 gap-4 p-4 bg-zinc-50/50 dark:bg-zinc-800/20 border border-zinc-100 dark:border-zinc-800/80 rounded-xl text-center">
             <div>
@@ -351,7 +377,7 @@ const DetailedSummaryModal = ({
             <div>
               <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mb-0.5">Target Period</p>
               <p className="text-[9px] font-bold text-zinc-900 dark:text-zinc-100">
-                {new Date(summary.periodStartDate).toLocaleDateString()} - {new Date(summary.periodEndDate).toLocaleDateString()}
+                {formatDateToDisplay(summary.periodStartDate)} - {formatDateToDisplay(summary.periodEndDate)}
               </p>
             </div>
             <div>
@@ -518,20 +544,13 @@ const SchedulerJobsWidget = ({
       .join(' ');
   };
 
-  const getCronDescription = (cron: string) => {
-    if (cron.includes('23 55')) return 'Every day at 11:55 PM';
-    if (cron.includes('23 59') && cron.includes('31')) return 'Monthly at 11:59 PM';
-    if (cron.includes('12 31 23 59')) return 'Yearly on Dec 31st at 11:59 PM';
-    return cron;
-  };
-
   return (
     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-4 bg-zinc-900 dark:bg-zinc-100 rounded-full" />
           <div>
-            <h4 className="text-[10px] font-bold text-zinc-900 dark:text-zinc-200 uppercase tracking-widest">Automated Summarizer Engine (Hangfire)</h4>
+            <h4 className="text-[10px] font-bold text-zinc-900 dark:text-zinc-200 uppercase tracking-widest">Automated Summarizer Engine</h4>
             <p className="text-[8px] text-zinc-400 font-bold uppercase mt-0.5">Background task compiler schedule and telemetry</p>
           </div>
         </div>
@@ -574,7 +593,6 @@ const SchedulerJobsWidget = ({
                       {isActive ? 'Active' : 'Error'}
                     </span>
                   </div>
-                  <p className="text-[9px] text-zinc-400 font-semibold">{getCronDescription(job.cron)}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 mt-4 pt-2.5 border-t border-zinc-200/30 dark:border-zinc-800/50 text-[8px] font-bold uppercase tracking-wider text-zinc-400">
@@ -609,15 +627,15 @@ export default function SalesSummariesPage() {
 
   const currentTheme = resolvedTheme || theme;
   const isDark = currentTheme === 'dark';
-  
+
   // Date Range Quick Presets
   const [periodStartDate, setPeriodStartDate] = useState<string>(() => {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    return firstDay.toISOString().split('T')[0];
+    return formatLocalDate(firstDay);
   });
   const [periodEndDate, setPeriodEndDate] = useState<string>(() => {
-    return new Date().toISOString().split('T')[0];
+    return formatLocalDate(new Date());
   });
 
   // Create a display-safe fallback for summary details to avoid layout thrashing on empty states
@@ -688,7 +706,7 @@ export default function SalesSummariesPage() {
       }
 
       const res = await api.get('/summary/sales', { params });
-      
+
       if (res.data.isSuccess && res.data.data) {
         setActiveSummary(res.data.data);
       } else {
@@ -699,7 +717,7 @@ export default function SalesSummariesPage() {
       const historyRes = await api.get('/summary/sales/history', {
         params: { summaryType: summaryTypeFilter.toUpperCase() }
       });
-      
+
       if (historyRes.data.isSuccess && historyRes.data.data) {
         setHistoryList(historyRes.data.data);
       } else {
@@ -785,7 +803,7 @@ export default function SalesSummariesPage() {
 
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-300 pb-20">
-      
+
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-zinc-900 p-6 border border-zinc-200 dark:border-zinc-700/80 rounded-xl shadow-sm gap-4">
         <div>
@@ -797,13 +815,13 @@ export default function SalesSummariesPage() {
             Generate and analyze operational cadence profiles and high-velocity business trends.
           </p>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-3">
           {activeSummary && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 rounded-xl text-[9px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-450 shadow-sm animate-in fade-in duration-200">
               <Calendar size={12} className="text-zinc-400" />
               <span>
-                {new Date(activeSummary.periodStartDate).toLocaleDateString()} &mdash; {new Date(activeSummary.periodEndDate).toLocaleDateString()}
+                {formatDateToDisplay(activeSummary.periodStartDate)} &mdash; {formatDateToDisplay(activeSummary.periodEndDate)}
               </span>
             </div>
           )}
@@ -835,10 +853,10 @@ export default function SalesSummariesPage() {
         </div>
       ) : (
         <div className="space-y-6 animate-in fade-in duration-300">
-          
+
           {/* Active Summary Dash: KPI Cards Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
+
             {/* Total Revenue */}
             <div className="group relative overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-xl shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
@@ -910,7 +928,7 @@ export default function SalesSummariesPage() {
 
           {/* AI Insights & Recharts Telemetry Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-            
+
             {/* Visual Analytics */}
             <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm flex flex-col min-h-[350px]">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-zinc-100 dark:border-zinc-800/60">
@@ -943,18 +961,16 @@ export default function SalesSummariesPage() {
 
                   {summaryTypeFilter === 'CUSTOM' && (
                     <div className="flex items-center gap-1.5 animate-in fade-in slide-in-from-right-3 duration-250">
-                      <input
-                        type="date"
+                      <MyanmarDateInput
                         value={periodStartDate}
-                        onChange={(e) => setPeriodStartDate(e.target.value)}
-                        className="px-2 py-1 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 rounded-md text-[9px] font-bold text-zinc-900 dark:text-zinc-100 outline-none"
+                        onChange={setPeriodStartDate}
+                        buttonClassName="w-24 pl-2 pr-2 py-1 text-[9px] rounded-md"
                       />
                       <span className="text-[8px] font-bold text-zinc-400 uppercase">To</span>
-                      <input
-                        type="date"
+                      <MyanmarDateInput
                         value={periodEndDate}
-                        onChange={(e) => setPeriodEndDate(e.target.value)}
-                        className="px-2 py-1 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 rounded-md text-[9px] font-bold text-zinc-900 dark:text-zinc-100 outline-none"
+                        onChange={setPeriodEndDate}
+                        buttonClassName="w-24 pl-2 pr-2 py-1 text-[9px] rounded-md"
                       />
                       <button
                         onClick={loadActiveSummary}
@@ -976,11 +992,15 @@ export default function SalesSummariesPage() {
               ) : (
                 <div className="flex-1 h-[250px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={telemetryChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <AreaChart
+                      key={`area-chart-${summaryTypeFilter}-${displaySummary.totalRevenue}-${displaySummary.totalOrders}`}
+                      data={telemetryChartData}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
                       <defs>
                         <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={isDark ? "#fafafa" : "#18181b"} stopOpacity={0.08}/>
-                          <stop offset="95%" stopColor={isDark ? "#fafafa" : "#18181b"} stopOpacity={0}/>
+                          <stop offset="5%" stopColor={isDark ? "#fafafa" : "#18181b"} stopOpacity={0.08} />
+                          <stop offset="95%" stopColor={isDark ? "#fafafa" : "#18181b"} stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f1f1f1"} />
@@ -994,7 +1014,7 @@ export default function SalesSummariesPage() {
                         axisLine={false}
                         tickLine={false}
                         tick={{ fill: isDark ? '#71717a' : '#a1a1aa', fontSize: 9, fontWeight: 700 }}
-                        tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                        tickFormatter={formatShortNumber}
                       />
                       <Tooltip
                         contentStyle={{
@@ -1009,7 +1029,7 @@ export default function SalesSummariesPage() {
                         itemStyle={{ color: isDark ? '#fff' : '#18181b' }}
                         formatter={(v: unknown) => [formatCurrency(Number(v as number)), 'REVENUE']}
                       />
-                      <Area type="monotone" dataKey="revenue" stroke={isDark ? "#fafafa" : "#18181b"} strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
+                      <Area type="monotone" dataKey="revenue" stroke={isDark ? "#fafafa" : "#18181b"} strokeWidth={2} dot={{ r: 3, strokeWidth: 1, fill: isDark ? '#18181b' : '#ffffff' }} fillOpacity={1} fill="url(#colorRev)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -1018,7 +1038,7 @@ export default function SalesSummariesPage() {
 
             {/* Sidebar Intelligence (AI Insights + Leaders) */}
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
-              
+
               {/* AI Narrative insight block */}
               <div className="relative p-4 bg-zinc-50/50 dark:bg-zinc-950/20 border border-zinc-200/50 dark:border-zinc-800/80 rounded-xl">
                 <div className="absolute top-2 right-2 opacity-20">
@@ -1091,7 +1111,7 @@ export default function SalesSummariesPage() {
                         <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Contribution mix</p>
                       </div>
                       <ResponsiveContainer width="100%" height={180}>
-                        <PieChart>
+                        <PieChart key={`customer-pie-${summaryTypeFilter}-${displaySummary.totalRevenue}-${displaySummary.totalOrders}`}>
                           <Tooltip
                             contentStyle={{
                               borderRadius: '8px',
@@ -1122,7 +1142,12 @@ export default function SalesSummariesPage() {
                         <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Ranked by paid revenue</p>
                       </div>
                       <ResponsiveContainer width="100%" height={180}>
-                        <BarChart data={customerRankData.slice(0, 5)} layout="vertical" margin={{ top: 0, right: 12, left: 8, bottom: 0 }}>
+                        <BarChart
+                          key={`customer-bar-${summaryTypeFilter}-${displaySummary.totalRevenue}-${displaySummary.totalOrders}`}
+                          data={customerRankData.slice(0, 5)}
+                          layout="vertical"
+                          margin={{ top: 0, right: 12, left: 8, bottom: 0 }}
+                        >
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                           <XAxis type="number" hide />
                           <YAxis
@@ -1161,7 +1186,7 @@ export default function SalesSummariesPage() {
                         <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Top item contribution</p>
                       </div>
                       <ResponsiveContainer width="100%" height={180}>
-                        <PieChart>
+                        <PieChart key={`product-pie-${summaryTypeFilter}-${displaySummary.totalRevenue}-${displaySummary.totalOrders}`}>
                           <Tooltip
                             contentStyle={{
                               borderRadius: '8px',
@@ -1192,7 +1217,12 @@ export default function SalesSummariesPage() {
                         <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Ranked by units moved</p>
                       </div>
                       <ResponsiveContainer width="100%" height={180}>
-                        <BarChart data={productRankData.slice(0, 5).sort((a, b) => b.quantity - a.quantity)} layout="vertical" margin={{ top: 0, right: 12, left: 8, bottom: 0 }}>
+                        <BarChart
+                          key={`product-bar-${summaryTypeFilter}-${displaySummary.totalRevenue}-${displaySummary.totalOrders}`}
+                          data={productRankData.slice(0, 5).sort((a, b) => b.quantity - a.quantity)}
+                          layout="vertical"
+                          margin={{ top: 0, right: 12, left: 8, bottom: 0 }}
+                        >
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                           <XAxis type="number" allowDecimals={false} hide />
                           <YAxis
@@ -1260,16 +1290,16 @@ export default function SalesSummariesPage() {
                       >
                         <td className="px-5 py-4 font-bold text-zinc-400 text-center w-12">{idx + 1}</td>
                         <td className="px-5 py-4 font-black text-zinc-800 dark:text-zinc-200">
-                          {new Date(item.periodStartDate).toLocaleDateString()} - {new Date(item.periodEndDate).toLocaleDateString()}
+                          {formatDateToDisplay(item.periodStartDate)} - {formatDateToDisplay(item.periodEndDate)}
                         </td>
                         <td className="px-5 py-4 font-bold">
                           <span className={cn(
                             "px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider",
                             item.summaryType === 'DAILY' ? "bg-rose-500/10 text-rose-600" :
-                            item.summaryType === 'WEEKLY' ? "bg-blue-500/10 text-blue-600" :
-                            item.summaryType === 'MONTHLY' ? "bg-amber-500/10 text-amber-600" :
-                            item.summaryType === 'YEARLY' ? "bg-emerald-500/10 text-emerald-600" :
-                            "bg-violet-500/10 text-violet-600"
+                              item.summaryType === 'WEEKLY' ? "bg-blue-500/10 text-blue-600" :
+                                item.summaryType === 'MONTHLY' ? "bg-amber-500/10 text-amber-600" :
+                                  item.summaryType === 'YEARLY' ? "bg-emerald-500/10 text-emerald-600" :
+                                    "bg-violet-500/10 text-violet-600"
                           )}>
                             {item.summaryType}
                           </span>

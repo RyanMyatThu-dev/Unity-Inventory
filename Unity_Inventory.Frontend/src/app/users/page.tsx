@@ -22,6 +22,22 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
+const formatDateToDisplay = (dateInput: string | Date) => {
+  if (!dateInput) return 'N/A';
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return 'N/A';
+  
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+    const [year, month, day] = dateInput.split('-');
+    return `${day}-${month}-${year}`;
+  }
+  
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
 interface UserDto {
   userId: number;
   name: string;
@@ -515,7 +531,7 @@ export default function UsersPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-medium">
                           <Calendar size={10} />
-                          {new Date(u.createdAt).toLocaleDateString()}
+                          {formatDateToDisplay(u.createdAt)}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">

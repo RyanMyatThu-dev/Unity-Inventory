@@ -32,7 +32,10 @@ namespace Unity_Inventory.Domain.Features.Sales
                     query = query.Where(r => r.ReportDate >= startDate.Value);
 
                 if (endDate.HasValue)
-                    query = query.Where(r => r.ReportDate <= endDate.Value);
+                {
+                    var endOfDay = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                    query = query.Where(r => r.ReportDate <= endOfDay);
+                }
 
                 var totalCount = await query.CountAsync();
 
@@ -58,7 +61,7 @@ namespace Unity_Inventory.Domain.Features.Sales
                     BusinessId = r.BusinessId,
                     CustomerId = r.CustomerId,
                     CustomerName = r.CustomerName,
-                    ReportDate = r.ReportDate ?? DateTime.UtcNow,
+                    ReportDate = r.ReportDate ?? DateTime.Now,
                     TotalAmount = r.TotalAmount,
                     Remarks = r.Remarks
                 }).ToList();
@@ -92,7 +95,7 @@ namespace Unity_Inventory.Domain.Features.Sales
                     BusinessId = report.BusinessId,
                     CustomerId = report.CustomerId,
                     CustomerName = report.Customer.CustomerName,
-                    ReportDate = report.ReportDate ?? DateTime.UtcNow,
+                    ReportDate = report.ReportDate ?? DateTime.Now,
                     TotalAmount = report.TotalAmount,
                     Remarks = report.Remarks,
                     Vouchers = report.TblVouchers.Select(v => new VoucherDTO
@@ -127,7 +130,7 @@ namespace Unity_Inventory.Domain.Features.Sales
                 {
                     BusinessId = request.BusinessId,
                     CustomerId = request.CustomerId,
-                    ReportDate = request.ReportDate ?? DateTime.UtcNow,
+                    ReportDate = request.ReportDate ?? DateTime.Now,
                     Remarks = request.Remarks,
                     TotalAmount = request.Vouchers.Sum(v => v.Quantity * v.SellPrice)
                 };
@@ -152,26 +155,30 @@ namespace Unity_Inventory.Domain.Features.Sales
                     var invSummary = await _db.TblInventorySummaries
                         .FirstOrDefaultAsync(s => s.InventoryId == vReq.InventoryId && s.BusinessId == request.BusinessId);
 
+                    if (vReq.Quantity < 0)
+                    {
+                        return Result<ReportDTO>.Failure("Invalid quantity. Cannot process negative quantity.");
+                    }
+
+                    var currentStock = invSummary?.CurrentStock ?? 0;
+                    if (currentStock < vReq.Quantity)
+                    {
+                        return Result<ReportDTO>.Failure($"Insufficient stock for product. Available: {currentStock}, Required: {vReq.Quantity}.");
+                    }
+
                     if (invSummary == null)
                     {
-                        // Prevent negative stock from sales
-                        if (vReq.Quantity < 0)
-                            return Result<ReportDTO>.Failure("Invalid quantity. Cannot process negative quantity.");
-
                         invSummary = new TblInventorySummary
                         {
                             BusinessId = request.BusinessId,
                             InventoryId = vReq.InventoryId,
                             CurrentStock = 0,
-                            LastUpdated = DateTime.UtcNow
+                            LastUpdated = DateTime.Now
                         };
                         _db.TblInventorySummaries.Add(invSummary);
                     }
                     else
                     {
-                        if (invSummary.CurrentStock < vReq.Quantity)
-                            return Result<ReportDTO>.Failure($"Insufficient stock for product. Available: {invSummary.CurrentStock}, Required: {vReq.Quantity}.");
-
                         invSummary.CurrentStock -= vReq.Quantity;
                         invSummary.LastUpdated = DateTime.Now;
                     }

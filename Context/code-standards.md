@@ -60,3 +60,16 @@ This document outlines the strict coding standards, design patterns, and program
 - **No Direct References**: Frontend applications must never reference business logic layers or DbContexts directly. All system queries must route through the ASP.NET Core API layer.
 - **No Shared Secrets**: Never check API credentials, database strings, or encryption keys into source control. Always read secrets from configuration settings (`appsettings.json` or `.env.local` files).
 - **No Reverts**: Never rollback or reverse codebase changes unless explicitly directed or when an active test fails, and do not introduce files that are outside the requested boundaries.
+
+---
+
+## 4. DateTime & Timezone Handling Standards
+
+### A. Backend Storage & Queries (.NET / Postgres)
+- **Local Time Storage**: Always store transaction timestamps, reports, last-updated dates, and summaries using the local system time (`DateTime.Now`). The database tables use `timestamp without time zone` which stores these timestamps literally.
+- **UTC Exception**: Reserve `DateTime.UtcNow` exclusively for token provisioning (JWT access/refresh tokens) and security handshake expirations to prevent network/client synchronization drift.
+
+### B. Frontend Date Extraction & Display (Next.js)
+- **Extraction Formatting**: When formatting dates to send to the API (such as custom start/end queries), NEVER use `date.toISOString().split('T')[0]`. This will shift the date to the previous day or year for local times near timezone boundaries due to UTC timezone offsets. Always use a helper like `formatLocalDate` to parse by local day/month/year components.
+- **Regional Display Rendering**: The Myanmar standard display format is `dd-mm-yyyy`. All date readouts in list tables, ledger cards, detail models, and headers must format dates to this standard using the shared `formatDateToDisplay` function.
+

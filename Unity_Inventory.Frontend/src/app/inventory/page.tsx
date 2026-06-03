@@ -563,7 +563,7 @@ export default function InventoryPage() {
   const [filterSortDesc, setFilterSortDesc] = useState(false);
   const [lowStockOnly, setLowStockOnly] = useState(false);
 
-  const hasActiveFilters = filterCategoryId || filterMinPrice || filterMaxPrice || filterMinStock || filterMaxStock || filterSortBy !== 'name' || filterSortDesc || lowStockOnly;
+  const hasActiveFilters = filterCategoryId || filterMinPrice || filterMaxPrice || filterMinStock || filterMaxStock || filterSortBy !== 'name' || filterSortDesc;
 
   const resetFilters = () => {
     setFilterCategoryId('');
@@ -573,7 +573,6 @@ export default function InventoryPage() {
     setFilterMaxStock('');
     setFilterSortBy('name');
     setFilterSortDesc(false);
-    setLowStockOnly(false);
     setPage(1);
   };
 
@@ -744,7 +743,7 @@ export default function InventoryPage() {
   useEffect(() => {
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, searchTrigger]);
+  }, [page, searchTrigger, lowStockOnly]);
 
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-300">

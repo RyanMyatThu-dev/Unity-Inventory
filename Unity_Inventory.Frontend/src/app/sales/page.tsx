@@ -26,6 +26,7 @@ import {
   CreditCard,
   Hash
 } from 'lucide-react';
+import { MyanmarDateInput } from '@/components/ui/MyanmarDateInput';
 
 // --- Types ---
 interface SaleReport {
@@ -45,6 +46,29 @@ interface SaleReport {
 
 const formatCurrency = (value: number) => {
   return `${(value || 0).toLocaleString()} MMK`;
+};
+
+const formatLocalDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatDateToDisplay = (dateInput: string | Date) => {
+  if (!dateInput) return 'N/A';
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return 'N/A';
+  
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+    const [year, month, day] = dateInput.split('-');
+    return `${day}-${month}-${year}`;
+  }
+  
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
 };
 
 // --- Memoized Row ---
@@ -67,7 +91,7 @@ const SaleRow = memo(({ report, index, onSelect }: {
         </div>
         <div>
           <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate tracking-tight">INV-{report.id.toString().padStart(6, '0')}</p>
-          <p className="text-[10px] text-zinc-400 font-medium">{new Date(report.reportDate).toLocaleDateString()}</p>
+          <p className="text-[10px] text-zinc-400 font-medium">{formatDateToDisplay(report.reportDate)}</p>
         </div>
       </div>
     </td>
@@ -130,7 +154,7 @@ const SaleCard = memo(({ report, index, onSelect }: {
       </div>
       <div className="min-w-0">
         <p className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 truncate tracking-tight uppercase">INV-{report.id.toString().padStart(6, '0')}</p>
-        <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">{new Date(report.reportDate).toLocaleDateString()}</p>
+        <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">{formatDateToDisplay(report.reportDate)}</p>
       </div>
     </div>
     
@@ -208,7 +232,7 @@ const SaleDetailModal = ({ reportId, onClose }: { reportId: number, onClose: () 
               <div className="flex items-center justify-center gap-1.5 text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
                 <Calendar size={10} /> Date
               </div>
-              <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase">{new Date(report.reportDate).toLocaleDateString()}</p>
+              <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase">{formatDateToDisplay(report.reportDate)}</p>
             </div>
             <div className="space-y-1 text-right">
               <div className="flex items-center justify-end gap-1.5 text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
@@ -589,18 +613,17 @@ export default function SalesPage() {
       if (selectedPreset === 'THIS_WEEK') {
         const day = today.getDay();
         const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-        const monday = new Date(today.setDate(diff));
-        monday.setHours(0, 0, 0, 0);
-        startDate = monday.toISOString().split('T')[0];
-        endDate = new Date().toISOString().split('T')[0];
+        const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+        startDate = formatLocalDate(monday);
+        endDate = formatLocalDate(new Date());
       } else if (selectedPreset === 'THIS_MONTH') {
         const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-        startDate = firstDay.toISOString().split('T')[0];
-        endDate = new Date().toISOString().split('T')[0];
+        startDate = formatLocalDate(firstDay);
+        endDate = formatLocalDate(new Date());
       } else if (selectedPreset === 'THIS_YEAR') {
         const firstDayOfYear = new Date(today.getFullYear(), 0, 1);
-        startDate = firstDayOfYear.toISOString().split('T')[0];
-        endDate = new Date().toISOString().split('T')[0];
+        startDate = formatLocalDate(firstDayOfYear);
+        endDate = formatLocalDate(new Date());
       } else if (selectedPreset === 'CUSTOM') {
         if (customStartDate) startDate = customStartDate;
         if (customEndDate) endDate = customEndDate;
@@ -677,24 +700,22 @@ export default function SalesPage() {
 
           {selectedPreset === 'CUSTOM' && (
             <div className="flex items-center gap-1.5 animate-in fade-in slide-in-from-left-3 duration-250">
-              <input
-                type="date"
+              <MyanmarDateInput
                 value={customStartDate}
-                onChange={(e) => {
-                  setCustomStartDate(e.target.value);
+                onChange={(val) => {
+                  setCustomStartDate(val);
                   setPage(1);
                 }}
-                className="px-2 py-1 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 rounded-md text-[9px] font-bold text-zinc-900 dark:text-zinc-100 outline-none"
+                buttonClassName="w-24 pl-2 pr-2 py-1 text-[9px] rounded-md"
               />
               <span className="text-[8px] font-bold text-zinc-400 uppercase">To</span>
-              <input
-                type="date"
+              <MyanmarDateInput
                 value={customEndDate}
-                onChange={(e) => {
-                  setCustomEndDate(e.target.value);
+                onChange={(val) => {
+                  setCustomEndDate(val);
                   setPage(1);
                 }}
-                className="px-2 py-1 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 rounded-md text-[9px] font-bold text-zinc-900 dark:text-zinc-100 outline-none"
+                buttonClassName="w-24 pl-2 pr-2 py-1 text-[9px] rounded-md"
               />
             </div>
           )}

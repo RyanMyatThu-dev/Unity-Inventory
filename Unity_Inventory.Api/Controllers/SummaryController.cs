@@ -50,7 +50,7 @@ namespace Unity_Inventory.Api.Controllers
             DateOnly startDate, endDate;
             if (!periodStartDate.HasValue || !periodEndDate.HasValue)
             {
-                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                var today = DateOnly.FromDateTime(DateTime.Now);
                 switch (summaryType.ToUpper())
                 {
                     case "DAILY":
