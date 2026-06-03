@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import api from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
+import { useAIChat } from '@/context/AIChatContext';
 import { cn } from '@/lib/utils';
 import {
   TrendingUp,
@@ -682,6 +683,8 @@ export default function SalesSummariesPage() {
   const [activeSummary, setActiveSummary] = useState<SalesSummary | null>(null);
   const [historyList, setHistoryList] = useState<SalesSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
 
   if (isLoading) {
     return (
@@ -782,10 +785,16 @@ export default function SalesSummariesPage() {
     };
   }, [activeSummary, summaryTypeFilter, periodStartDate, periodEndDate]);
 
-  // AI Analyst Chat state and handlers
-  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'model'; content: string }>>([]);
+  // AI Analyst Chat state and handlers (Consolidated to global AIChatContext)
+  const {
+    chatMessages,
+    chatLoading,
+    sendChatMessage,
+    resetChat,
+    updateSummaryParams
+  } = useAIChat();
+
   const [chatInput, setChatInput] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
   const chatContainerRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -799,56 +808,24 @@ export default function SalesSummariesPage() {
 
   useEffect(() => {
     if (displaySummary) {
-      const startMyanmar = formatDateToDisplay(displaySummary.periodStartDate);
-      const endMyanmar = formatDateToDisplay(displaySummary.periodEndDate);
-      const initialText = `Hello! I'm your AI Business Analyst. I've analyzed the sales summary for the period from ${startMyanmar} to ${endMyanmar} (${displaySummary.summaryType}). During this period:\n\n` +
-        `- **Total Revenue**: ${formatCurrency(displaySummary.totalRevenue)}\n` +
-        `- **Average Ticket**: ${formatCurrency(displaySummary.averageOrderValue)}\n` +
-        `- **Total Orders**: ${displaySummary.totalOrders}\n` +
-        `- **Items Dispatched**: ${displaySummary.totalItemsSold} items\n\n` +
-        `How can I help you analyze this data or optimize your inventory operations?`;
-      
-      setChatMessages([
-        { role: 'model', content: initialText }
-      ]);
-    }
-  }, [displaySummary]);
-
-  const handleSendChatMessage = async (customMessage?: string) => {
-    const textToSend = customMessage || chatInput;
-    if (!textToSend.trim() || chatLoading || !displaySummary) return;
-
-    const userMsg = { role: 'user' as const, content: textToSend };
-    const updatedMessages = [...chatMessages, userMsg];
-    setChatMessages(updatedMessages);
-    if (!customMessage) setChatInput('');
-    setChatLoading(true);
-
-    try {
-      const history = chatMessages.map(m => ({
-        role: m.role === 'model' ? 'model' : 'user',
-        content: m.content
-      }));
-
-      const response = await api.post('/summary/chat', {
-        message: textToSend,
+      updateSummaryParams({
         summaryType: displaySummary.summaryType,
         periodStartDate: displaySummary.periodStartDate,
         periodEndDate: displaySummary.periodEndDate,
-        history: history
+        totalRevenue: displaySummary.totalRevenue,
+        averageOrderValue: displaySummary.averageOrderValue,
+        totalOrders: displaySummary.totalOrders,
+        totalItemsSold: displaySummary.totalItemsSold
       });
-
-      if (response.data.isSuccess && response.data.data) {
-        setChatMessages([...updatedMessages, { role: 'model', content: response.data.data }]);
-      } else {
-        toast.error('Failed to get response from AI');
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error('Error contacting AI service');
-    } finally {
-      setChatLoading(false);
     }
+  }, [displaySummary, updateSummaryParams]);
+
+  const handleSendChatMessage = async (customMessage?: string) => {
+    const textToSend = customMessage || chatInput;
+    if (!textToSend.trim() || chatLoading) return;
+
+    if (!customMessage) setChatInput('');
+    await sendChatMessage(textToSend);
   };
 
   // Modal States
@@ -886,7 +863,11 @@ export default function SalesSummariesPage() {
 
   // Fetch summaries logic
   const loadActiveSummary = useCallback(async () => {
-    setLoading(true);
+    if (isInitialLoading) {
+      setLoading(true);
+    } else {
+      setIsFetching(true);
+    }
     try {
       // Query parameters for GET /api/summary/sales
       const params: Record<string, string> = {
@@ -924,8 +905,10 @@ export default function SalesSummariesPage() {
       toast.error('Failed to fetch analytical summaries.');
     } finally {
       setLoading(false);
+      setIsInitialLoading(false);
+      setIsFetching(false);
     }
-  }, [summaryTypeFilter, periodStartDate, periodEndDate]);
+  }, [summaryTypeFilter, periodStartDate, periodEndDate, isInitialLoading]);
 
   // Trigger loading on filter changes
   useEffect(() => {
@@ -1122,222 +1105,126 @@ export default function SalesSummariesPage() {
           </div>
 
           {/* AI Insights & Recharts Telemetry Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-            {/* Visual Analytics */}
-            <div id="telemetry-charts" className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm flex flex-col min-h-[350px]">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-zinc-100 dark:border-zinc-800/60">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 bg-zinc-900 dark:bg-zinc-100 rounded-full" />
-                  <div>
-                    <h4 className="text-[10px] font-bold text-zinc-900 dark:text-zinc-200 uppercase tracking-widest">Sales Trend Telemetry</h4>
-                    <p className="text-[8px] text-zinc-400 font-bold uppercase mt-0.5">Cadence distribution index</p>
+            {/* Visual Analytics & Drivers Column */}
+            <div className={cn("lg:col-span-7 flex flex-col gap-6 transition-opacity duration-200", isFetching && "opacity-75")}>
+              
+              {/* Visual Analytics */}
+              <div id="telemetry-charts" className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm flex flex-col h-[480px] relative">
+                {isFetching && (
+                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-zinc-100 dark:bg-zinc-800 overflow-hidden z-10 rounded-t-xl">
+                    <div className="h-full bg-zinc-900 dark:bg-zinc-100 animate-pulse w-1/3" />
                   </div>
-                </div>
-
-                {/* Cadence controls and Date picker */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center gap-1 bg-zinc-100/60 dark:bg-zinc-800/40 p-0.5 rounded-lg border border-zinc-200/50 dark:border-zinc-700/30">
-                    {['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'CUSTOM'].map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => setSummaryTypeFilter(t)}
-                        className={cn(
-                          "px-2.5 py-1 rounded-md text-[8px] font-bold uppercase tracking-wider transition-all",
-                          summaryTypeFilter === t
-                            ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm"
-                            : "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
-                        )}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-
-                  {summaryTypeFilter === 'CUSTOM' && (
-                    <div className="flex items-center gap-1.5 animate-in fade-in slide-in-from-right-3 duration-250">
-                      <MyanmarDateInput
-                        value={periodStartDate}
-                        onChange={setPeriodStartDate}
-                        buttonClassName="w-24 pl-2 pr-2 py-1 text-[9px] rounded-md"
-                      />
-                      <span className="text-[8px] font-bold text-zinc-400 uppercase">To</span>
-                      <MyanmarDateInput
-                        value={periodEndDate}
-                        onChange={setPeriodEndDate}
-                        buttonClassName="w-24 pl-2 pr-2 py-1 text-[9px] rounded-md"
-                      />
-                      <button
-                        onClick={loadActiveSummary}
-                        className="px-2.5 py-1 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded text-[8px] font-bold uppercase tracking-widest shadow-sm hover:opacity-90 transition-opacity"
-                      >
-                        Apply
-                      </button>
+                )}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-zinc-100 dark:border-zinc-800/60">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-1.5 h-4 bg-zinc-900 dark:bg-zinc-100 rounded-full" />
+                    <div>
+                      <h4 className="text-[10px] font-bold text-zinc-900 dark:text-zinc-200 uppercase tracking-widest flex items-center gap-1.5">
+                        Sales Trend Telemetry
+                        {isFetching && <Loader2 className="animate-spin text-zinc-400" size={10} />}
+                      </h4>
+                      <p className="text-[8px] text-zinc-400 font-bold uppercase mt-0.5">Cadence distribution index</p>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {telemetryChartData.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl p-8 bg-zinc-50/30 dark:bg-zinc-950/10 min-h-[220px]">
-                  <AlertCircle className="text-zinc-300 dark:text-zinc-600 mb-2 animate-pulse" size={24} />
-                  <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">No transaction data available</p>
-                  <p className="text-[8px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-1">Try selecting a different cadence or custom range</p>
-                </div>
-              ) : (
-                <div className="flex-1 h-[250px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      key={`area-chart-${summaryTypeFilter}-${displaySummary.totalRevenue}-${displaySummary.totalOrders}`}
-                      data={telemetryChartData}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                    >
-                      <defs>
-                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={isDark ? "#fafafa" : "#18181b"} stopOpacity={0.08} />
-                          <stop offset="95%" stopColor={isDark ? "#fafafa" : "#18181b"} stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f1f1f1"} />
-                      <XAxis
-                        dataKey="name"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: isDark ? '#71717a' : '#a1a1aa', fontSize: 9, fontWeight: 700 }}
-                      />
-                      <YAxis
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: isDark ? '#71717a' : '#a1a1aa', fontSize: 9, fontWeight: 700 }}
-                        tickFormatter={formatShortNumber}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          borderRadius: '8px',
-                          border: 'none',
-                          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
-                          fontSize: '9px',
-                          fontWeight: 800,
-                          backgroundColor: isDark ? '#18181b' : '#fafafa',
-                          color: isDark ? '#fff' : '#18181b'
-                        }}
-                        itemStyle={{ color: isDark ? '#fff' : '#18181b' }}
-                        formatter={(v: unknown) => [formatCurrency(Number(v as number)), 'REVENUE']}
-                      />
-                      <Area type="monotone" dataKey="revenue" stroke={isDark ? "#fafafa" : "#18181b"} strokeWidth={2} dot={{ r: 3, strokeWidth: 1, fill: isDark ? '#18181b' : '#ffffff' }} fillOpacity={1} fill="url(#colorRev)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </div>
-
-            {/* Sidebar Intelligence (AI Chat + Performance Drivers) */}
-            <div className="lg:col-span-1 flex flex-col gap-6">
-
-              {/* AI Narrative chat block */}
-              <div className="flex flex-col h-[380px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
-                {/* Chat Header */}
-                <div className="flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-950/20 border-b border-zinc-200/50 dark:border-zinc-800/80">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="text-amber-500 animate-pulse" size={12} />
-                    <span className="text-[10px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-widest">AI Analyst Assistant</span>
                   </div>
-                  {chatMessages.length > 1 && (
-                    <button
-                      onClick={() => setChatMessages([{ role: 'model', content: `Hello! I've re-initialized. How can I help you analyze the sales summary for ${formatDateToDisplay(displaySummary.periodStartDate)} to ${formatDateToDisplay(displaySummary.periodEndDate)}?` }])}
-                      className="text-[10px] font-bold text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-200 uppercase tracking-wider transition-colors"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
 
-                {/* Messages Panel */}
-                <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800 animate-in fade-in duration-200">
-                  {chatMessages.map((msg, index) => {
-                    const isModel = msg.role === 'model';
-                    return (
-                      <div
-                        key={index}
-                        className={cn(
-                          "flex flex-col max-w-[90%] rounded-2xl px-4 py-3 text-xs leading-relaxed shadow-sm font-medium",
-                          isModel
-                            ? "bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/65 dark:border-zinc-800 text-zinc-750 dark:text-zinc-300 self-start rounded-tl-none"
-                            : "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 self-end rounded-tr-none"
-                        )}
-                      >
-                        <div className="text-xs font-normal">
-                          {renderMarkdown(msg.content, isModel)}
-                        </div>
-                        {(() => {
-                          const scrollTarget = isModel ? getScrollTargetForMessage(msg.content) : null;
-                          if (!scrollTarget) return null;
-                          return (
-                            <button
-                              onClick={() => {
-                                const element = document.getElementById(scrollTarget.id);
-                                if (element) {
-                                  element.scrollIntoView({ behavior: 'smooth' });
-                                }
-                              }}
-                              className="mt-2 text-[10px] font-black text-emerald-600 dark:text-emerald-450 hover:underline flex items-center gap-1 uppercase tracking-wider self-start"
-                            >
-                              <ArrowUpRight size={10} />
-                              (Take me to {scrollTarget.label})
-                            </button>
-                          );
-                        })()}
+                  {/* Cadence controls and Date picker */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-1 bg-zinc-100/60 dark:bg-zinc-800/40 p-0.5 rounded-lg border border-zinc-200/50 dark:border-zinc-700/30">
+                      {['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'CUSTOM'].map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setSummaryTypeFilter(t)}
+                          className={cn(
+                            "px-2.5 py-1 rounded-md text-[8px] font-bold uppercase tracking-wider transition-all",
+                            summaryTypeFilter === t
+                              ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm"
+                              : "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+                          )}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+
+                    {summaryTypeFilter === 'CUSTOM' && (
+                      <div className="flex items-center gap-1.5 animate-in fade-in slide-in-from-right-3 duration-250">
+                        <MyanmarDateInput
+                          value={periodStartDate}
+                          onChange={setPeriodStartDate}
+                          buttonClassName="w-24 pl-2 pr-2 py-1 text-[9px] rounded-md"
+                        />
+                        <span className="text-[8px] font-bold text-zinc-400 uppercase">To</span>
+                        <MyanmarDateInput
+                          value={periodEndDate}
+                          onChange={setPeriodEndDate}
+                          buttonClassName="w-24 pl-2 pr-2 py-1 text-[9px] rounded-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={loadActiveSummary}
+                          className="px-2.5 py-1 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded text-[8px] font-bold uppercase tracking-widest shadow-sm hover:opacity-90 transition-opacity"
+                        >
+                          Apply
+                        </button>
                       </div>
-                    );
-                  })}
-                  {chatLoading && (
-                    <div className="flex items-center gap-1.5 self-start bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-850 px-4 py-3 rounded-2xl rounded-tl-none text-zinc-450">
-                      <Loader2 className="animate-spin text-zinc-500" size={12} />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">Analyst is typing...</span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
-                {/* Shortcut pills */}
-                <div className="px-4 py-2.5 flex gap-2 overflow-x-auto whitespace-nowrap border-t border-zinc-200/30 dark:border-zinc-800/40 bg-zinc-50/30 dark:bg-zinc-950/10 scrollbar-none">
-                  {[
-                    { label: 'Stock advice', text: 'Give me inventory stock and replenishment advice.' },
-                    { label: 'Peak hours', text: 'Analyze peak daily sales transaction times.' },
-                    { label: 'Best sellers', text: 'Show my best selling products and ranks.' },
-                    { label: 'Revenue audit', text: 'Summarize total orders and ticket sizes.' }
-                  ].map((preset, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleSendChatMessage(preset.text)}
-                      disabled={chatLoading}
-                      className="px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-[10px] font-bold uppercase text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors shadow-inner disabled:opacity-50"
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Input Form */}
-                <form
-                  onSubmit={(e) => { e.preventDefault(); handleSendChatMessage(); }}
-                  className="flex border-t border-zinc-200/50 dark:border-zinc-800/80 bg-white dark:bg-zinc-900"
-                >
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    disabled={chatLoading}
-                    placeholder="Ask the Analyst..."
-                    className="flex-1 px-4 py-2.5 text-xs bg-transparent focus:outline-none placeholder-zinc-400 dark:placeholder-zinc-600 disabled:opacity-50 text-zinc-800 dark:text-zinc-200"
-                  />
-                  <button
-                    type="submit"
-                    disabled={chatLoading || !chatInput.trim()}
-                    className="px-3.5 py-2.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors disabled:opacity-30"
-                  >
-                    <Send size={13} />
-                  </button>
-                </form>
+                {telemetryChartData.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl p-8 bg-zinc-50/30 dark:bg-zinc-950/10 min-h-[220px]">
+                    <AlertCircle className="text-zinc-300 dark:text-zinc-600 mb-2 animate-pulse" size={24} />
+                    <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">No transaction data available</p>
+                    <p className="text-[8px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-1">Try selecting a different cadence or custom range</p>
+                  </div>
+                ) : (
+                  <div className="flex-1 h-full w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        key={`area-chart-${summaryTypeFilter}-${displaySummary.totalRevenue}-${displaySummary.totalOrders}`}
+                        data={telemetryChartData}
+                        margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                      >
+                        <defs>
+                          <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={isDark ? "#fafafa" : "#18181b"} stopOpacity={0.08} />
+                            <stop offset="95%" stopColor={isDark ? "#fafafa" : "#18181b"} stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f1f1f1"} />
+                        <XAxis
+                          dataKey="name"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: isDark ? '#71717a' : '#a1a1aa', fontSize: 9, fontWeight: 700 }}
+                        />
+                        <YAxis
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: isDark ? '#71717a' : '#a1a1aa', fontSize: 9, fontWeight: 700 }}
+                          tickFormatter={formatShortNumber}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: '8px',
+                            border: 'none',
+                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
+                            fontSize: '9px',
+                            fontWeight: 800,
+                            backgroundColor: isDark ? '#18181b' : '#fafafa',
+                            color: isDark ? '#fff' : '#18181b'
+                          }}
+                          itemStyle={{ color: isDark ? '#fff' : '#18181b' }}
+                          formatter={(v: unknown) => [formatCurrency(Number(v as number)), 'REVENUE']}
+                        />
+                        <Area type="monotone" dataKey="revenue" stroke={isDark ? "#fafafa" : "#18181b"} strokeWidth={2} dot={{ r: 3, strokeWidth: 1, fill: isDark ? '#18181b' : '#ffffff' }} fillOpacity={1} fill="url(#colorRev)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
 
               {/* Drivers Card */}
@@ -1381,8 +1268,116 @@ export default function SalesSummariesPage() {
                   </div>
                 </div>
               </div>
-
             </div>
+
+            {/* Active System Insights (AI Chat Area) */}
+            <div className="lg:col-span-5 flex flex-col h-[480px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+              {/* Chat Header */}
+              <div className="flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-950/20 border-b border-zinc-200/50 dark:border-zinc-800/80">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="text-amber-500 animate-pulse" size={12} />
+                  <span className="text-[10px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-widest">Active System Insights</span>
+                </div>
+                {chatMessages.length > 1 && (
+                  <button
+                    onClick={resetChat}
+                    className="text-[10px] font-bold text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-200 uppercase tracking-wider transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              {/* Messages Panel */}
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800 animate-in fade-in duration-200">
+                {chatMessages.map((msg, index) => {
+                  const isModel = msg.role === 'model';
+                  return (
+                    <div
+                      key={index}
+                      className={cn(
+                        "flex flex-col max-w-[90%] rounded-2xl px-4 py-3 text-xs leading-relaxed shadow-sm font-medium",
+                        isModel
+                          ? "bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/65 dark:border-zinc-800 text-zinc-750 dark:text-zinc-300 self-start rounded-tl-none"
+                          : "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 self-end rounded-tr-none"
+                      )}
+                    >
+                      <div className="text-xs font-normal">
+                        {renderMarkdown(msg.content, isModel)}
+                      </div>
+                      {(() => {
+                        const scrollTarget = isModel ? getScrollTargetForMessage(msg.content) : null;
+                        if (!scrollTarget) return null;
+                        const targetExists = typeof document !== 'undefined' && document.getElementById(scrollTarget.id);
+                        if (!targetExists) return null;
+                        return (
+                          <button
+                            onClick={() => {
+                              const element = document.getElementById(scrollTarget.id);
+                              if (element) {
+                                element.scrollIntoView({ behavior: 'smooth' });
+                              }
+                            }}
+                            className="mt-2 text-[10px] font-black text-emerald-600 dark:text-emerald-450 hover:underline flex items-center gap-1 uppercase tracking-wider self-start"
+                          >
+                            <ArrowUpRight size={10} />
+                            (Take me to {scrollTarget.label})
+                          </button>
+                        );
+                      })()}
+                    </div>
+                  );
+                })}
+                {chatLoading && (
+                  <div className="flex items-center gap-1.5 self-start bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-850 px-4 py-3 rounded-2xl rounded-tl-none text-zinc-450">
+                    <Loader2 className="animate-spin text-zinc-500" size={12} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Analyst is typing...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Shortcut pills */}
+              <div className="px-4 py-2.5 flex gap-2 overflow-x-auto whitespace-nowrap border-t border-zinc-200/30 dark:border-zinc-800/40 bg-zinc-50/30 dark:bg-zinc-950/10 scrollbar-none">
+                {[
+                  { label: 'Stock advice', text: 'Give me inventory stock and replenishment advice.' },
+                  { label: 'Peak hours', text: 'Analyze peak daily sales transaction times.' },
+                  { label: 'Best sellers', text: 'Show my best selling products and ranks.' },
+                  { label: 'Revenue audit', text: 'Summarize total orders and ticket sizes.' }
+                ].map((preset, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSendChatMessage(preset.text)}
+                    disabled={chatLoading}
+                    className="px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-[10px] font-bold uppercase text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors shadow-inner disabled:opacity-50"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Input Form */}
+              <form
+                onSubmit={(e) => { e.preventDefault(); handleSendChatMessage(); }}
+                className="flex border-t border-zinc-200/50 dark:border-zinc-800/80 bg-white dark:bg-zinc-900"
+              >
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  disabled={chatLoading}
+                  placeholder="Ask the Analyst..."
+                  className="flex-1 px-4 py-2.5 text-xs bg-transparent focus:outline-none placeholder-zinc-400 dark:placeholder-zinc-600 disabled:opacity-50 text-zinc-800 dark:text-zinc-200"
+                />
+                <button
+                  type="submit"
+                  disabled={chatLoading || !chatInput.trim()}
+                  className="px-3.5 py-2.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors disabled:opacity-30"
+                >
+                  <Send size={13} />
+                </button>
+              </form>
+            </div>
+
           </div>
 
           {/* Detailed Product & Client Insights Section */}

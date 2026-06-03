@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { AIChatProvider } from "@/context/AIChatContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
@@ -41,9 +42,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <MainLayout>
-              {children}
-            </MainLayout>
+            <AIChatProvider>
+              <MainLayout>
+                {children}
+              </MainLayout>
+            </AIChatProvider>
           </AuthProvider>
           <Toaster 
             position="bottom-right" 

@@ -7,6 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Bell, Plus, Search, Package, Users, FileText, BellOff, X, LayoutList } from 'lucide-react';
 import { ThemeToggle } from '../ThemeToggle';
 import { UnityLogo } from '../ui/UnityLogo';
+import { AIChatFloating } from '@/components/AIChatFloating';
 
 
 export const MainLayout = ({ children }: { children: ReactNode }) => {
@@ -171,6 +172,7 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
         <div className="p-6 overflow-y-auto">
           {children}
         </div>
+        <AIChatFloating />
       </main>
     </div>
   );
