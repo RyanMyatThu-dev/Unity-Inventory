@@ -33,7 +33,7 @@ const navItems = [
   { name: 'Inventory', href: '/inventory', icon: Package },
   { name: 'Categories', href: '/inventory/categories', icon: LayoutList },
   { name: 'Sales Ledger', href: '/sales', icon: FileText },
-  { name: 'Sales Summaries', href: '/sales/summaries', icon: TrendingUp },
+  { name: 'Sales Summaries', href: '/sales/summaries', icon: TrendingUp, ownerOnly: true },
   { name: 'Customers', href: '/customers', icon: Users },
   { name: 'Team & Permissions', href: '/users', icon: UserCog, ownerOnly: true },
 ];

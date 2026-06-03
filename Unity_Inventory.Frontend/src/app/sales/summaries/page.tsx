@@ -19,9 +19,10 @@ import {
   Sparkles,
   Clock,
   Eye,
-  X,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Send,
+  X
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -39,7 +40,7 @@ import {
 } from 'recharts';
 import { toast } from 'sonner';
 import { MyanmarDateInput } from '@/components/ui/MyanmarDateInput';
-
+import { canProvisionNewBusiness } from '@/lib/accountType';
 
 // --- Types ---
 interface SalesSummary {
@@ -140,6 +141,64 @@ const formatDateToDisplay = (dateInput: string | Date) => {
 };
 
 const CHART_COLORS = ['#059669', '#2563eb', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2'];
+
+const renderMarkdown = (text: string, isModel: boolean) => {
+  if (!text) return null;
+  const lines = text.split('\n');
+  return lines.map((line, lineIdx) => {
+    const trimmed = line.trim();
+    const isBullet = trimmed.startsWith('-') || trimmed.startsWith('*');
+    let content = trimmed;
+    if (isBullet) {
+      content = content.replace(/^[-*]\s+/, '');
+    }
+
+    // Process bold text
+    const parts = content.split('**');
+    const elements = parts.map((part, partIdx) => {
+      if (partIdx % 2 === 1) {
+        return <strong key={partIdx} className={cn("font-extrabold", isModel ? "text-zinc-950 dark:text-white" : "text-white dark:text-zinc-900")}>{part}</strong>;
+      }
+      return part;
+    });
+
+    if (isBullet) {
+      return (
+        <li key={lineIdx} className={cn("list-disc ml-4 my-1", isModel ? "text-zinc-750 dark:text-zinc-300" : "text-white dark:text-zinc-900")}>
+          <span>{elements}</span>
+        </li>
+      );
+    }
+
+    return (
+      <p key={lineIdx} className={cn("my-1 leading-normal min-h-[0.75rem]", isModel ? "text-zinc-755 dark:text-zinc-300" : "text-white/95 dark:text-zinc-900")}>
+        {elements}
+      </p>
+    );
+  });
+};
+
+const getScrollTargetForMessage = (content: string): { id: string; label: string } | null => {
+  const lower = content.toLowerCase();
+  
+  if (lower.includes("scheduler") || lower.includes("hangfire") || lower.includes("cron") || lower.includes("recur") || lower.includes("background task") || lower.includes("compiler schedule")) {
+    return { id: "scheduler-jobs", label: "compiler schedules" };
+  }
+  
+  if (lower.includes("stock") || lower.includes("replenish") || lower.includes("product") || lower.includes("item") || lower.includes("best") || lower.includes("seller") || lower.includes("driver")) {
+    return { id: "detailed-insights", label: "rankings & insights" };
+  }
+  
+  if (lower.includes("peak") || lower.includes("hour") || lower.includes("time") || lower.includes("velocity") || lower.includes("trend") || lower.includes("afternoon")) {
+    return { id: "telemetry-charts", label: "trend charts" };
+  }
+  
+  if (lower.includes("revenue") || lower.includes("average") || lower.includes("ticket") || lower.includes("volume") || lower.includes("invoice") || lower.includes("performance ratio") || lower.includes("client") || lower.includes("customer")) {
+    return { id: "kpi-cards", label: "revenue cards" };
+  }
+  
+  return null;
+};
 
 // Removed mock seed data as per plan - using live API data only
 
@@ -618,11 +677,76 @@ const SchedulerJobsWidget = ({
 
 // --- Primary Page Component ---
 export default function SalesSummariesPage() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const { theme, resolvedTheme } = useTheme();
   const [activeSummary, setActiveSummary] = useState<SalesSummary | null>(null);
   const [historyList, setHistoryList] = useState<SalesSummary[]>([]);
   const [loading, setLoading] = useState(true);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)] bg-zinc-50 dark:bg-zinc-950">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-zinc-900 dark:text-zinc-100" />
+          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest animate-pulse">
+            Authenticating user session...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const isOwner = user && canProvisionNewBusiness(user.accountType);
+
+  if (!isOwner) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)] bg-zinc-50/50 dark:bg-zinc-950/20 px-4">
+        <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl shadow-xl p-8 text-center relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:border-zinc-300 dark:hover:border-zinc-700">
+          {/* Visual gradient backdrop glow */}
+          <div className="absolute -top-12 -left-12 w-24 h-24 bg-amber-500/10 dark:bg-amber-500/5 rounded-full blur-2xl" />
+          <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl" />
+          
+          <div className="flex flex-col items-center relative z-10">
+            {/* Pulsing Lock Icon Container */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 rounded-full bg-amber-500/20 dark:bg-amber-500/10 animate-ping opacity-75" />
+              <div className="relative w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-500/20">
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+            </div>
+            
+            {/* Header */}
+            <h2 className="text-sm font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest mb-1.5 font-display">
+              Access Restricted
+            </h2>
+            <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mb-6">
+              Authorized Owner access only
+            </p>
+            
+            {/* Descriptive Content */}
+            <div className="bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-100 dark:border-zinc-800 rounded-xl p-4 mb-6 text-left space-y-2.5">
+              <p className="text-[11px] text-zinc-650 dark:text-zinc-450 leading-relaxed font-medium">
+                The Sales Summaries dashboard and AI Business Analyser Assistant are restricted resources designated strictly for the **Business Owner** role.
+              </p>
+              <p className="text-[10px] text-zinc-400 leading-relaxed font-semibold">
+                If you require access to sales data audits, compiling schedules, or automated telemetry, please contact your business owner to provision permissions.
+              </p>
+            </div>
+            
+            {/* Premium Button Action */}
+            <button
+              onClick={() => window.location.href = '/dashboard'}
+              className="w-full py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-850 dark:hover:bg-zinc-200 transition-all hover:shadow-lg dark:hover:shadow-none duration-200 transform active:scale-[0.98]"
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   const [summaryTypeFilter, setSummaryTypeFilter] = useState<string>('MONTHLY');
 
   const currentTheme = resolvedTheme || theme;
@@ -657,6 +781,75 @@ export default function SalesSummariesPage() {
       source: 'N/A'
     };
   }, [activeSummary, summaryTypeFilter, periodStartDate, periodEndDate]);
+
+  // AI Analyst Chat state and handlers
+  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'model'; content: string }>>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatContainerRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [chatMessages, chatLoading]);
+
+  useEffect(() => {
+    if (displaySummary) {
+      const startMyanmar = formatDateToDisplay(displaySummary.periodStartDate);
+      const endMyanmar = formatDateToDisplay(displaySummary.periodEndDate);
+      const initialText = `Hello! I'm your AI Business Analyst. I've analyzed the sales summary for the period from ${startMyanmar} to ${endMyanmar} (${displaySummary.summaryType}). During this period:\n\n` +
+        `- **Total Revenue**: ${formatCurrency(displaySummary.totalRevenue)}\n` +
+        `- **Average Ticket**: ${formatCurrency(displaySummary.averageOrderValue)}\n` +
+        `- **Total Orders**: ${displaySummary.totalOrders}\n` +
+        `- **Items Dispatched**: ${displaySummary.totalItemsSold} items\n\n` +
+        `How can I help you analyze this data or optimize your inventory operations?`;
+      
+      setChatMessages([
+        { role: 'model', content: initialText }
+      ]);
+    }
+  }, [displaySummary]);
+
+  const handleSendChatMessage = async (customMessage?: string) => {
+    const textToSend = customMessage || chatInput;
+    if (!textToSend.trim() || chatLoading || !displaySummary) return;
+
+    const userMsg = { role: 'user' as const, content: textToSend };
+    const updatedMessages = [...chatMessages, userMsg];
+    setChatMessages(updatedMessages);
+    if (!customMessage) setChatInput('');
+    setChatLoading(true);
+
+    try {
+      const history = chatMessages.map(m => ({
+        role: m.role === 'model' ? 'model' : 'user',
+        content: m.content
+      }));
+
+      const response = await api.post('/summary/chat', {
+        message: textToSend,
+        summaryType: displaySummary.summaryType,
+        periodStartDate: displaySummary.periodStartDate,
+        periodEndDate: displaySummary.periodEndDate,
+        history: history
+      });
+
+      if (response.data.isSuccess && response.data.data) {
+        setChatMessages([...updatedMessages, { role: 'model', content: response.data.data }]);
+      } else {
+        toast.error('Failed to get response from AI');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error contacting AI service');
+    } finally {
+      setChatLoading(false);
+    }
+  };
 
   // Modal States
   const [isGenModalOpen, setIsGenModalOpen] = useState(false);
@@ -837,7 +1030,9 @@ export default function SalesSummariesPage() {
       </div>
 
       {/* Scheduler status panel */}
-      <SchedulerJobsWidget jobs={jobsStatus} loading={loadingJobs} onRefresh={loadSchedulerStatus} isDark={isDark} />
+      <div id="scheduler-jobs">
+        <SchedulerJobsWidget jobs={jobsStatus} loading={loadingJobs} onRefresh={loadSchedulerStatus} isDark={isDark} />
+      </div>
 
       {loading ? (
         <div className="space-y-6 animate-pulse">
@@ -855,7 +1050,7 @@ export default function SalesSummariesPage() {
         <div className="space-y-6 animate-in fade-in duration-300">
 
           {/* Active Summary Dash: KPI Cards Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div id="kpi-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
             {/* Total Revenue */}
             <div className="group relative overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-xl shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
@@ -930,7 +1125,7 @@ export default function SalesSummariesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
 
             {/* Visual Analytics */}
-            <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm flex flex-col min-h-[350px]">
+            <div id="telemetry-charts" className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm flex flex-col min-h-[350px]">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-zinc-100 dark:border-zinc-800/60">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 bg-zinc-900 dark:bg-zinc-100 rounded-full" />
@@ -1036,55 +1231,154 @@ export default function SalesSummariesPage() {
               )}
             </div>
 
-            {/* Sidebar Intelligence (AI Insights + Leaders) */}
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+            {/* Sidebar Intelligence (AI Chat + Performance Drivers) */}
+            <div className="lg:col-span-1 flex flex-col gap-6">
 
-              {/* AI Narrative insight block */}
-              <div className="relative p-4 bg-zinc-50/50 dark:bg-zinc-950/20 border border-zinc-200/50 dark:border-zinc-800/80 rounded-xl">
-                <div className="absolute top-2 right-2 opacity-20">
-                  <Sparkles size={16} className="text-amber-500 animate-pulse" />
+              {/* AI Narrative chat block */}
+              <div className="flex flex-col h-[380px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+                {/* Chat Header */}
+                <div className="flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-950/20 border-b border-zinc-200/50 dark:border-zinc-800/80">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="text-amber-500 animate-pulse" size={12} />
+                    <span className="text-[10px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-widest">AI Analyst Assistant</span>
+                  </div>
+                  {chatMessages.length > 1 && (
+                    <button
+                      onClick={() => setChatMessages([{ role: 'model', content: `Hello! I've re-initialized. How can I help you analyze the sales summary for ${formatDateToDisplay(displaySummary.periodStartDate)} to ${formatDateToDisplay(displaySummary.periodEndDate)}?` }])}
+                      className="text-[10px] font-bold text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-200 uppercase tracking-wider transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Sparkles className="text-amber-500" size={12} />
-                  <h5 className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Active System Insights</h5>
+
+                {/* Messages Panel */}
+                <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800 animate-in fade-in duration-200">
+                  {chatMessages.map((msg, index) => {
+                    const isModel = msg.role === 'model';
+                    return (
+                      <div
+                        key={index}
+                        className={cn(
+                          "flex flex-col max-w-[90%] rounded-2xl px-4 py-3 text-xs leading-relaxed shadow-sm font-medium",
+                          isModel
+                            ? "bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/65 dark:border-zinc-800 text-zinc-750 dark:text-zinc-300 self-start rounded-tl-none"
+                            : "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 self-end rounded-tr-none"
+                        )}
+                      >
+                        <div className="text-xs font-normal">
+                          {renderMarkdown(msg.content, isModel)}
+                        </div>
+                        {(() => {
+                          const scrollTarget = isModel ? getScrollTargetForMessage(msg.content) : null;
+                          if (!scrollTarget) return null;
+                          return (
+                            <button
+                              onClick={() => {
+                                const element = document.getElementById(scrollTarget.id);
+                                if (element) {
+                                  element.scrollIntoView({ behavior: 'smooth' });
+                                }
+                              }}
+                              className="mt-2 text-[10px] font-black text-emerald-600 dark:text-emerald-450 hover:underline flex items-center gap-1 uppercase tracking-wider self-start"
+                            >
+                              <ArrowUpRight size={10} />
+                              (Take me to {scrollTarget.label})
+                            </button>
+                          );
+                        })()}
+                      </div>
+                    );
+                  })}
+                  {chatLoading && (
+                    <div className="flex items-center gap-1.5 self-start bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-850 px-4 py-3 rounded-2xl rounded-tl-none text-zinc-450">
+                      <Loader2 className="animate-spin text-zinc-500" size={12} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Analyst is typing...</span>
+                    </div>
+                  )}
                 </div>
-                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-normal font-medium">
-                  Aggregate sales logged at <strong className="text-zinc-800 dark:text-zinc-200">{formatCurrency(displaySummary.totalRevenue)}</strong> with growth trends auditing positively. High-retention customers moved a volume index of <strong className="text-zinc-800 dark:text-zinc-200">{displaySummary.totalItemsSold} stock items</strong>. Performance ratio suggests robust average ticket size.
-                </p>
+
+                {/* Shortcut pills */}
+                <div className="px-4 py-2.5 flex gap-2 overflow-x-auto whitespace-nowrap border-t border-zinc-200/30 dark:border-zinc-800/40 bg-zinc-50/30 dark:bg-zinc-950/10 scrollbar-none">
+                  {[
+                    { label: 'Stock advice', text: 'Give me inventory stock and replenishment advice.' },
+                    { label: 'Peak hours', text: 'Analyze peak daily sales transaction times.' },
+                    { label: 'Best sellers', text: 'Show my best selling products and ranks.' },
+                    { label: 'Revenue audit', text: 'Summarize total orders and ticket sizes.' }
+                  ].map((preset, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSendChatMessage(preset.text)}
+                      disabled={chatLoading}
+                      className="px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-[10px] font-bold uppercase text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors shadow-inner disabled:opacity-50"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Input Form */}
+                <form
+                  onSubmit={(e) => { e.preventDefault(); handleSendChatMessage(); }}
+                  className="flex border-t border-zinc-200/50 dark:border-zinc-800/80 bg-white dark:bg-zinc-900"
+                >
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    disabled={chatLoading}
+                    placeholder="Ask the Analyst..."
+                    className="flex-1 px-4 py-2.5 text-xs bg-transparent focus:outline-none placeholder-zinc-400 dark:placeholder-zinc-600 disabled:opacity-50 text-zinc-800 dark:text-zinc-200"
+                  />
+                  <button
+                    type="submit"
+                    disabled={chatLoading || !chatInput.trim()}
+                    className="px-3.5 py-2.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors disabled:opacity-30"
+                  >
+                    <Send size={13} />
+                  </button>
+                </form>
               </div>
 
-              {/* Top Performer summary list */}
-              <div className="space-y-3.5">
-                <div className="border-t border-zinc-100 dark:border-zinc-800/60 pt-3">
-                  <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">Primary Product Driver</span>
-                  {displaySummary.topProductName ? (
-                    <div className="flex items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-950/20 border border-zinc-200/20 dark:border-zinc-800/50 p-2.5 rounded-lg">
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 truncate uppercase">{displaySummary.topProductName}</p>
-                        <p className="text-[8px] text-zinc-400 font-bold uppercase mt-0.5">{displaySummary.topProductQuantitySold} Units Dispatched</p>
+              {/* Drivers Card */}
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
+                <h4 className="text-[10px] font-bold text-zinc-900 dark:text-zinc-200 uppercase tracking-widest flex items-center gap-1.5">
+                  <TrendingUp size={12} className="text-zinc-900 dark:text-zinc-100" />
+                  Key Business Drivers
+                </h4>
+                
+                <div className="space-y-4 pt-1">
+                  <div className="border-t border-zinc-100 dark:border-zinc-800/60 pt-3">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">Primary Product Driver</span>
+                    {displaySummary.topProductName ? (
+                      <div className="flex items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-950/20 border border-zinc-200/20 dark:border-zinc-800/50 p-3 rounded-lg">
+                        <div className="min-w-0">
+                          <p className="text-xs font-black text-zinc-800 dark:text-zinc-200 truncate uppercase">{displaySummary.topProductName}</p>
+                          <p className="text-[10px] text-zinc-400 font-bold uppercase mt-0.5">{displaySummary.topProductQuantitySold} Units Dispatched</p>
+                        </div>
+                        <span className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 shrink-0">TOP</span>
                       </div>
-                      <span className="text-[9px] font-black text-zinc-900 dark:text-zinc-100 shrink-0">TOP</span>
-                    </div>
-                  ) : (
-                    <p className="text-[9px] text-zinc-400 italic">None registered</p>
-                  )}
-                </div>
+                    ) : (
+                      <p className="text-xs text-zinc-400 italic">None registered</p>
+                    )}
+                  </div>
 
-                <div className="border-t border-zinc-100 dark:border-zinc-800/60 pt-3">
-                  <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">Highest Value Client</span>
-                  {displaySummary.topCustomerName ? (
-                    <div className="flex items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-950/20 border border-zinc-200/20 dark:border-zinc-800/50 p-2.5 rounded-lg">
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-black text-zinc-800 dark:text-zinc-200 truncate uppercase">{displaySummary.topCustomerName}</p>
-                        {displaySummary.topCustomerTotal && (
-                          <p className="text-[8px] text-emerald-600 dark:text-emerald-400 font-bold uppercase mt-0.5">{formatCurrency(displaySummary.topCustomerTotal)}</p>
-                        )}
+                  <div className="border-t border-zinc-100 dark:border-zinc-800/60 pt-3">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">Highest Value Client</span>
+                    {displaySummary.topCustomerName ? (
+                      <div className="flex items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-950/20 border border-zinc-200/20 dark:border-zinc-800/50 p-3 rounded-lg">
+                        <div className="min-w-0">
+                          <p className="text-xs font-black text-zinc-800 dark:text-zinc-200 truncate uppercase">{displaySummary.topCustomerName}</p>
+                          {displaySummary.topCustomerTotal && (
+                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase mt-0.5">{formatCurrency(displaySummary.topCustomerTotal)}</p>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 shrink-0">KEY</span>
                       </div>
-                      <span className="text-[9px] font-black text-zinc-900 dark:text-zinc-100 shrink-0">KEY</span>
-                    </div>
-                  ) : (
-                    <p className="text-[9px] text-zinc-400 italic">None registered</p>
-                  )}
+                    ) : (
+                      <p className="text-xs text-zinc-400 italic">None registered</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1093,7 +1387,7 @@ export default function SalesSummariesPage() {
 
           {/* Detailed Product & Client Insights Section */}
           {(customerRankData.length > 0 || productRankData.length > 0) && (
-            <div className="space-y-3.5 animate-in fade-in duration-300">
+            <div id="detailed-insights" className="space-y-3.5 animate-in fade-in duration-300">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-4 bg-zinc-900 dark:bg-zinc-100 rounded-full" />
                 <div>

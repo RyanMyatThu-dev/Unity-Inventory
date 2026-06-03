@@ -74,8 +74,5 @@ internal static class RolePermissionSeedData
         ("sales", "create"),
         ("customerprices", "view"),
         ("categories", "view"),
-        ("summary", "view"),
-        ("summary", "create"),
-        ("summary", "analyze"),
     ];
 }

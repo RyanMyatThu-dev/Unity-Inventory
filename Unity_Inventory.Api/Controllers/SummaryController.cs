@@ -1,7 +1,10 @@
 using Unity_Inventory.Domain.Features.Summary;
 using Unity_Inventory.Domain.Features.Summary.Models;
+using Unity_Inventory.Domain.Features.Inventories;
 using Unity_Inventory.Shared;
 using Microsoft.AspNetCore.Authorization;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -11,7 +14,7 @@ using Hangfire.Storage;
 
 namespace Unity_Inventory.Api.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Owner")]
     [Route("api/summary")]
     [ApiController]
     public class SummaryController : ControllerBase
@@ -183,6 +186,121 @@ namespace Unity_Inventory.Api.Controllers
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
+        // Interactive chat with AI Business Analyst Assistant
+        [HttpPost("chat")]
+        [Permission("summary", "view")]
+        public async Task<IActionResult> ChatWithAnalyst(
+            [FromBody] AiChatRequest request,
+            [FromServices] IAiService aiService,
+            [FromServices] IInventoryService inventoryService)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Message))
+                return BadRequest("Message cannot be empty.");
+
+            var businessId = GetCurrentBusinessId();
+            if (businessId == 0)
+                return BadRequest("Business ID not found.");
+
+            // Calculate or fetch summary dates
+            DateOnly startDate, endDate;
+            if (!request.PeriodStartDate.HasValue || !request.PeriodEndDate.HasValue)
+            {
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                switch (request.SummaryType?.ToUpper() ?? "MONTHLY")
+                {
+                    case "DAILY":
+                        startDate = today;
+                        endDate = today;
+                        break;
+                    case "WEEKLY":
+                        startDate = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+                        endDate = startDate.AddDays(6);
+                        break;
+                    case "MONTHLY":
+                        startDate = new DateOnly(today.Year, today.Month, 1);
+                        endDate = startDate.AddMonths(1).AddDays(-1);
+                        break;
+                    case "YEARLY":
+                        var lastYear = today.Year - 1;
+                        startDate = new DateOnly(lastYear, 1, 1);
+                        endDate = new DateOnly(lastYear, 12, 31);
+                        break;
+                    default:
+                        startDate = today;
+                        endDate = today;
+                        break;
+                }
+            }
+            else
+            {
+                startDate = request.PeriodStartDate.Value;
+                endDate = request.PeriodEndDate.Value;
+            }
+
+            var summaryResult = await _summaryService.GetSalesSummaryAsync(businessId, request.SummaryType?.ToUpper() ?? "MONTHLY", startDate, endDate);
+            var summary = summaryResult.IsSuccess ? summaryResult.Data : null;
+
+            var lowStockResult = await inventoryService.GetLowStockItemsAsync(businessId, threshold: 5);
+            var lowStockItems = lowStockResult.IsSuccess ? lowStockResult.Data : null;
+
+            var safeCustomerRanks = summary?.CustomerRanks?.Select(c => new
+            {
+                c.Rank,
+                TotalRevenue = c.TotalRevenue,
+                TotalOrders = c.TotalOrders,
+                PercentageOfRevenue = c.PercentageOfRevenue
+            }).ToList();
+
+            var productRanks = summary?.ProductRanks?.Select(p => new
+            {
+                p.Rank,
+                ProductName = p.ProductName,
+                p.QuantitySold,
+                p.Revenue,
+                p.PercentageOfRevenue
+            }).ToList();
+
+            var safeLowStock = lowStockItems?.Select(i => new
+            {
+                ProductName = i.Name,
+                Quantity = i.CurrentStock ?? 0,
+                MinThreshold = 5
+            }).ToList();
+
+            var salesTrend = summary?.SalesTrend?.Select(t => new
+            {
+                t.Label,
+                t.Revenue,
+                t.Orders
+            }).ToList();
+
+            var contextData = new
+            {
+                PeriodType = request.SummaryType?.ToUpper() ?? "MONTHLY",
+                StartDate = startDate,
+                EndDate = endDate,
+                OverallPerformance = summary != null ? new
+                {
+                    TotalRevenue = summary.TotalRevenue,
+                    AverageOrderValue = summary.AverageOrderValue,
+                    TotalOrders = summary.TotalOrders,
+                    TotalItemsSold = summary.TotalItemsSold,
+                    UniqueCustomers = summary.UniqueCustomers,
+                    TopProductName = summary.TopProductName,
+                    TopProductQuantitySold = summary.TopProductQuantitySold
+                } : null,
+                ProductPerformanceRanks = productRanks,
+                CustomerSpendRanksSecure = safeCustomerRanks,
+                LowStockAlerts = safeLowStock,
+                SalesTrendVelocity = salesTrend
+            };
+
+            var businessContext = System.Text.Json.JsonSerializer.Serialize(contextData, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+
+            var result = await aiService.ChatWithAnalystAsync(businessContext, request.Message, request.History ?? new List<ChatMessageDto>());
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
         #region Helper Method
         private int GetCurrentBusinessId()
         {
@@ -198,5 +316,15 @@ namespace Unity_Inventory.Api.Controllers
         public string SummaryType { get; set; } = null!; // DAILY, WEEKLY, MONTHLY, YEARLY
         public DateOnly PeriodStartDate { get; set; }
         public DateOnly PeriodEndDate { get; set; }
+    }
+
+    // Request model for AI chat assistant
+    public class AiChatRequest
+    {
+        public string Message { get; set; } = null!;
+        public string SummaryType { get; set; } = "MONTHLY";
+        public DateOnly? PeriodStartDate { get; set; }
+        public DateOnly? PeriodEndDate { get; set; }
+        public List<ChatMessageDto>? History { get; set; }
     }
 }

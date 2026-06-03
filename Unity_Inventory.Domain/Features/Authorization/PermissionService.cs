@@ -32,9 +32,10 @@ namespace Unity_Inventory.Domain.Features.Authorization
             "categories",
             "users",
             "business",
+            "summary"
         ];
 
-        private static readonly string[] Actions = ["view", "create", "edit", "delete"];
+        private static readonly string[] Actions = ["view", "create", "edit", "delete", "analyze"];
 
         #endregion
         public PermissionService(IMSDbContext db)
