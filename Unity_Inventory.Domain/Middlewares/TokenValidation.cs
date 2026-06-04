@@ -50,7 +50,7 @@ namespace Unity_Inventory.Shared.Middlewares
                         var authService = context.RequestServices.GetRequiredService<IAuthService>();
                         var res = await authService.RefreshTokenAsync(new RefreshTokenRequest { RefreshToken = refreshToken });
 
-                        if (res != null)
+                        if (res?.Data != null)
                         {
                             ValidateToken(res.Data.AccessToken, context);
                             context.Response.Cookies.Append("X-Access-Token", res.Data.AccessToken);
@@ -69,10 +69,8 @@ namespace Unity_Inventory.Shared.Middlewares
                             context.Response.Cookies.Append("refreshToken", res.Data.RefreshToken, cookieOptions);
 
                         }
-
-
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         // Handler errors here
                     }
@@ -107,7 +105,7 @@ namespace Unity_Inventory.Shared.Middlewares
                 context.User = principal;
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Handle token validation errors here
                 return false;

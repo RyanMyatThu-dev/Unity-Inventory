@@ -1,0 +1,517 @@
+{
+  "Unity_Inventory.Frontend/src/app/customers/page.tsx": [
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 183,
+      "column": 7,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 215,
+      "column": 21,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 412,
+      "column": 21,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 445,
+      "column": 9,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    },
+    {
+      "ruleId": "react-hooks/exhaustive-deps",
+      "severity": "warning",
+      "line": 448,
+      "column": 6,
+      "message": "React Hook useEffect has a missing dependency: 'selectedCustomer'. Either include it or remove the dependency array."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 468,
+      "column": 21,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 543,
+      "column": 21,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 552,
+      "column": 5,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 707,
+      "column": 74,
+      "message": "Unexpected any. Specify a different type."
+    }
+  ],
+  "Unity_Inventory.Frontend/src/app/dashboard/page.tsx": [
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 124,
+      "column": 23,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 225,
+      "column": 94,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 317,
+      "column": 30,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 332,
+      "column": 56,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@next/next/no-img-element",
+      "severity": "warning",
+      "line": 342,
+      "column": 27,
+      "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element"
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 364,
+      "column": 17,
+      "message": "Unexpected any. Specify a different type."
+    }
+  ],
+  "Unity_Inventory.Frontend/src/app/inventory/categories/page.tsx": [
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 13,
+      "column": 3,
+      "message": "'X' is defined but never used."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 15,
+      "column": 3,
+      "message": "'CornerDownRight' is defined but never used."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 17,
+      "column": 3,
+      "message": "'Box' is defined but never used."
+    },
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 165,
+      "column": 5,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 203,
+      "column": 21,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 224,
+      "column": 21,
+      "message": "Unexpected any. Specify a different type."
+    }
+  ],
+  "Unity_Inventory.Frontend/src/app/inventory/page.tsx": [
+    {
+      "ruleId": "@next/next/no-img-element",
+      "severity": "warning",
+      "line": 90,
+      "column": 31,
+      "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element"
+    },
+    {
+      "ruleId": "@next/next/no-img-element",
+      "severity": "warning",
+      "line": 163,
+      "column": 9,
+      "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element"
+    },
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 220,
+      "column": 7,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 265,
+      "column": 21,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 306,
+      "column": 21,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 336,
+      "column": 21,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@next/next/no-img-element",
+      "severity": "warning",
+      "line": 384,
+      "column": 19,
+      "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element"
+    },
+    {
+      "ruleId": "@next/next/no-img-element",
+      "severity": "warning",
+      "line": 386,
+      "column": 19,
+      "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element"
+    },
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 617,
+      "column": 5,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 621,
+      "column": 19,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 701,
+      "column": 57,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "react-hooks/exhaustive-deps",
+      "severity": "warning",
+      "line": 721,
+      "column": 6,
+      "message": "React Hook useCallback has a missing dependency: 'buildProductSearchParams'. Either include it or remove the dependency array."
+    },
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 728,
+      "column": 9,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    },
+    {
+      "ruleId": "react-hooks/exhaustive-deps",
+      "severity": "warning",
+      "line": 731,
+      "column": 6,
+      "message": "React Hook useEffect has a missing dependency: 'selectedProduct'. Either include it or remove the dependency array."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 784,
+      "column": 21,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 807,
+      "column": 21,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 816,
+      "column": 5,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 999,
+      "column": 74,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@next/next/no-img-element",
+      "severity": "warning",
+      "line": 1098,
+      "column": 23,
+      "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element"
+    }
+  ],
+  "Unity_Inventory.Frontend/src/app/login/page.tsx": [
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 6,
+      "column": 42,
+      "message": "'Building2' is defined but never used."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 29,
+      "column": 19,
+      "message": "Unexpected any. Specify a different type."
+    }
+  ],
+  "Unity_Inventory.Frontend/src/app/sales/page.tsx": [
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 16,
+      "column": 3,
+      "message": "'PlusCircle' is defined but never used."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 27,
+      "column": 3,
+      "message": "'Hash' is defined but never used."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 308,
+      "column": 46,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 309,
+      "column": 50,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 335,
+      "column": 21,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 378,
+      "column": 31,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "@next/next/no-img-element",
+      "severity": "warning",
+      "line": 523,
+      "column": 31,
+      "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element"
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 655,
+      "column": 21,
+      "message": "Unexpected any. Specify a different type."
+    }
+  ],
+  "Unity_Inventory.Frontend/src/app/sales/summaries/page.tsx": [
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 572,
+      "column": 7,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    },
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 607,
+      "column": 3,
+      "message": "'isDark' is defined but never used."
+    },
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 823,
+      "column": 5,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    }
+  ],
+  "Unity_Inventory.Frontend/src/app/users/page.tsx": [
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 3,
+      "column": 51,
+      "message": "'memo' is defined but never used."
+    },
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 98,
+      "column": 5,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    },
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 208,
+      "column": 29,
+      "message": "'key' is assigned a value but never used."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "severity": "error",
+      "line": 306,
+      "column": 19,
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 457,
+      "column": 7,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    }
+  ],
+  "Unity_Inventory.Frontend/src/components/AIChatFloating.tsx": [
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 14,
+      "column": 3,
+      "message": "'MessageSquare' is defined but never used."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 19,
+      "column": 7,
+      "message": "'formatCurrency' is assigned a value but never used."
+    }
+  ],
+  "Unity_Inventory.Frontend/src/components/ThemeToggle.tsx": [
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 13,
+      "column": 5,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    }
+  ],
+  "Unity_Inventory.Frontend/src/components/layout/MainLayout.tsx": [
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 24,
+      "column": 5,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    },
+    {
+      "ruleId": "react/no-unescaped-entities",
+      "severity": "error",
+      "line": 145,
+      "column": 63,
+      "message": "`'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`."
+    }
+  ],
+  "Unity_Inventory.Frontend/src/components/layout/Sidebar.tsx": [
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 17,
+      "column": 3,
+      "message": "'Settings' is defined but never used."
+    },
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 18,
+      "column": 3,
+      "message": "'Command' is defined but never used."
+    }
+  ],
+  "Unity_Inventory.Frontend/src/components/ui/ConfirmDialog.tsx": [
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 2,
+      "column": 10,
+      "message": "'X' is defined but never used."
+    }
+  ],
+  "Unity_Inventory.Frontend/src/components/ui/MyanmarDateInput.tsx": [
+    {
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "warning",
+      "line": 43,
+      "column": 18,
+      "message": "'e' is defined but never used."
+    }
+  ],
+  "Unity_Inventory.Frontend/src/context/AIChatContext.tsx": [
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 97,
+      "column": 5,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    }
+  ],
+  "Unity_Inventory.Frontend/src/context/AuthContext.tsx": [
+    {
+      "ruleId": "react-hooks/set-state-in-effect",
+      "severity": "error",
+      "line": 69,
+      "column": 9,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders"
+    }
+  ]
+}

@@ -1,7 +1,6 @@
 using Unity_Inventory.Domain.Features.Customers;
 using Unity_Inventory.Domain.Features.Customers.Models;
 using Unity_Inventory.Shared;
-using Unity_Inventory.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

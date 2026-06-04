@@ -18,10 +18,8 @@ import {
   Loader2,
   Trash2,
   Edit2,
-  Info,
   DollarSign,
   Save,
-  Activity,
   CreditCard,
   UserCheck,
   Settings2,
@@ -112,49 +110,59 @@ const CustomerCard = memo(({ customer, index, onSelect, onDelete }: {
   onSelect: (c: Customer) => void,
   onDelete: (id: number, version: string) => void 
 }) => (
-  <div 
-    onClick={() => onSelect(customer)}
-    className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-6 hover:shadow-md transition-all cursor-pointer relative overflow-hidden flex flex-col h-full"
-  >
+  <div className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl hover:shadow-md transition-all relative overflow-hidden flex flex-col h-full">
+    {/* Main Clickable Area */}
+    <button 
+      type="button"
+      onClick={() => onSelect(customer)}
+      className="flex-1 p-6 text-left w-full h-full focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-400 rounded-xl cursor-pointer"
+    >
+      <div className="flex items-center gap-4 mb-6 relative">
+        <div className="absolute -top-4 -left-4 w-6 h-6 bg-zinc-900/5 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-400 shadow-sm">
+          {index}
+        </div>
+        <div className="w-14 h-14 rounded-full bg-zinc-900 flex items-center justify-center text-white text-lg font-bold shadow-lg dark:shadow-black/20 shadow-zinc-200 shrink-0">
+          {customer.name?.[0] || '?'}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate uppercase tracking-tight">{customer.name}</p>
+          <p className="text-[10px] text-zinc-400 font-semibold italic tracking-wider">UID-{customer.id.toString().padStart(5, '0')}</p>
+        </div>
+      </div>
+      
+      <div className="space-y-3 mb-6 flex-1">
+        <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-semibold">
+          <Phone size={12} className="text-zinc-400" />
+          {customer.phone || 'N/A'}
+        </div>
+        <div className="flex items-start gap-2 text-[10px] text-zinc-500 line-clamp-2">
+          <MapPin size={12} className="text-zinc-400 shrink-0 mt-0.5" />
+          <span className="font-medium leading-relaxed">{customer.address || 'No registered address'}</span>
+        </div>
+      </div>
+      
+      <div className="pt-4 border-t border-zinc-50 mt-auto">
+        <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Lifetime Value ({customer.totalOrders} Orders)</p>
+        <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tighter">{formatCurrency(customer.totalSpent)}</p>
+      </div>
+    </button>
+
+    {/* Actions Overlay */}
     <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-      <button className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded shadow-sm text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+      <button 
+        type="button"
+        onClick={() => onSelect(customer)}
+        className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded shadow-sm text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer"
+      >
         <Edit2 size={10} />
       </button>
       <button 
+        type="button"
         onClick={(e) => { e.stopPropagation(); onDelete(customer.id, customer.versionStamp); }}
-        className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-rose-50 rounded shadow-sm text-zinc-400 hover:text-rose-600 transition-colors"
+        className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-rose-50 rounded shadow-sm text-zinc-400 hover:text-rose-600 transition-colors cursor-pointer"
       >
         <Trash2 size={10} />
       </button>
-    </div>
-    
-    <div className="flex items-center gap-4 mb-6 relative">
-      <div className="absolute -top-4 -left-4 w-6 h-6 bg-zinc-900/5 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-400 shadow-sm">
-        {index}
-      </div>
-      <div className="w-14 h-14 rounded-full bg-zinc-900 flex items-center justify-center text-white text-lg font-bold shadow-lg dark:shadow-black/20 shadow-zinc-200 shrink-0">
-        {customer.name?.[0] || '?'}
-      </div>
-      <div className="min-w-0">
-        <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate uppercase tracking-tight">{customer.name}</p>
-        <p className="text-[10px] text-zinc-400 font-semibold italic tracking-wider">UID-{customer.id.toString().padStart(5, '0')}</p>
-      </div>
-    </div>
-    
-    <div className="space-y-3 mb-6 flex-1">
-      <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-semibold">
-        <Phone size={12} className="text-zinc-400" />
-        {customer.phone || 'N/A'}
-      </div>
-      <div className="flex items-start gap-2 text-[10px] text-zinc-500 line-clamp-2">
-        <MapPin size={12} className="text-zinc-400 shrink-0 mt-0.5" />
-        <span className="font-medium leading-relaxed">{customer.address || 'No registered address'}</span>
-      </div>
-    </div>
-    
-    <div className="pt-4 border-t border-zinc-50 mt-auto">
-      <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Lifetime Value ({customer.totalOrders} Orders)</p>
-      <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tighter">{formatCurrency(customer.totalSpent)}</p>
     </div>
   </div>
 ));
@@ -170,7 +178,6 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [editForm, setEditForm] = useState({ 
     name: customer.name, 
     phone: customer.phone || '', 
@@ -222,7 +229,7 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-hidden">
-      <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm animate-in fade-in duration-150" onClick={onClose}></div>
+      <button type="button" onClick={onClose} className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm animate-in fade-in duration-150 border-0 cursor-default" aria-label="Close modal" />
       <div className="relative bg-white dark:bg-zinc-900 w-full max-w-xl rounded-2xl shadow-2xl animate-in zoom-in-98 duration-150 flex flex-col max-h-[95vh]">
         
         {/* Header */}
@@ -265,7 +272,7 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
                     {isEditing ? (
                       <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
                         <div className="space-y-1.5">
-                           <label className="text-[9px] font-bold text-zinc-400 uppercase">Legal Entity Name</label>
+                           <span className="block text-[9px] font-bold text-zinc-400 uppercase">Legal Entity Name</span>
                            <input 
                             autoFocus
                             value={editForm.name}
@@ -348,13 +355,16 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
         </div>
 
         <div className="p-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
-           <button disabled={isDeleting} onClick={() => onDelete(customer.id, customer.versionStamp)} className="px-4 py-2 text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all disabled:opacity-50 flex items-center gap-2">Terminate Relationship</button>
+           <button onClick={() => onDelete(customer.id, customer.versionStamp)} className="px-4 py-2 text-[10px] font-bold text-rose-600 dark:text-rose-450 uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all flex items-center gap-2">Terminate Relationship</button>
            <span className="text-[9px] text-zinc-400 font-semibold uppercase tracking-widest opacity-50">Internal Record • Secured CID</span>
         </div>
       </div>
     </div>
   );
 };
+
+const TABLE_SKELETON_KEYS = ['tbl-sk-1', 'tbl-sk-2', 'tbl-sk-3', 'tbl-sk-4', 'tbl-sk-5', 'tbl-sk-6', 'tbl-sk-7', 'tbl-sk-8', 'tbl-sk-9', 'tbl-sk-10'];
+const GRID_SKELETON_KEYS = ['grid-sk-1', 'grid-sk-2', 'grid-sk-3', 'grid-sk-4', 'grid-sk-5', 'grid-sk-6', 'grid-sk-7', 'grid-sk-8'];
 
 // --- Main Page ---
 export default function CustomersPage() {
@@ -390,13 +400,20 @@ export default function CustomersPage() {
     setPage(1);
   };
   
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
+  const selectedCustomer = selectedCustomerId === null
+    ? null
+    : customers.find(c => c.id === selectedCustomerId) || null;
+  const setSelectedCustomer = useCallback((c: Customer | null) => {
+    setSelectedCustomerId(c ? c.id : null);
+  }, []);
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', address: '' });
 
   useEffect(() => {
-    if (selectedCustomer || isAddModalOpen || customerToDelete) {
+    if (selectedCustomerId !== null || isAddModalOpen || customerToDelete) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -404,18 +421,23 @@ export default function CustomersPage() {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [selectedCustomer, isAddModalOpen, customerToDelete]);
+  }, [selectedCustomerId, isAddModalOpen, customerToDelete]);
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
     try {
       const params: any = { pageNumber: page, pageSize: 15, businessId: currentBusinessId };
       if (search) params.name = search;
-      if (filterMinSpent) params.minTotalSpent = parseFloat(filterMinSpent);
-      if (filterMaxSpent) params.maxTotalSpent = parseFloat(filterMaxSpent);
-      if (filterMinOrders) params.minTotalOrders = parseInt(filterMinOrders);
-      if (filterMaxOrders) params.maxTotalOrders = parseInt(filterMaxOrders);
-      params.sortBy = filterSortBy === 'name' ? 0 : filterSortBy === 'totalOrders' ? 1 : filterSortBy === 'totalSpent' ? 2 : 3;
+      if (filterMinSpent) params.minTotalSpent = Number.parseFloat(filterMinSpent);
+      if (filterMaxSpent) params.maxTotalSpent = Number.parseFloat(filterMaxSpent);
+      if (filterMinOrders) params.minTotalOrders = Number.parseInt(filterMinOrders, 10);
+      if (filterMaxOrders) params.maxTotalOrders = Number.parseInt(filterMaxOrders, 10);
+      
+      let sortByValue = 3;
+      if (filterSortBy === 'name') sortByValue = 0;
+      else if (filterSortBy === 'totalOrders') sortByValue = 1;
+      else if (filterSortBy === 'totalSpent') sortByValue = 2;
+      params.sortBy = sortByValue;
       params.isDescending = filterSortDesc;
 
       const response = await api.get('/search/customers', { params });
@@ -432,17 +454,8 @@ export default function CustomersPage() {
     }
   }, [page, search, filterMinSpent, filterMaxSpent, filterMinOrders, filterMaxOrders, filterSortBy, filterSortDesc, currentBusinessId]);
 
-  // Sync selected customer with background updates
-  useEffect(() => {
-    if (selectedCustomer) {
-      const updated = customers.find(c => c.id === selectedCustomer.id);
-      if (updated && JSON.stringify(updated) !== JSON.stringify(selectedCustomer)) {
-        setSelectedCustomer(updated);
-      }
-    }
-  }, [customers]);
 
-  const handleAddCustomer = async (e: React.FormEvent) => {
+  const handleAddCustomer = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
@@ -466,6 +479,58 @@ export default function CustomersPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const renderTableBody = () => {
+    if (loading && customers.length === 0) {
+      return TABLE_SKELETON_KEYS.map((key) => (
+        <tr key={key} className="animate-pulse border-b border-zinc-50">
+          <td colSpan={6} className="h-16 bg-white dark:bg-zinc-900" />
+        </tr>
+      ));
+    }
+    if (customers.length === 0) {
+      return (
+        <tr>
+          <td colSpan={6} className="px-6 py-32 text-center text-[10px] font-bold text-zinc-300 uppercase tracking-widest italic">
+            No client records found
+          </td>
+        </tr>
+      );
+    }
+    return customers.map((customer, idx) => (
+      <CustomerRow 
+        key={customer.id} 
+        customer={customer} 
+        index={(page - 1) * 15 + idx + 1}
+        onSelect={setSelectedCustomer} 
+        onDelete={handleDeleteCustomer} 
+      />
+    ));
+  };
+
+  const renderGridContent = () => {
+    if (loading && customers.length === 0) {
+      return GRID_SKELETON_KEYS.map((key) => (
+        <div key={key} className="h-64 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl animate-pulse" />
+      ));
+    }
+    if (customers.length === 0) {
+      return (
+        <div className="col-span-full py-32 text-center text-[10px] font-bold text-zinc-300 uppercase tracking-widest italic">
+          No client records found
+        </div>
+      );
+    }
+    return customers.map((customer, idx) => (
+      <CustomerCard 
+        key={customer.id} 
+        customer={customer} 
+        index={(page - 1) * 15 + idx + 1}
+        onSelect={setSelectedCustomer} 
+        onDelete={handleDeleteCustomer} 
+      />
+    ));
   };
 
   const handleDeleteCustomer = useCallback(async (id: number, version: string) => {
@@ -599,7 +664,7 @@ export default function CustomersPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {/* Min Spent */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Min LTV (MMK)</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Min LTV (MMK)</span>
                 <input
                   type="number"
                   placeholder="0"
@@ -610,7 +675,7 @@ export default function CustomersPage() {
               </div>
               {/* Max Spent */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Max LTV (MMK)</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Max LTV (MMK)</span>
                 <input
                   type="number"
                   placeholder="∞"
@@ -621,7 +686,7 @@ export default function CustomersPage() {
               </div>
               {/* Min Orders */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Min Orders</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Min Orders</span>
                 <input
                   type="number"
                   placeholder="0"
@@ -632,7 +697,7 @@ export default function CustomersPage() {
               </div>
               {/* Max Orders */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Max Orders</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Max Orders</span>
                 <input
                   type="number"
                   placeholder="∞"
@@ -643,7 +708,7 @@ export default function CustomersPage() {
               </div>
               {/* Sort */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Sort By</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Sort By</span>
                 <div className="flex gap-1">
                   <select
                     value={filterSortBy}
@@ -695,42 +760,14 @@ export default function CustomersPage() {
                 </tr>
               </thead>
               <tbody>
-                {loading && customers.length === 0 ? (
-                  [...Array(10)].map((_, i) => <tr key={i} className="animate-pulse border-b border-zinc-50"><td colSpan={6} className="h-16 bg-white dark:bg-zinc-900" /></tr>)
-                ) : customers.length === 0 ? (
-                  <tr><td colSpan={6} className="px-6 py-32 text-center text-[10px] font-bold text-zinc-300 uppercase tracking-widest italic">No client records found</td></tr>
-                ) : (
-                  customers.map((customer, idx) => (
-                    <CustomerRow 
-                      key={customer.id} 
-                      customer={customer} 
-                      index={(page - 1) * 15 + idx + 1}
-                      onSelect={setSelectedCustomer} 
-                      onDelete={handleDeleteCustomer} 
-                    />
-                  ))
-                )}
+                {renderTableBody()}
               </tbody>
             </table>
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
-           {loading && customers.length === 0 ? (
-             [...Array(8)].map((_, i) => <div key={i} className="h-64 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl animate-pulse" />)
-           ) : customers.length === 0 ? (
-             <div className="col-span-full py-32 text-center text-[10px] font-bold text-zinc-300 uppercase tracking-widest italic">No client records found</div>
-           ) : (
-             customers.map((customer, idx) => (
-               <CustomerCard 
-                 key={customer.id} 
-                 customer={customer} 
-                 index={(page - 1) * 15 + idx + 1}
-                 onSelect={setSelectedCustomer} 
-                 onDelete={handleDeleteCustomer} 
-               />
-             ))
-           )}
+          {renderGridContent()}
         </div>
       )}
       </div>
@@ -758,20 +795,20 @@ export default function CustomersPage() {
       {/* Add Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setIsAddModalOpen(false)}></div>
+          <button type="button" onClick={() => setIsAddModalOpen(false)} className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm border-0 cursor-default" aria-label="Close modal" />
           <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 w-full max-w-sm rounded-2xl shadow-2xl p-8 animate-in zoom-in-98 duration-150">
             <h3 className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest mb-8 border-b border-zinc-50 pb-4">Onboard Client Entity</h3>
             <form onSubmit={handleAddCustomer} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase">Legal Entity Name</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase">Legal Entity Name</span>
                 <input required type="text" value={newCustomer.name} onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })} placeholder="Full Corporate Name" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400" />
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase">Primary Comms</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase">Primary Comms</span>
                 <input type="text" value={newCustomer.phone} onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })} placeholder="Direct Phone Line" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400" />
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase">Physical Address</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase">Physical Address</span>
                 <textarea value={newCustomer.address} onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })} placeholder="Logistics Anchor Point" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 min-h-[80px]" />
               </div>
               <button disabled={isSubmitting} type="submit" className="w-full py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-xl dark:shadow-black/40 shadow-zinc-200 mt-4">

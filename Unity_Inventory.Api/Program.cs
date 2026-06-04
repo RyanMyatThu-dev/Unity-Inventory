@@ -138,12 +138,12 @@ app.MapControllers();
 try
 {
     Log.Information("Starting web host");
-    app.Run();
+    await app.RunAsync();
 } catch (Exception ex)
 {
     Log.Fatal(ex, "Application terminated unexpectedly");
 }
 finally
 {
-    Log.CloseAndFlush();
+    await Log.CloseAndFlushAsync();
 }

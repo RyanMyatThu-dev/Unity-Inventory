@@ -18,15 +18,11 @@ import {
   Loader2,
   Trash2,
   Edit2,
-  Info,
   Box,
   Image as ImageIcon,
   Upload,
   Save,
-  TrendingUp,
-  History,
   AlertCircle,
-  Settings2,
   LayoutList,
   LayoutGrid,
   ChevronDown,
@@ -140,53 +136,63 @@ const InventoryCard = memo(({ product, index, onSelect, onDelete }: {
   onSelect: (p: Product) => void,
   onDelete: (id: number, version: string) => void
 }) => (
-  <div
-    onClick={() => onSelect(product)}
-    className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 hover:shadow-md transition-all cursor-pointer relative overflow-hidden flex flex-col h-full"
-  >
+  <div className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl hover:shadow-md transition-all relative overflow-hidden flex flex-col h-full">
+    {/* Main Clickable Area */}
+    <button 
+      type="button"
+      onClick={() => onSelect(product)}
+      className="flex-1 p-4 text-left w-full h-full focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-400 rounded-xl cursor-pointer"
+    >
+      <div className="w-full h-32 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center overflow-hidden mb-4 relative">
+        <div className="absolute top-2 left-2 w-6 h-6 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-400 shadow-sm">
+          {index}
+        </div>
+        {product.imageUrl ? (
+          <img src={product.imageUrl} alt="" className="w-full h-full object-contain p-2" />
+        ) : (
+          <Package size={32} className="text-zinc-200" />
+        )}
+      </div>
+
+      <div className="space-y-1 mb-4 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight line-clamp-1 flex-1">{product.name}</p>
+          {product.categoryName && (
+            <span className="text-[8px] px-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-400 font-bold uppercase rounded border border-zinc-200 dark:border-zinc-700 shrink-0">
+              {product.categoryName}
+            </span>
+          )}
+        </div>
+        <p className="text-[9px] text-zinc-400 font-semibold uppercase tracking-widest">ID: {product.id.toString().padStart(5, '0')}</p>
+      </div>
+
+      <div className="flex items-center justify-between pt-3 border-t border-zinc-50 mt-auto">
+        <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(product.price)}</p>
+        <div className={cn(
+          "px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter",
+          product.currentStock > 5 ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
+        )}>
+          {product.currentStock} Units
+        </div>
+      </div>
+    </button>
+
+    {/* Actions Overlay */}
     <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-      <button className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded shadow-sm text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+      <button 
+        type="button"
+        onClick={() => onSelect(product)}
+        className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded shadow-sm text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer"
+      >
         <Edit2 size={10} />
       </button>
       <button
+        type="button"
         onClick={(e) => { e.stopPropagation(); onDelete(product.id, product.versionStamp); }}
-        className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-rose-50 rounded shadow-sm text-zinc-400 hover:text-rose-600 transition-colors"
+        className="p-1.5 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 hover:bg-rose-50 rounded shadow-sm text-zinc-400 hover:text-rose-600 transition-colors cursor-pointer"
       >
         <Trash2 size={10} />
       </button>
-    </div>
-
-    <div className="w-full h-32 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center overflow-hidden mb-4 relative">
-      <div className="absolute top-2 left-2 w-6 h-6 bg-white dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-400 shadow-sm">
-        {index}
-      </div>
-      {product.imageUrl ? (
-        <img src={product.imageUrl} alt="" className="w-full h-full object-contain p-2" />
-      ) : (
-        <Package size={32} className="text-zinc-200" />
-      )}
-    </div>
-
-    <div className="space-y-1 mb-4 flex-1">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight line-clamp-1 flex-1">{product.name}</p>
-        {product.categoryName && (
-          <span className="text-[8px] px-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-400 font-bold uppercase rounded border border-zinc-200 dark:border-zinc-700 shrink-0">
-            {product.categoryName}
-          </span>
-        )}
-      </div>
-      <p className="text-[9px] text-zinc-400 font-semibold uppercase tracking-widest">ID: {product.id.toString().padStart(5, '0')}</p>
-    </div>
-
-    <div className="flex items-center justify-between pt-3 border-t border-zinc-50 mt-auto">
-      <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(product.price)}</p>
-      <div className={cn(
-        "px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter",
-        product.currentStock > 5 ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
-      )}>
-        {product.currentStock} Units
-      </div>
     </div>
   </div>
 ));
@@ -272,8 +278,8 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
   };
 
   const handleSaveInfo = async () => {
-    const parsedPrice = parseFloat(editForm.price);
-    if (isNaN(parsedPrice) || parsedPrice < 0) {
+    const parsedPrice = Number.parseFloat(editForm.price);
+    if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
       toast.error("Price cannot be negative.");
       return;
     }
@@ -297,8 +303,8 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
         onEditSuccess({
           ...product,
           name: editForm.name,
-          price: parseFloat(editForm.price),
-          categoryId: editForm.categoryId ? parseInt(editForm.categoryId) : undefined,
+          price: Number.parseFloat(editForm.price),
+          categoryId: editForm.categoryId ? Number.parseInt(editForm.categoryId, 10) : undefined,
           categoryName: categories.find(c => c.categoryId.toString() === editForm.categoryId)?.categoryName
         });
         setIsEditing(false);
@@ -313,8 +319,8 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
   };
 
   const handleUpdateStock = async () => {
-    const parsedStock = parseInt(newStock);
-    if (isNaN(parsedStock) || parsedStock < 0) {
+    const parsedStock = Number.parseInt(newStock, 10);
+    if (Number.isNaN(parsedStock) || parsedStock < 0) {
       toast.error("Stock quantity cannot be negative.");
       return;
     }
@@ -322,14 +328,14 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
     try {
       const response = await api.post('/inventories/update-stock', {
         inventoryId: product.id,
-        currentStock: parseInt(newStock),
+        currentStock: Number.parseInt(newStock, 10),
         stockVersionStamp: product.stockVersionStamp
       });
       if (response.data.isSuccess) {
         // Immediate visual update for stock
         onEditSuccess({
           ...product,
-          currentStock: parseInt(newStock)
+          currentStock: Number.parseInt(newStock, 10)
         });
         onUpdate();
         onClose();
@@ -342,9 +348,18 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
     }
   };
 
+  let productImageNode;
+  if (imagePreview) {
+    productImageNode = <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />;
+  } else if (product.imageUrl) {
+    productImageNode = <img src={product.imageUrl} alt="" className="w-full h-full object-cover" />;
+  } else {
+    productImageNode = <ImageIcon size={24} className="text-zinc-300" />;
+  }
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-hidden">
-      <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm animate-in fade-in duration-150" onClick={onClose}></div>
+      <button type="button" onClick={onClose} className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm animate-in fade-in duration-150 border-0 cursor-default" aria-label="Close modal" />
       <div className="relative bg-white dark:bg-zinc-900 w-full max-w-xl rounded-xl shadow-2xl animate-in zoom-in-98 duration-150 flex flex-col max-h-[95vh]">
 
         {/* Header */}
@@ -381,21 +396,16 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
 
             <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-center sm:items-start relative w-full">
               <div className="w-24 h-24 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center overflow-hidden shrink-0 shadow-inner group relative">
-                {imagePreview ? (
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                ) : product.imageUrl ? (
-                  <img src={product.imageUrl} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <ImageIcon size={24} className="text-zinc-300" />
-                )}
+                {productImageNode}
                 <input type="file" ref={imageInputRef} accept="image/*" className="hidden" onChange={handleImageSelect} />
-                <div
+                <button
+                  type="button"
                   onClick={() => imageInputRef.current?.click()}
-                  className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer gap-1"
+                  className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer gap-1 border-0"
                 >
                   <Upload size={14} className="text-white" />
-                  <p className="text-[8px] font-bold text-white uppercase">Replace</p>
-                </div>
+                  <span className="text-[8px] font-bold text-white uppercase">Replace</span>
+                </button>
               </div>
               {imageFile && (
                 <div className="absolute -bottom-8 left-0">
@@ -413,7 +423,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                 {isEditing ? (
                   <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-bold text-zinc-400 uppercase">Product Name</label>
+                      <span className="block text-[9px] font-bold text-zinc-400 uppercase">Product Name</span>
                       <input
                         autoFocus
                         value={editForm.name}
@@ -422,7 +432,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-bold text-zinc-400 uppercase">Unit Price (MMK)</label>
+                      <span className="block text-[9px] font-bold text-zinc-400 uppercase">Unit Price (MMK)</span>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-400">MMK</span>
                         <input
@@ -435,7 +445,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-bold text-zinc-400 uppercase">Category</label>
+                      <span className="block text-[9px] font-bold text-zinc-400 uppercase">Category</span>
                       <select
                         value={editForm.categoryId}
                         onChange={(e) => setEditForm({ ...editForm, categoryId: e.target.value })}
@@ -502,8 +512,8 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 border-t border-zinc-200 dark:border-zinc-700 pt-6">
-                <div className="w-full sm:flex-1 space-y-2">
-                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Manual Override Value</label>
+                 <div className="w-full sm:flex-1 space-y-2">
+                   <span className="block text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Manual Override Value</span>
                   <input
                     type="number"
                     min="0"
@@ -531,13 +541,16 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
         </div>
 
         <div className="p-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
-          <button disabled={isDeleting} onClick={async () => { setIsDeleting(true); await onDelete(product.id, product.versionStamp); setIsDeleting(false); }} className="px-4 py-2 text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all disabled:opacity-50 flex items-center gap-2">{isDeleting ? <><Loader2 size={12} className="animate-spin" /> Archiving...</> : 'Archive Product'}</button>
+          <button disabled={isDeleting} onClick={() => { setIsDeleting(true); onDelete(product.id, product.versionStamp); setIsDeleting(false); }} className="px-4 py-2 text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all disabled:opacity-50 flex items-center gap-2">{isDeleting ? <><Loader2 size={12} className="animate-spin" /> Archiving...</> : 'Archive Product'}</button>
           <span className="text-[9px] text-zinc-400 font-semibold uppercase tracking-widest opacity-50">Confidential • Enterprise Product Record</span>
         </div>
       </div>
     </div>
   );
 };
+
+const TABLE_SKELETON_KEYS = ['tbl-sk-1', 'tbl-sk-2', 'tbl-sk-3', 'tbl-sk-4', 'tbl-sk-5', 'tbl-sk-6', 'tbl-sk-7', 'tbl-sk-8'];
+const GRID_SKELETON_KEYS = ['grid-sk-1', 'grid-sk-2', 'grid-sk-3', 'grid-sk-4', 'grid-sk-5', 'grid-sk-6', 'grid-sk-7', 'grid-sk-8', 'grid-sk-9', 'grid-sk-10'];
 
 // --- Main Page ---
 export default function InventoryPage() {
@@ -576,7 +589,14 @@ export default function InventoryPage() {
     setPage(1);
   };
 
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const selectedProduct = selectedProductId === null
+    ? null
+    : products.find(p => p.id === selectedProductId) || null;
+  const setSelectedProduct = useCallback((p: Product | null) => {
+    setSelectedProductId(p ? p.id : null);
+  }, []);
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', price: '', stock: '', categoryId: '' });
@@ -585,7 +605,7 @@ export default function InventoryPage() {
   const addImageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (selectedProduct || isAddModalOpen || productToDelete) {
+    if (selectedProductId !== null || isAddModalOpen || productToDelete) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -593,7 +613,7 @@ export default function InventoryPage() {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [selectedProduct, isAddModalOpen, productToDelete]);
+  }, [selectedProductId, isAddModalOpen, productToDelete]);
 
   const [categoryTree, setCategoryTree] = useState<Category[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -615,6 +635,75 @@ export default function InventoryPage() {
     fetchCategories();
   }, [fetchCategories]);
 
+  const buildProductSearchParams = useCallback(() => {
+    const params: any = { pageNumber: page, pageSize: 15 };
+    if (search) params.name = search;
+    if (filterCategoryId) params.categoryId = Number.parseInt(filterCategoryId, 10);
+    if (filterMinPrice) params.minPrice = Number.parseFloat(filterMinPrice);
+    if (filterMaxPrice) params.maxPrice = Number.parseFloat(filterMaxPrice);
+    if (filterMinStock) params.minStockQuantity = Number.parseInt(filterMinStock, 10);
+    if (filterMaxStock) params.maxStockQuantity = Number.parseInt(filterMaxStock, 10);
+    
+    let sortByValue = 2;
+    if (filterSortBy === 'name') sortByValue = 0;
+    else if (filterSortBy === 'price') sortByValue = 1;
+    params.sortBy = sortByValue;
+    params.isDescending = filterSortDesc;
+    return params;
+  }, [page, search, filterCategoryId, filterMinPrice, filterMaxPrice, filterMinStock, filterMaxStock, filterSortBy, filterSortDesc]);
+
+  const renderTableBody = () => {
+    if (loading && products.length === 0) {
+      return TABLE_SKELETON_KEYS.map((key) => (
+        <tr key={key} className="animate-pulse border-b border-zinc-50">
+          <td colSpan={5} className="h-16 bg-white dark:bg-zinc-900" />
+        </tr>
+      ));
+    }
+    if (products.length === 0) {
+      return (
+        <tr>
+          <td colSpan={5} className="px-6 py-32 text-center text-[10px] font-bold text-zinc-300 uppercase tracking-widest italic">
+            Database Empty
+          </td>
+        </tr>
+      );
+    }
+    return products.map((product, idx) => (
+      <InventoryRow
+        key={product.id}
+        product={product}
+        index={(page - 1) * 15 + idx + 1}
+        onSelect={setSelectedProduct}
+        onDelete={handleDeleteProduct}
+      />
+    ));
+  };
+
+  const renderGridContent = () => {
+    if (loading && products.length === 0) {
+      return GRID_SKELETON_KEYS.map((key) => (
+        <div key={key} className="h-64 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl animate-pulse" />
+      ));
+    }
+    if (products.length === 0) {
+      return (
+        <div className="col-span-full py-32 text-center text-[10px] font-bold text-zinc-300 uppercase tracking-widest italic">
+          Database Empty
+        </div>
+      );
+    }
+    return products.map((product, idx) => (
+      <InventoryCard
+        key={product.id}
+        product={product}
+        index={(page - 1) * 15 + idx + 1}
+        onSelect={setSelectedProduct}
+        onDelete={handleDeleteProduct}
+      />
+    ));
+  };
+
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
@@ -622,17 +711,7 @@ export default function InventoryPage() {
       if (lowStockOnly) {
         response = await api.get('/inventories/low-stock', { params: { threshold: 10 } });
       } else {
-        const params: any = { pageNumber: page, pageSize: 15 };
-        if (search) params.name = search;
-        if (filterCategoryId) params.categoryId = parseInt(filterCategoryId);
-        if (filterMinPrice) params.minPrice = parseFloat(filterMinPrice);
-        if (filterMaxPrice) params.maxPrice = parseFloat(filterMaxPrice);
-        if (filterMinStock) params.minStockQuantity = parseInt(filterMinStock);
-        if (filterMaxStock) params.maxStockQuantity = parseInt(filterMaxStock);
-        params.sortBy = filterSortBy === 'name' ? 0 : filterSortBy === 'price' ? 1 : 2;
-        params.isDescending = filterSortDesc;
-
-        response = await api.get('/search/products', { params });
+        response = await api.get('/search/products', { params: buildProductSearchParams() });
       }
 
       if (response.data.isSuccess) {
@@ -657,17 +736,8 @@ export default function InventoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, filterCategoryId, filterMinPrice, filterMaxPrice, filterMinStock, filterMaxStock, filterSortBy, filterSortDesc, lowStockOnly]);
+  }, [buildProductSearchParams, lowStockOnly]);
 
-  // Sync selected product with background updates
-  useEffect(() => {
-    if (selectedProduct) {
-      const updated = products.find(p => p.id === selectedProduct.id);
-      if (updated && JSON.stringify(updated) !== JSON.stringify(selectedProduct)) {
-        setSelectedProduct(updated);
-      }
-    }
-  }, [products]);
 
   const handleNewProductImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -679,16 +749,16 @@ export default function InventoryPage() {
     }
   };
 
-  const handleAddProduct = async (e: React.FormEvent) => {
+  const handleAddProduct = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    const parsedPrice = parseFloat(newProduct.price);
-    const parsedStock = parseInt(newProduct.stock);
+    const parsedPrice = Number.parseFloat(newProduct.price);
+    const parsedStock = Number.parseInt(newProduct.stock, 10);
 
-    if (isNaN(parsedPrice) || parsedPrice < 0) {
+    if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
       toast.error("Price cannot be negative.");
       return;
     }
-    if (isNaN(parsedStock) || parsedStock < 0) {
+    if (Number.isNaN(parsedStock) || parsedStock < 0) {
       toast.error("Initial stock cannot be negative.");
       return;
     }
@@ -875,7 +945,7 @@ export default function InventoryPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {/* Category */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Category</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Category</span>
                 <select
                   value={filterCategoryId}
                   onChange={(e) => { setFilterCategoryId(e.target.value); setPage(1); }}
@@ -887,7 +957,7 @@ export default function InventoryPage() {
               </div>
               {/* Min Price */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Min Price</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Min Price</span>
                 <input
                   type="number"
                   placeholder="0"
@@ -898,7 +968,7 @@ export default function InventoryPage() {
               </div>
               {/* Max Price */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Max Price</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Max Price</span>
                 <input
                   type="number"
                   placeholder="∞"
@@ -909,7 +979,7 @@ export default function InventoryPage() {
               </div>
               {/* Min Stock */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Min Stock</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Min Stock</span>
                 <input
                   type="number"
                   placeholder="0"
@@ -920,7 +990,7 @@ export default function InventoryPage() {
               </div>
               {/* Max Stock */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Max Stock</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Max Stock</span>
                 <input
                   type="number"
                   placeholder="∞"
@@ -931,7 +1001,7 @@ export default function InventoryPage() {
               </div>
               {/* Sort */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Sort By</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Sort By</span>
                 <div className="flex gap-1">
                   <select
                     value={filterSortBy}
@@ -980,42 +1050,14 @@ export default function InventoryPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {loading && products.length === 0 ? (
-                    [...Array(8)].map((_, i) => <tr key={i} className="animate-pulse border-b border-zinc-50"><td colSpan={5} className="h-16 bg-white dark:bg-zinc-900" /></tr>)
-                  ) : products.length === 0 ? (
-                    <tr><td colSpan={5} className="px-6 py-32 text-center text-[10px] font-bold text-zinc-300 uppercase tracking-widest italic">Database Empty</td></tr>
-                  ) : (
-                    products.map((product, idx) => (
-                      <InventoryRow
-                        key={product.id}
-                        product={product}
-                        index={(page - 1) * 15 + idx + 1}
-                        onSelect={setSelectedProduct}
-                        onDelete={handleDeleteProduct}
-                      />
-                    ))
-                  )}
+                  {renderTableBody()}
                 </tbody>
               </table>
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {loading && products.length === 0 ? (
-              [...Array(10)].map((_, i) => <div key={i} className="h-64 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl animate-pulse" />)
-            ) : products.length === 0 ? (
-              <div className="col-span-full py-32 text-center text-[10px] font-bold text-zinc-300 uppercase tracking-widest italic">Database Empty</div>
-            ) : (
-              products.map((product, idx) => (
-                <InventoryCard
-                  key={product.id}
-                  product={product}
-                  index={(page - 1) * 15 + idx + 1}
-                  onSelect={setSelectedProduct}
-                  onDelete={handleDeleteProduct}
-                />
-              ))
-            )}
+            {renderGridContent()}
           </div>
         )}
       </div>
@@ -1045,15 +1087,16 @@ export default function InventoryPage() {
       {/* Add Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setIsAddModalOpen(false)}></div>
+          <button type="button" onClick={() => setIsAddModalOpen(false)} className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm border-0 cursor-default" aria-label="Close modal" />
           <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 w-full max-w-sm rounded-2xl shadow-2xl p-8 animate-in zoom-in-98 duration-150">
             <h3 className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest mb-8 border-b border-zinc-50 pb-4">Onboard New Product</h3>
             <form onSubmit={handleAddProduct} className="space-y-6">
               {/* Image Upload Area */}
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase">Product Photo</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase">Product Photo</span>
                 <input type="file" ref={addImageInputRef} accept="image/*" className="hidden" onChange={handleNewProductImageSelect} />
-                <div
+                <button
+                  type="button"
                   onClick={() => addImageInputRef.current?.click()}
                   className="w-full h-36 bg-zinc-50 dark:bg-zinc-900/50 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-zinc-400 hover:bg-zinc-100 dark:bg-zinc-800/50 transition-all group overflow-hidden relative"
                 >
@@ -1061,7 +1104,7 @@ export default function InventoryPage() {
                     <>
                       <img src={newProductImagePreview} alt="Preview" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <p className="text-[9px] font-bold text-white uppercase tracking-widest">Change Photo</p>
+                        <span className="text-[9px] font-bold text-white uppercase tracking-widest">Change Photo</span>
                       </div>
                     </>
                   ) : (
@@ -1071,15 +1114,15 @@ export default function InventoryPage() {
                       <p className="text-[9px] text-zinc-300 mt-1">Optional • JPG, PNG, WebP</p>
                     </>
                   )}
-                </div>
+                </button>
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase">Product Identification</label>
-                <input required type="text" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Legal Product Name" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 outline-none transition-all shadow-inner"
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase">Product Identification</span>
+                <input required type="text" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Legal Product Name" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-inner"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Category Assignment</label>
+                <span className="block text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Category Assignment</span>
                 <select
                   value={newProduct.categoryId}
                   onChange={(e) => setNewProduct({ ...newProduct, categoryId: e.target.value })}
@@ -1091,11 +1134,11 @@ export default function InventoryPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest px-1">Unit Price</label>
+                  <span className="block text-[9px] font-semibold text-zinc-400 uppercase tracking-widest px-1">Unit Price</span>
                   <input required type="number" min="0" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} placeholder="0.00" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-inner" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest px-1">Initial Stock</label>
+                  <span className="block text-[9px] font-semibold text-zinc-400 uppercase tracking-widest px-1">Initial Stock</span>
                   <input required type="number" min="0" step="1" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })} placeholder="0" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-350 dark:placeholder:text-zinc-650 outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-400 transition-all shadow-inner" />
                 </div>
               </div>

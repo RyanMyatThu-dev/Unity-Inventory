@@ -24,6 +24,7 @@ namespace Unity_Inventory.WebApp.Controllers
 
         public async Task<IActionResult> PrintReport(int id, string? token = null)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             var client = _httpClientFactory.CreateClient();
             var baseUrl = _configuration["ApiSettings:BaseUrl"];
             
@@ -58,6 +59,7 @@ namespace Unity_Inventory.WebApp.Controllers
 
         public async Task<IActionResult> PrintSalesList(int businessId, string? token = null)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             var client = _httpClientFactory.CreateClient();
             var baseUrl = _configuration["ApiSettings:BaseUrl"];
 

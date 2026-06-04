@@ -54,8 +54,8 @@ namespace Unity_Inventory.Domain.Features.Dashboard
             try
             {
                 var today = DateTime.Now.Date;
-                var startOfMonth = new DateTime(today.Year, today.Month, 1);
-                var startOfYear = new DateTime(today.Year, 1, 1);
+                var startOfMonth = new DateTime(today.Year, today.Month, 1, 0, 0, 0, today.Kind);
+                var startOfYear = new DateTime(today.Year, 1, 1, 0, 0, 0, today.Kind);
 
                 // Fetch all three categories in parallel
                 var topCustomerAllTime = await GetTopCustomersAsync(businessId, null, null, 5);
@@ -136,8 +136,8 @@ namespace Unity_Inventory.Domain.Features.Dashboard
             try
             {
                 var today = DateTime.Now.Date;
-                var startOfMonth = new DateTime(today.Year, today.Month, 1);
-                var startOfYear = new DateTime(today.Year, 1, 1);
+                var startOfMonth = new DateTime(today.Year, today.Month, 1, 0, 0, 0, today.Kind);
+                var startOfYear = new DateTime(today.Year, 1, 1, 0, 0, 0, today.Kind);
 
                 var reportData = await _db.TblReports
                     .AsNoTracking()
@@ -224,7 +224,7 @@ namespace Unity_Inventory.Domain.Features.Dashboard
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error calculating weekly sales: {ex.Message}");
+                throw new InvalidOperationException($"Error calculating weekly sales: {ex.Message}", ex);
             }
         }
 
@@ -251,7 +251,7 @@ namespace Unity_Inventory.Domain.Features.Dashboard
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error calculating monthly sales: {ex.Message}");
+                throw new InvalidOperationException($"Error calculating monthly sales: {ex.Message}", ex);
             }
         }
 
@@ -276,7 +276,7 @@ namespace Unity_Inventory.Domain.Features.Dashboard
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error calculating yearly sales: {ex.Message}");
+                throw new InvalidOperationException($"Error calculating yearly sales: {ex.Message}", ex);
             }
         }
         #endregion

@@ -1,6 +1,5 @@
 using Unity_Inventory.Domain.Features.Sales.Models;
 using Unity_Inventory.Shared;
-using Unity_Inventory.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;

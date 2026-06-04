@@ -46,17 +46,23 @@ internal static class RolePermissionSeedData
         }
 
         foreach (var menu in Menus)
-        foreach (var action in Actions)
-            Add("Owner", menu, action);
+        {
+            foreach (var action in Actions)
+            {
+                Add("Owner", menu, action);
+            }
+        }
 
         foreach (var menu in Menus)
-        foreach (var action in Actions)
         {
-            if (menu == "users" && action == "delete")
-                continue;
-            if (menu == "business" && action == "delete")
-                continue;
-            Add("Admin", menu, action);
+            foreach (var action in Actions)
+            {
+                if (menu == "users" && action == "delete")
+                    continue;
+                if (menu == "business" && action == "delete")
+                    continue;
+                Add("Admin", menu, action);
+            }
         }
 
         foreach (var (menu, action) in StaffPermissions)

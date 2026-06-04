@@ -11,6 +11,7 @@ using System.Security.Claims;
 using Unity_Inventory.Api.Filters;
 using Hangfire;
 using Hangfire.Storage;
+using System.ComponentModel.DataAnnotations;
 
 namespace Unity_Inventory.Api.Controllers
 {
@@ -56,7 +57,7 @@ namespace Unity_Inventory.Api.Controllers
                 var today = DateOnly.FromDateTime(DateTime.Now);
                 switch (summaryType.ToUpper())
                 {
-                    case "DAILY":
+                    default:
                         startDate = today;
                         endDate = today;
                         break;
@@ -76,10 +77,6 @@ namespace Unity_Inventory.Api.Controllers
                         startDate = new DateOnly(lastYear, 1, 1);
                         endDate = new DateOnly(lastYear, 12, 31);
                         break;
-                    default:
-                        startDate = today;
-                        endDate = today;
-                        break;
                 }
             }
             else
@@ -95,6 +92,7 @@ namespace Unity_Inventory.Api.Controllers
         // Get status and execution details of Hangfire recurring summary compiler jobs
         [HttpGet("scheduler/status")]
         [Permission("summary", "view")]
+        [ProducesResponseType(typeof(Result<object>), StatusCodes.Status200OK)]
         public IActionResult GetSchedulerStatus()
         {
             try
@@ -147,9 +145,9 @@ namespace Unity_Inventory.Api.Controllers
 
             var result = await _summaryService.GenerateAndStoreSalesSummaryAsync(
                 businessId,
-                request.SummaryType.ToUpper(),
-                request.PeriodStartDate,
-                request.PeriodEndDate);
+                request.SummaryType!.ToUpper(),
+                request.PeriodStartDate!.Value,
+                request.PeriodEndDate!.Value);
 
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
@@ -208,7 +206,7 @@ namespace Unity_Inventory.Api.Controllers
                 var today = DateOnly.FromDateTime(DateTime.Now);
                 switch (request.SummaryType?.ToUpper() ?? "MONTHLY")
                 {
-                    case "DAILY":
+                    default:
                         startDate = today;
                         endDate = today;
                         break;
@@ -224,10 +222,6 @@ namespace Unity_Inventory.Api.Controllers
                         var lastYear = today.Year - 1;
                         startDate = new DateOnly(lastYear, 1, 1);
                         endDate = new DateOnly(lastYear, 12, 31);
-                        break;
-                    default:
-                        startDate = today;
-                        endDate = today;
                         break;
                 }
             }
@@ -313,9 +307,12 @@ namespace Unity_Inventory.Api.Controllers
     // Request model for generating summaries
     public class GenerateSummaryRequest
     {
-        public string SummaryType { get; set; } = null!; // DAILY, WEEKLY, MONTHLY, YEARLY
-        public DateOnly PeriodStartDate { get; set; }
-        public DateOnly PeriodEndDate { get; set; }
+        [Required]
+        public string? SummaryType { get; set; } // DAILY, WEEKLY, MONTHLY, YEARLY
+        [Required]
+        public DateOnly? PeriodStartDate { get; set; }
+        [Required]
+        public DateOnly? PeriodEndDate { get; set; }
     }
 
     // Request model for AI chat assistant

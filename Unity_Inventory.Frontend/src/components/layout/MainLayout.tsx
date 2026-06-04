@@ -142,7 +142,7 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
                       </div>
                       <p className="text-xs font-semibold text-zinc-500">All caught up!</p>
                       <p className="text-[10px] text-zinc-400 mt-1 leading-relaxed">
-                        You have no new notifications.<br />We'll let you know when something arrives.
+                        You have no new notifications.<br />We&apos;ll let you know when something arrives.
                       </p>
                     </div>
                     <div className="px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-100 dark:border-zinc-800">

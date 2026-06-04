@@ -24,6 +24,7 @@ namespace Unity_Inventory.WebApp.Controllers
 
         public async Task<IActionResult> PrintStock(int businessId, string? token = null)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             if (businessId == 0) return BadRequest("Business ID is required");
 
             var client = _httpClientFactory.CreateClient();

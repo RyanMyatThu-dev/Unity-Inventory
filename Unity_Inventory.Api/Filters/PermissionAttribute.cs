@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Runtime.CompilerServices;
 using System.Security;
@@ -9,6 +9,7 @@ using Unity_Inventory.Domain.Features.Authorization.Models;
 
 namespace Unity_Inventory.Api.Filters
 {
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = true)]
     public class PermissionAttribute : TypeFilterAttribute
     {
         public PermissionAttribute(string menuCode, string actionCode, bool checkFromDb = true) : base(typeof(PermissionFilter))
@@ -54,7 +55,7 @@ namespace Unity_Inventory.Api.Filters
                         BusinessId = businessId,
                         MenuCode = _menuCode,
                         ActionCode = _actionCode,
-                        RoleName = roleClaim?.Value
+                        RoleName = roleClaim?.Value ?? string.Empty
                     });
                     hasPermission = result.Data;
 

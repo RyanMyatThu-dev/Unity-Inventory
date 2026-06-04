@@ -104,7 +104,7 @@ Please output only the paragraph of analysis directly, with no markdown headers 
                 var apiKey = _config["Gemini:ApiKey"];
                 if (string.IsNullOrEmpty(apiKey))
                 {
-                    return Result<string>.Success(GenerateMockChatResponse(businessContext, userMessage));
+                    return Result<string>.Success(GenerateMockChatResponse(userMessage));
                 }
 
                 var contentsList = new List<object>();
@@ -157,7 +157,7 @@ Current Business Data Context:
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return Result<string>.Success(GenerateMockChatResponse(businessContext, userMessage));
+                    return Result<string>.Success(GenerateMockChatResponse(userMessage));
                 }
 
                 var responseJson = await response.Content.ReadAsStringAsync();
@@ -169,15 +169,15 @@ Current Business Data Context:
                     .GetProperty("text")
                     .GetString();
 
-                return Result<string>.Success(text?.Trim() ?? GenerateMockChatResponse(businessContext, userMessage));
+                return Result<string>.Success(text?.Trim() ?? GenerateMockChatResponse(userMessage));
             }
             catch (Exception)
             {
-                return Result<string>.Success(GenerateMockChatResponse(businessContext, userMessage));
+                return Result<string>.Success(GenerateMockChatResponse(userMessage));
             }
         }
 
-        private string GenerateMockChatResponse(string businessContext, string userMessage)
+        private string GenerateMockChatResponse(string userMessage)
         {
             var msgLower = userMessage.ToLower();
             

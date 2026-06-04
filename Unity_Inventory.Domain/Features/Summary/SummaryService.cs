@@ -90,7 +90,7 @@ namespace Unity_Inventory.Domain.Features.Summary
                     return summaryResult;
                 }
 
-                var summary = summaryResult.Data;
+                var summary = summaryResult.Data!;
 
                 // Check if we already have a summary for this period/type
                 var existingSummary = await _db.TblSummaryArchives
@@ -484,7 +484,7 @@ namespace Unity_Inventory.Domain.Features.Summary
                         else
                         {
                             var reportsByYrMonth = reports.Where(r => r.ReportDate.HasValue).GroupBy(r => new { r.ReportDate!.Value.Year, r.ReportDate.Value.Month }).ToDictionary(g => g.Key, g => g.ToList());
-                            var current = new DateTime(minDate.Value.Year, minDate.Value.Month, 1);
+                            var current = new DateTime(minDate.Value.Year, minDate.Value.Month, 1, 0, 0, 0, minDate.Value.Kind);
                             while (current <= maxDate.Value)
                             {
                                 var label = current.ToString("MMM yyyy");

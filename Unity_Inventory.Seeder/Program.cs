@@ -135,10 +135,10 @@ FOR EACH ROW EXECUTE FUNCTION update_version_stamp();
         // Generate initial summaries for the seeded data
         var endDate = DateTime.UtcNow.Date;
         var yesterday = endDate.AddDays(-1);
-        var lastMonthStart = new DateTime(endDate.Year, endDate.Month, 1).AddMonths(-1);
+        var lastMonthStart = new DateTime(endDate.Year, endDate.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(-1);
         var lastMonthEnd = lastMonthStart.AddMonths(1).AddDays(-1);
-        var lastYearStart = new DateTime(endDate.Year - 1, 1, 1);
-        var lastYearEnd = new DateTime(endDate.Year - 1, 12, 31);
+        var lastYearStart = new DateTime(endDate.Year - 1, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var lastYearEnd = new DateTime(endDate.Year - 1, 12, 31, 0, 0, 0, DateTimeKind.Utc);
 
         await GenerateAndStoreSummaryAsync(db, business.BusinessId, "DAILY",
             DateOnly.FromDateTime(yesterday),

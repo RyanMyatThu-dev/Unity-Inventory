@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +8,7 @@ namespace Unity_Inventory.Domain.Features.Authorization.Models
 {
     public class CheckPermissionRequest
     {
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
         public int BusinessId { get; set; }
         public string MenuCode { get; set; } = null!;
         public string ActionCode { get; set; } = null!;
@@ -25,21 +25,21 @@ namespace Unity_Inventory.Domain.Features.Authorization.Models
 
     public class  GrantPermissionRequest
     {
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
         public int BusinessId { get; set; }
         public string MenuCode { get; set; } = null!;
         public string ActionCode { get; set; } = null!;
-        public string RoleName { get; set; }
+        public string RoleName { get; set; } = null!;
         public int GrantedByUserId { get; set; }
     }
 
     public class RevokePermissionRequest 
     {
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
         public int BusinessId { get; set; }
         public string MenuCode { get; set; } = null!;
         public string ActionCode { get; set; } = null!;
-        public string RoleName { get; set; }
+        public string RoleName { get; set; } = null!;
         public int RevokedByUserId { get; set; }
     }
 }

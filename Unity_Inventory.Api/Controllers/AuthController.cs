@@ -38,7 +38,7 @@ namespace Unity_Inventory.Domain.Features.Authentication
                     Expires = DateTime.UtcNow.AddDays(7)
                 };
 
-                Response.Cookies.Append("refreshToken", result.Data.RefreshToken, cookieOptions);
+                Response.Cookies.Append("refreshToken", result.Data!.RefreshToken, cookieOptions);
 
                 return Ok(result);
             }
