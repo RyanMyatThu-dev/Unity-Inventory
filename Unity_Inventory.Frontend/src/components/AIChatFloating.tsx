@@ -191,7 +191,7 @@ export const AIChatFloating: React.FC = () => {
                 </span>
               </div>
               <div>
-                <span className="text-[10px] font-black text-zinc-900 dark:text-zinc-150 uppercase tracking-widest block">Active System Insights</span>
+                <span className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest block">Active System Insights</span>
                 <span className="text-[8px] text-zinc-400 font-bold uppercase block tracking-wider">AI Analyst Online</span>
               </div>
             </div>
@@ -294,23 +294,31 @@ export const AIChatFloating: React.FC = () => {
           {/* Input Form */}
           <form
             onSubmit={handleSubmit}
-            className="flex border-t border-zinc-200/50 dark:border-zinc-800/80 bg-white dark:bg-zinc-900"
+            className="p-3 border-t border-zinc-200/50 dark:border-zinc-800/80 bg-white dark:bg-zinc-900"
           >
-            <input
-              type="text"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              disabled={chatLoading}
-              placeholder="Ask the analyst..."
-              className="flex-1 px-4 py-3 text-xs bg-transparent focus:outline-none placeholder-zinc-400 dark:placeholder-zinc-650 disabled:opacity-50 text-zinc-800 dark:text-zinc-200"
-            />
-            <button
-              type="submit"
-              disabled={chatLoading || !inputMessage.trim()}
-              className="px-4 py-3 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors disabled:opacity-30"
-            >
-              <Send size={12} />
-            </button>
+            <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-950/30 border border-zinc-200 dark:border-zinc-800/80 rounded-xl px-3 py-2 transition-all focus-within:border-zinc-400 dark:focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-zinc-300 dark:focus-within:ring-zinc-700">
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                disabled={chatLoading}
+                placeholder="Ask the analyst..."
+                className="flex-1 text-xs bg-transparent focus:outline-none placeholder-zinc-400 dark:placeholder-zinc-650 disabled:opacity-50 text-zinc-800 dark:text-zinc-200"
+              />
+              <button
+                type="submit"
+                disabled={chatLoading || !inputMessage.trim()}
+                className={cn(
+                  "flex items-center justify-center p-2 rounded-lg transition-all",
+                  inputMessage.trim()
+                    ? "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                    : "bg-zinc-100 text-zinc-450 dark:bg-zinc-800/50 dark:text-zinc-650 cursor-not-allowed"
+                )}
+                title="Send Message"
+              >
+                <Send size={14} className={inputMessage.trim() ? "translate-x-[0.5px] -translate-y-[0.5px]" : ""} />
+              </button>
+            </div>
           </form>
         </div>
       )}

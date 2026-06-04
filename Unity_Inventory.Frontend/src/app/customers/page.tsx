@@ -395,6 +395,17 @@ export default function CustomersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', address: '' });
 
+  useEffect(() => {
+    if (selectedCustomer || isAddModalOpen || customerToDelete) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedCustomer, isAddModalOpen, customerToDelete]);
+
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
     try {
@@ -675,7 +686,7 @@ export default function CustomersPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-zinc-50 bg-zinc-50 dark:bg-zinc-800/50">
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest w-12 text-center">#</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest w-12 text-center">No</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Client Entity</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Communications</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Anchor Location</th>

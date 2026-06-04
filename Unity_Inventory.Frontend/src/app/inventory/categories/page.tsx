@@ -136,6 +136,17 @@ export default function CategoriesPage() {
   
   const [form, setForm] = useState({ name: '', description: '' });
 
+  useEffect(() => {
+    if (isModalOpen || categoryToDelete !== null) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isModalOpen, categoryToDelete]);
+
   const fetchTree = useCallback(async () => {
     setLoading(true);
     try {

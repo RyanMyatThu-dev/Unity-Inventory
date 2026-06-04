@@ -828,9 +828,19 @@ export default function SalesSummariesPage() {
     await sendChatMessage(textToSend);
   };
 
-  // Modal States
   const [isGenModalOpen, setIsGenModalOpen] = useState(false);
   const [selectedSummary, setSelectedSummary] = useState<SalesSummary | null>(null);
+
+  useEffect(() => {
+    if (isGenModalOpen || selectedSummary) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isGenModalOpen, selectedSummary]);
 
   const [jobsStatus, setJobsStatus] = useState<SchedulerJobStatus[]>([]);
   const [loadingJobs, setLoadingJobs] = useState<boolean>(true);
@@ -1105,7 +1115,7 @@ export default function SalesSummariesPage() {
           </div>
 
           {/* AI Insights & Recharts Telemetry Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
 
             {/* Visual Analytics & Drivers Column */}
             <div className={cn("lg:col-span-7 flex flex-col gap-6 transition-opacity duration-200", isFetching && "opacity-75")}>
@@ -1271,7 +1281,7 @@ export default function SalesSummariesPage() {
             </div>
 
             {/* Active System Insights (AI Chat Area) */}
-            <div className="lg:col-span-5 flex flex-col h-[480px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+            <div className="lg:col-span-5 flex flex-col h-[480px] lg:h-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
               {/* Chat Header */}
               <div className="flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-950/20 border-b border-zinc-200/50 dark:border-zinc-800/80">
                 <div className="flex items-center gap-1.5">
@@ -1358,23 +1368,31 @@ export default function SalesSummariesPage() {
               {/* Input Form */}
               <form
                 onSubmit={(e) => { e.preventDefault(); handleSendChatMessage(); }}
-                className="flex border-t border-zinc-200/50 dark:border-zinc-800/80 bg-white dark:bg-zinc-900"
+                className="p-3.5 border-t border-zinc-200/50 dark:border-zinc-800/80 bg-white dark:bg-zinc-900"
               >
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  disabled={chatLoading}
-                  placeholder="Ask the Analyst..."
-                  className="flex-1 px-4 py-2.5 text-xs bg-transparent focus:outline-none placeholder-zinc-400 dark:placeholder-zinc-600 disabled:opacity-50 text-zinc-800 dark:text-zinc-200"
-                />
-                <button
-                  type="submit"
-                  disabled={chatLoading || !chatInput.trim()}
-                  className="px-3.5 py-2.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors disabled:opacity-30"
-                >
-                  <Send size={13} />
-                </button>
+                <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-950/30 border border-zinc-200 dark:border-zinc-800/80 rounded-xl px-3 py-2 transition-all focus-within:border-zinc-400 dark:focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-zinc-300 dark:focus-within:ring-zinc-700">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    disabled={chatLoading}
+                    placeholder="Ask the Analyst..."
+                    className="flex-1 text-xs bg-transparent focus:outline-none placeholder-zinc-400 dark:placeholder-zinc-600 disabled:opacity-50 text-zinc-800 dark:text-zinc-200"
+                  />
+                  <button
+                    type="submit"
+                    disabled={chatLoading || !chatInput.trim()}
+                    className={cn(
+                      "flex items-center justify-center p-2 rounded-lg transition-all",
+                      chatInput.trim()
+                        ? "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                        : "bg-zinc-100 text-zinc-450 dark:bg-zinc-800/50 dark:text-zinc-650 cursor-not-allowed"
+                    )}
+                    title="Send Message"
+                  >
+                    <Send size={14} className={chatInput.trim() ? "translate-x-[0.5px] -translate-y-[0.5px]" : ""} />
+                  </button>
+                </div>
               </form>
             </div>
 

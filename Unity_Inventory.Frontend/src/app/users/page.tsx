@@ -420,6 +420,17 @@ export default function UsersPage() {
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
   useEffect(() => {
+    if (selectedUser || isAddUserModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedUser, isAddUserModalOpen]);
+
+  useEffect(() => {
     // Only Owners can access this page
     if (authUser && !canProvisionNewBusiness(authUser.accountType)) {
       router.push('/dashboard');

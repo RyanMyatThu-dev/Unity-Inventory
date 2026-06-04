@@ -584,6 +584,17 @@ export default function InventoryPage() {
   const [newProductImagePreview, setNewProductImagePreview] = useState<string | null>(null);
   const addImageInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (selectedProduct || isAddModalOpen || productToDelete) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedProduct, isAddModalOpen, productToDelete]);
+
   const [categoryTree, setCategoryTree] = useState<Category[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -961,7 +972,7 @@ export default function InventoryPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-zinc-50 bg-zinc-50 dark:bg-zinc-800/50">
-                    <th className="px-4 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest w-12 text-center">#</th>
+                    <th className="px-4 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest w-12 text-center">No</th>
                     <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Product Entity</th>
                     <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">MSRP (MMK)</th>
                     <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Stock Integrity</th>

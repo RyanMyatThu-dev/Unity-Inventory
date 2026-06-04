@@ -143,7 +143,7 @@ const SaleCard = memo(({ report, index, onSelect }: {
       <div className="w-6 h-6 bg-zinc-900/5 rounded-full flex items-center justify-center text-[10px] font-bold text-zinc-400">
         {index}
       </div>
-      <div className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[9px] font-bold uppercase rounded tracking-widest">
+      <div className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[9px] font-bold uppercase rounded tracking-widest group-hover:opacity-0 transition-opacity duration-200">
         {report.status || 'Completed'}
       </div>
     </div>
@@ -589,6 +589,17 @@ export default function SalesPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
 
+  useEffect(() => {
+    if (isAddModalOpen || selectedReportId) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isAddModalOpen, selectedReportId]);
+
   const [selectedPreset, setSelectedPreset] = useState<string>('ALL');
   const [customStartDate, setCustomStartDate] = useState<string>('');
   const [customEndDate, setCustomEndDate] = useState<string>('');
@@ -755,7 +766,7 @@ export default function SalesPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
-                  <th className="px-4 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest w-12 text-center">#</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest w-12 text-center">No</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Invoice Ref</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Client Name</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Gross Total</th>
