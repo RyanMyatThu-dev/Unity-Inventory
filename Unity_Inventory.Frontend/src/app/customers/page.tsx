@@ -257,11 +257,11 @@ const CustomerDetailModal = ({ customer, onClose, onUpdate, onDelete, onEditSucc
                 <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Core Identity Profile</h4>
               </div>
               
-              <div className="flex gap-8 items-center">
+              <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-center w-full">
                  <div className="w-24 h-24 rounded-full bg-zinc-900 flex items-center justify-center text-white text-4xl font-bold shadow-2xl border-4 border-white shrink-0">
                     {customer.name[0]}
                  </div>
-                 <div className="flex-1 space-y-4">
+                 <div className="flex-1 space-y-4 w-full text-center sm:text-left">
                     {isEditing ? (
                       <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
                         <div className="space-y-1.5">
@@ -498,20 +498,20 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-300">
-      <div className="flex items-center justify-between bg-white dark:bg-zinc-900 p-6 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-6 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-sm">
         <div>
           <h1 className="text-base font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">Client Ledger</h1>
           <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-1">High-value relationship management & portfolio tracking.</p>
         </div>
-        <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-xl dark:shadow-black/20 shadow-zinc-100">
+        <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-xl dark:shadow-black/20 shadow-zinc-100 w-full sm:w-auto justify-center">
           <Plus size={16} /> Onboard Client
         </button>
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 flex-1">
-            <div className="relative max-w-md flex-1 flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2 flex-1 w-full">
+            <div className="relative w-full sm:max-w-md flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
                 <input
@@ -596,7 +596,7 @@ export default function CustomersPage() {
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {/* Min Spent */}
               <div className="space-y-1.5">
                 <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Min LTV (MMK)</label>

@@ -41,7 +41,7 @@ export default function SelectBusinessPage() {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center h-screen bg-white dark:bg-zinc-950 transition-colors">
+      <div className="flex items-center justify-center h-screen bg-background transition-colors">
         <UnityLogo size={48} className="animate-pulse text-zinc-900 dark:text-zinc-100" />
       </div>
     );

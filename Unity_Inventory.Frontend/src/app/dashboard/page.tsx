@@ -206,7 +206,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Main Analytics Section */}
         <div className="lg:col-span-2 bg-white dark:bg-zinc-900 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 dark:border-zinc-800 rounded-xl p-6 shadow-sm flex flex-col min-h-[400px]">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <div className="w-2 h-6 bg-zinc-900 dark:bg-zinc-100 rounded-full" />
               <div>

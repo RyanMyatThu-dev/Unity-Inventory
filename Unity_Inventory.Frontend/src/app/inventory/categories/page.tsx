@@ -56,7 +56,7 @@ const CategoryNode = ({
         {/* Lined Connector for nested items */}
         {level > 0 && (
           <div className="absolute -left-4 top-0 bottom-0 w-px bg-zinc-200 dark:bg-zinc-800">
-            {isLast && <div className="absolute top-1/2 bottom-0 left-0 right-0 bg-white dark:bg-zinc-950" />}
+            {isLast && <div className="absolute top-1/2 bottom-0 left-0 right-0 bg-background" />}
             <div className="absolute top-1/2 left-0 w-3 h-px bg-zinc-200 dark:bg-zinc-800" />
           </div>
         )}
@@ -247,7 +247,7 @@ export default function CategoriesPage() {
         </button>
       </div>
 
-      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm min-h-[400px]">
+      <div className="bg-background border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm min-h-[400px]">
         {loading && tree.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 gap-3">
             <Loader2 size={24} className="animate-spin text-zinc-300" />

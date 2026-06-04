@@ -1141,14 +1141,14 @@ export default function SalesSummariesPage() {
 
                   {/* Cadence controls and Date picker */}
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-1 bg-zinc-100/60 dark:bg-zinc-800/40 p-0.5 rounded-lg border border-zinc-200/50 dark:border-zinc-700/30">
+                    <div className="flex items-center gap-1 bg-zinc-100/60 dark:bg-zinc-800/40 p-0.5 rounded-lg border border-zinc-200/50 dark:border-zinc-700/30 overflow-x-auto flex-nowrap w-full sm:w-auto scrollbar-none">
                       {['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'CUSTOM'].map((t) => (
                         <button
                           key={t}
                           type="button"
                           onClick={() => setSummaryTypeFilter(t)}
                           className={cn(
-                            "px-2.5 py-1 rounded-md text-[8px] font-bold uppercase tracking-wider transition-all",
+                            "px-2.5 py-1 rounded-md text-[8px] font-bold uppercase tracking-wider transition-all shrink-0",
                             summaryTypeFilter === t
                               ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm"
                               : "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
@@ -1281,7 +1281,7 @@ export default function SalesSummariesPage() {
             </div>
 
             {/* Active System Insights (AI Chat Area) */}
-            <div className="lg:col-span-5 flex flex-col h-[480px] lg:h-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+            <div className="lg:col-span-5 flex flex-col h-[480px] lg:h-[750px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
               {/* Chat Header */}
               <div className="flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-950/20 border-b border-zinc-200/50 dark:border-zinc-800/80">
                 <div className="flex items-center gap-1.5">

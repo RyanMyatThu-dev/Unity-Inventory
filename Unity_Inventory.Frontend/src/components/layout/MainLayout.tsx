@@ -4,7 +4,7 @@ import React, { ReactNode, useEffect, useState, useRef } from 'react';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import { Bell, Plus, Search, Package, Users, FileText, BellOff, X, LayoutList } from 'lucide-react';
+import { Bell, Plus, Search, Package, Users, FileText, BellOff, X, LayoutList, Menu } from 'lucide-react';
 import { ThemeToggle } from '../ThemeToggle';
 import { UnityLogo } from '../ui/UnityLogo';
 import { AIChatFloating } from '@/components/AIChatFloating';
@@ -16,6 +16,13 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isActionOpen, setIsActionOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Close mobile sidebar on route changes
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
   const notifRef = useRef<HTMLDivElement>(null);
   const actionRef = useRef<HTMLDivElement>(null);
 
@@ -41,7 +48,7 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-white dark:bg-zinc-950 transition-colors">
+      <div className="flex items-center justify-center h-screen bg-background transition-colors">
         <UnityLogo size={48} className="animate-pulse text-zinc-900 dark:text-zinc-100" />
       </div>
     );
@@ -53,7 +60,7 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
 
   if (!accessToken) {
     return (
-      <div className="flex items-center justify-center h-screen bg-white dark:bg-zinc-950 transition-colors">
+      <div className="flex items-center justify-center h-screen bg-background transition-colors">
         <div className="w-8 h-8 border-2 border-zinc-900 dark:border-zinc-100 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -67,21 +74,44 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-zinc-950 transition-colors">
-      <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0">
+    <div className="flex min-h-screen bg-background transition-colors relative overflow-x-hidden">
+      {/* Mobile Drawer Overlay Backdrop */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm z-45 md:hidden animate-in fade-in duration-200" 
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      <Sidebar 
+        isMobileOpen={isMobileOpen} 
+        setIsMobileOpen={setIsMobileOpen} 
+        isCollapsed={isCollapsed} 
+        setIsCollapsed={setIsCollapsed} 
+      />
+      
+      <main className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out ${isCollapsed ? 'md:pl-16' : 'md:pl-64'}`}>
         {/* Compact Header */}
-        <header className="h-14 bg-white dark:bg-zinc-950 border-b border-border dark:border-zinc-800 flex items-center justify-between px-6 sticky top-0 z-40 transition-colors">
-            <div className="flex items-center gap-4">
-              <nav className="flex items-center text-xs font-medium text-zinc-400">
-                <span className="hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer">UnityInventory</span>
-                <span className="mx-2">/</span>
-                <span className="text-zinc-900 dark:text-zinc-100 capitalize">{pathname.split('/')[1] || 'Dashboard'}</span>
+        <header className="h-14 bg-background border-b border-border dark:border-zinc-800 flex items-center justify-between px-4 md:px-6 sticky top-0 z-40 transition-colors">
+            <div className="flex items-center gap-3">
+              {/* Mobile Sidebar Hamburger Toggle */}
+              <button
+                onClick={() => setIsMobileOpen(true)}
+                className="md:hidden p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                title="Open navigation menu"
+              >
+                <Menu size={18} />
+              </button>
+              
+              <nav className="flex items-center text-[11px] md:text-xs font-medium text-zinc-400 truncate">
+                <span className="hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer hidden sm:inline">UnityInventory</span>
+                <span className="mx-2 hidden sm:inline">/</span>
+                <span className="text-zinc-900 dark:text-zinc-100 capitalize font-bold">{pathname.split('/')[1] || 'Dashboard'}</span>
               </nav>
            </div>
            
            <div className="flex items-center gap-2">
-               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-900 rounded-md border border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 transition-all cursor-text mr-2">
+               <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-900 rounded-md border border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 transition-all cursor-text mr-2">
                 <Search size={14} className="text-zinc-400" />
                 <span className="text-xs text-zinc-400 pr-12">Search...</span>
                 <span className="text-[10px] font-bold text-zinc-300 dark:text-zinc-600 border border-zinc-200 dark:border-zinc-700 px-1 rounded">⌘K</span>
@@ -102,7 +132,7 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
                   <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl shadow-zinc-200/50 dark:shadow-black/50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
                       <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">Notifications</h3>
-                      <button onClick={() => setIsNotifOpen(false)} className="p-0.5 text-zinc-400 hover:text-zinc-600 rounded transition-colors">
+                      <button onClick={() => setIsNotifOpen(false)} className="p-0.5 text-zinc-400 hover:text-zinc-650 rounded transition-colors">
                         <X size={14} />
                       </button>
                     </div>
@@ -169,7 +199,7 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
         </header>
 
         {/* Content Area - Reduced Padding */}
-        <div className="p-6 overflow-y-auto">
+        <div className="p-4 md:p-6 overflow-y-auto">
           {children}
         </div>
         <AIChatFloating />

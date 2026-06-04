@@ -11,6 +11,8 @@ import {
   Users, 
   FileText,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Search,
   Settings,
   Command,
@@ -38,7 +40,14 @@ const navItems = [
   { name: 'Team & Permissions', href: '/users', icon: UserCog, ownerOnly: true },
 ];
 
-export const Sidebar = () => {
+interface SidebarProps {
+  isMobileOpen: boolean;
+  setIsMobileOpen: (open: boolean) => void;
+  isCollapsed: boolean;
+  setIsCollapsed: (collapsed: boolean) => void;
+}
+
+export const Sidebar = ({ isMobileOpen, setIsMobileOpen, isCollapsed, setIsCollapsed }: SidebarProps) => {
   const pathname = usePathname();
   const { user, currentBusinessId, switchBusiness, refreshUser, logout } = useAuth();
   const [isBusinessDropdownOpen, setIsBusinessDropdownOpen] = useState(false);
@@ -74,37 +83,69 @@ export const Sidebar = () => {
   };
 
   return (
-    <div className="flex flex-col w-64 bg-[#FAFAFA] dark:bg-zinc-950 border-r border-border dark:border-zinc-700 h-screen sticky top-0 transition-all z-50">
+    <div className={cn(
+      "fixed inset-y-0 left-0 z-40 flex flex-col bg-[#FAFAFA] dark:bg-zinc-950 border-r border-border dark:border-zinc-700 h-screen transition-all duration-300 ease-in-out",
+      // Mobile visibility
+      isMobileOpen ? "translate-x-0 w-64 z-50" : "-translate-x-full md:translate-x-0",
+      // Desktop collapsed state
+      isCollapsed ? "md:w-16" : "md:w-64"
+    )}>
       {/* Header */}
-      <div className="h-14 flex items-center px-4 border-b border-border dark:border-zinc-700 justify-between bg-white dark:bg-zinc-950 transition-colors">
-        <div className="flex items-center gap-2">
-          <UnityLogo size={20} className="text-zinc-900 dark:text-zinc-100" />
-          <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">UnityInventory</span>
+      <div className="h-14 flex items-center px-4 border-b border-border dark:border-zinc-700 justify-between bg-background transition-colors">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <UnityLogo size={20} className="text-zinc-900 dark:text-zinc-100 shrink-0" />
+          {!isCollapsed && (
+            <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tracking-tight animate-in fade-in duration-200">UnityInventory</span>
+          )}
         </div>
-        <div className="flex items-center gap-1">
-          <button className="p-1 text-zinc-400 hover:text-zinc-600">
-            <Settings size={14} />
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Mobile close button */}
+          <button 
+            onClick={() => setIsMobileOpen(false)}
+            className="md:hidden p-1 text-zinc-400 hover:text-zinc-650"
+            title="Close menu"
+          >
+            <X size={16} />
+          </button>
+          
+          {/* Desktop collapse toggle */}
+          <button 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="hidden md:block p-1 text-zinc-400 hover:text-zinc-650"
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           </button>
         </div>
       </div>
 
       {/* Business Switcher Dropdown */}
       <div className="p-3 relative">
-        <label className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest px-2 mb-1 block">Active Business</label>
+        {!isCollapsed && (
+          <label className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest px-2 mb-1 block">Active Business</label>
+        )}
         <button 
-          onClick={() => setIsBusinessDropdownOpen(!isBusinessDropdownOpen)}
-          className="w-full flex items-center justify-between p-2 rounded-md border border-border dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all"
+          onClick={() => isCollapsed ? setIsCollapsed(false) : setIsBusinessDropdownOpen(!isBusinessDropdownOpen)}
+          className={cn(
+            "w-full flex items-center justify-between p-2 rounded-md border border-border dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm transition-all",
+            isCollapsed ? "justify-center border-none shadow-none bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800" : "hover:bg-zinc-55 dark:hover:bg-zinc-800"
+          )}
+          title={isCollapsed ? (currentBusiness?.businessName || 'Select Business') : undefined}
         >
           <div className="flex items-center gap-2 overflow-hidden">
             <div className="w-5 h-5 rounded bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 shrink-0">
               <UnityLogo size={14} />
             </div>
-            <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate">{currentBusiness?.businessName || 'Select Business'}</span>
+            {!isCollapsed && (
+              <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate">{currentBusiness?.businessName || 'Select Business'}</span>
+            )}
           </div>
-          <ChevronDown size={14} className={cn("text-zinc-400 transition-transform", isBusinessDropdownOpen && "rotate-180")} />
+          {!isCollapsed && (
+            <ChevronDown size={14} className={cn("text-zinc-400 transition-transform", isBusinessDropdownOpen && "rotate-180")} />
+          )}
         </button>
 
-        {isBusinessDropdownOpen && (
+        {isBusinessDropdownOpen && !isCollapsed && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setIsBusinessDropdownOpen(false)}></div>
             <div className="absolute left-3 right-3 mt-1 bg-white dark:bg-zinc-900 border border-border dark:border-zinc-700 rounded-md shadow-xl py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
@@ -140,7 +181,7 @@ export const Sidebar = () => {
                       setIsBusinessDropdownOpen(false);
                       setIsRegisterModalOpen(true);
                     }}
-                    className="w-full flex items-center gap-2 px-2 py-2 rounded text-xs text-zinc-900 dark:text-zinc-100  hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:bg-zinc-100 dark:hover:bg-zinc-8000/10 font-medium transition-colors"
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded text-xs text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 font-medium transition-colors"
                   >
                     <Plus size={12} />
                     Register New Business
@@ -154,19 +195,31 @@ export const Sidebar = () => {
 
       {/* Search */}
       <div className="px-3 mb-4">
-        <div className="relative group">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
-          <input
-            type="text"
-            placeholder="Quick search..."
-            className="w-full pl-8 pr-2 py-1.5 bg-zinc-100 dark:bg-zinc-900/50 border border-transparent dark:border-zinc-800 rounded-md text-xs focus:bg-white dark:focus:bg-zinc-800 focus:border-zinc-300 dark:focus:border-zinc-700 transition-all outline-none text-zinc-900 dark:text-zinc-100"
-          />
-        </div>
+        {isCollapsed ? (
+          <button 
+            onClick={() => setIsCollapsed(false)}
+            className="w-full flex items-center justify-center py-2 bg-zinc-100 dark:bg-zinc-900/50 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-md text-zinc-400 transition-all"
+            title="Quick search..."
+          >
+            <Search size={14} />
+          </button>
+        ) : (
+          <div className="relative group">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+            <input
+              type="text"
+              placeholder="Quick search..."
+              className="w-full pl-8 pr-2 py-1.5 bg-zinc-100 dark:bg-zinc-900/50 border border-transparent dark:border-zinc-800 rounded-md text-xs focus:bg-white dark:focus:bg-zinc-800 focus:border-zinc-300 dark:focus:border-zinc-700 transition-all outline-none text-zinc-900 dark:text-zinc-100"
+            />
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 space-y-0.5">
-        <p className="px-2 pb-2 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">Platform</p>
+        {!isCollapsed && (
+          <p className="px-2 pb-2 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">Platform</p>
+        )}
         {navItems.map((item) => {
           if (item.ownerOnly && !showRegisterBusiness) return null;
           const isActive = pathname === item.href;
@@ -174,39 +227,48 @@ export const Sidebar = () => {
             <Link
               key={item.name}
               href={item.href}
+              title={isCollapsed ? item.name : undefined}
               className={cn(
-                "flex items-center gap-2.5 px-2.5 py-1.5 rounded-md transition-all text-xs font-medium",
+                "flex items-center gap-2.5 rounded-md transition-all text-xs font-medium",
                 isActive 
                   ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-border dark:border-zinc-700 shadow-sm" 
-                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                isCollapsed ? "justify-center p-2" : "px-2.5 py-1.5"
               )}
             >
               <item.icon size={16} className={cn(
-                isActive ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-600"
+                isActive ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-600",
+                "shrink-0"
               )} />
-              <span>{item.name}</span>
+              {!isCollapsed && <span>{item.name}</span>}
             </Link>
           );
         })}
       </nav>
 
       {/* Footer Profile */}
-      <div className="p-3 border-t border-border dark:border-zinc-800 bg-white dark:bg-zinc-900 dark:bg-zinc-950 space-y-2 transition-colors">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="p-3 border-t border-border dark:border-zinc-800 bg-background space-y-2 transition-colors">
+        <div className={cn("flex items-center gap-2 min-w-0", isCollapsed ? "justify-center" : "")}>
           <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 dark:bg-zinc-900 flex items-center justify-center text-zinc-500 dark:text-zinc-400 border border-border dark:border-zinc-700 shrink-0 text-xs font-bold">
             {user?.email?.[0]?.toUpperCase()}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">{user?.email?.split('@')[0]}</p>
-            <p className="text-[10px] text-zinc-400 truncate uppercase tracking-tight">{user?.role}</p>
-          </div>
+          {!isCollapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">{user?.email?.split('@')[0]}</p>
+              <p className="text-[10px] text-zinc-400 truncate uppercase tracking-tight">{user?.role}</p>
+            </div>
+          )}
         </div>
         <button 
           onClick={logout} 
-          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all group"
+          title={isCollapsed ? "Sign Out" : undefined}
+          className={cn(
+            "flex items-center gap-2 rounded-md text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all group",
+            isCollapsed ? "justify-center p-2 w-full" : "w-full px-2.5 py-2"
+          )}
         >
-          <LogOut size={14} className="text-zinc-400 group-hover:text-rose-500 transition-colors" />
-          <span>Sign Out</span>
+          <LogOut size={14} className="text-zinc-400 group-hover:text-rose-500 transition-colors shrink-0" />
+          {!isCollapsed && <span>Sign Out</span>}
         </button>
       </div>
 
@@ -217,7 +279,7 @@ export const Sidebar = () => {
           <div className="relative bg-white dark:bg-zinc-900 border border-border dark:border-zinc-700 w-full max-w-sm rounded-lg shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-4 border-b border-border dark:border-zinc-800">
               <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">Register New Business</h3>
-              <button onClick={() => setIsRegisterModalOpen(false)} className="text-zinc-400 hover:text-zinc-600">
+              <button onClick={() => setIsRegisterModalOpen(false)} className="text-zinc-400 hover:text-zinc-650">
                 <X size={16} />
               </button>
             </div>

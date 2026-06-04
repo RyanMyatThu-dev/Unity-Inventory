@@ -179,7 +179,7 @@ export const AIChatFloating: React.FC = () => {
       {/* Floating Chat Drawer */}
       {isFloatingOpen && (
         <div
-          className="fixed bottom-24 right-6 w-96 h-[500px] z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-5 fade-in duration-300"
+          className="fixed bottom-24 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 h-[500px] max-h-[calc(100vh-120px)] z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-5 fade-in duration-300"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-zinc-50/80 dark:bg-zinc-950/40 border-b border-zinc-200/50 dark:border-zinc-800/80">

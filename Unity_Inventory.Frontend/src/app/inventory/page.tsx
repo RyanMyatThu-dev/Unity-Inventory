@@ -379,7 +379,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
               <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Core Product Specifications</h4>
             </div>
 
-            <div className="flex gap-8 items-start relative">
+            <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-center sm:items-start relative w-full">
               <div className="w-24 h-24 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center overflow-hidden shrink-0 shadow-inner group relative">
                 {imagePreview ? (
                   <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
@@ -501,8 +501,8 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                 </div>
               </div>
 
-              <div className="flex items-end gap-4 border-t border-zinc-200 dark:border-zinc-700 pt-6">
-                <div className="flex-1 space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 border-t border-zinc-200 dark:border-zinc-700 pt-6">
+                <div className="w-full sm:flex-1 space-y-2">
                   <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Manual Override Value</label>
                   <input
                     type="number"
@@ -516,7 +516,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate, onDelete, onEditSucces
                 <button
                   disabled={isUpdatingStock || newStock === product.currentStock.toString()}
                   onClick={handleUpdateStock}
-                  className="px-8 py-3.5 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-emerald-700 disabled:opacity-20 transition-all shadow-xl dark:shadow-black/20 shadow-emerald-100 flex items-center gap-2"
+                  className="w-full sm:w-auto px-8 py-3.5 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-emerald-700 disabled:opacity-20 transition-all shadow-xl dark:shadow-black/20 shadow-emerald-100 flex items-center justify-center gap-2"
                 >
                   {isUpdatingStock ? <><Loader2 size={12} className="animate-spin" /> Syncing...</> : 'Update Asset'}
                 </button>
@@ -758,20 +758,20 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-300">
-      <div className="flex items-center justify-between bg-white dark:bg-zinc-900 p-6 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-6 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-sm">
         <div>
           <h1 className="text-base font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">Inventory Matrix</h1>
           <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-1">Global supply chain oversight & asset management.</p>
         </div>
-        <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 px-6 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-xl dark:shadow-black/20 shadow-zinc-100">
+        <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 px-6 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-xl dark:shadow-black/20 shadow-zinc-100 w-full sm:w-auto justify-center">
           <Plus size={16} /> New Product
         </button>
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 flex-1">
-            <div className="relative max-w-md flex-1 flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2 flex-1 w-full">
+            <div className="relative w-full sm:max-w-md flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
                 <input
@@ -872,7 +872,7 @@ export default function InventoryPage() {
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {/* Category */}
               <div className="space-y-1.5">
                 <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Category</label>
