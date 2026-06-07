@@ -21,6 +21,8 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.AddDomain();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -95,6 +97,8 @@ builder.Services.AddAuthentication(options =>
 builder.Host.UseSerilog();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
