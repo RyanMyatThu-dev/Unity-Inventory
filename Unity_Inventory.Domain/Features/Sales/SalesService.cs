@@ -1,8 +1,11 @@
 using Unity_Inventory.Database.IMSDbContextModels;
 using Unity_Inventory.Domain.Features.Sales.Models;
+using Unity_Inventory.Domain.Features.Summary;
+using Unity_Inventory.Domain.Hubs;
 using Unity_Inventory.Shared;
-using Unity_Inventory.Shared;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,10 +17,16 @@ namespace Unity_Inventory.Domain.Features.Sales
     public class SalesService : ISalesService
     {
         private readonly IMSDbContext _db;
+        private readonly IHubContext<SummaryHub> _hubContext;
+        private readonly ISummaryService _summaryService;
+        private readonly ILogger<SalesService> _logger;
 
-        public SalesService(IMSDbContext db)
+        public SalesService(IMSDbContext db, IHubContext<SummaryHub> hubContext, ISummaryService summaryService, ILogger<SalesService> logger)
         {
             _db = db;
+            _hubContext = hubContext;
+            _summaryService = summaryService;
+            _logger = logger;
         }
 
         public async Task<PagedResult<ReportDTO>> GetReportsByBusinessIdAsync(PaginationRequest paginationRequest, int businessId, DateTime? startDate = null, DateTime? endDate = null)
@@ -209,12 +218,52 @@ namespace Unity_Inventory.Domain.Features.Sales
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return await GetReportByIdAsync(report.ReportId);
+                // Fetch the full report DTO for the response and SignalR push
+                var reportDtoResult = await GetReportByIdAsync(report.ReportId);
+
+                // Push real-time update via SignalR (fire-and-forget, non-blocking)
+                if (reportDtoResult.IsSuccess)
+                {
+                    _ = PushSummaryUpdateAsync(request.BusinessId, reportDtoResult.Data);
+                }
+
+                return reportDtoResult;
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
                 return Result<ReportDTO>.Failure(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Pushes a real-time summary update via SignalR after a sale is created.
+        /// Recalculates the current MONTHLY summary so the client can update KPIs + line chart.
+        /// This is fire-and-forget: failures are logged but do not block the sale creation.
+        /// </summary>
+        private async Task PushSummaryUpdateAsync(int businessId, ReportDTO reportDto)
+        {
+            try
+            {
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                var monthStart = new DateOnly(today.Year, today.Month, 1);
+                var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+                var summaryResult = await _summaryService.GetSalesSummaryAsync(
+                    businessId, "MONTHLY", monthStart, monthEnd);
+
+                await _hubContext.Clients
+                    .Group($"business-{businessId}")
+                    .SendAsync("SummaryDataUpdated", new
+                    {
+                        SaleReport = reportDto,
+                        UpdatedSummary = summaryResult.IsSuccess ? summaryResult.Data : null
+                    });
+            }
+            catch (Exception ex)
+            {
+                // Log but don't throw — the sale was already committed successfully
+                _logger.LogWarning(ex, "SignalR push failed for business {BusinessId}, report {ReportId}", businessId, reportDto.Id);
             }
         }
 

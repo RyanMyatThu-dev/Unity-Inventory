@@ -1,0 +1,13 @@
+{
+    "dotrush.roslyn.projectOrSolutionFiles": [
+        "/Users/ryanmyatthu/Documents/GitHub/Unity-Inventory/Unity_Inventory.sln",
+        "/Users/ryanmyatthu/Documents/GitHub/Unity-Inventory/Unity_Inventory.slnx",
+        "/Users/ryanmyatthu/Documents/GitHub/Unity-Inventory/Unity_Inventory.Api/Unity_Inventory.slnx",
+        "/Users/ryanmyatthu/Documents/GitHub/Unity-Inventory/Unity_Inventory.Api/Unity_Inventory.Api.csproj",
+        "/Users/ryanmyatthu/Documents/GitHub/Unity-Inventory/Unity_Inventory.Database/Unity_Inventory.Database.csproj",
+        "/Users/ryanmyatthu/Documents/GitHub/Unity-Inventory/Unity_Inventory.Domain/Unity_Inventory.Domain.csproj",
+        "/Users/ryanmyatthu/Documents/GitHub/Unity-Inventory/Unity_Inventory.Seeder/Unity_Inventory.Seeder.csproj",
+        "/Users/ryanmyatthu/Documents/GitHub/Unity-Inventory/Unity_Inventory.Shared/Unity_Inventory.Shared.csproj",
+        "/Users/ryanmyatthu/Documents/GitHub/Unity-Inventory/Unity_Inventory.WebApp/Unity_Inventory.WebApp.csproj"
+    ]
+}

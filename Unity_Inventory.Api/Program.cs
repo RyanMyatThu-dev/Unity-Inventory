@@ -9,6 +9,7 @@ using Scalar.AspNetCore;
 using System.Text;
 using Serilog;
 using Serilog.Events;
+using Unity_Inventory.Domain.Hubs;
 
 // Must be set before any Npgsql connections are created (including Hangfire.PostgreSql)
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -30,6 +31,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 
+builder.Services.AddSignalR();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowWebApp",
@@ -109,9 +111,11 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+app.MapHub<SummaryHub>("/hubs/summary");
 app.UseHttpsRedirection();
 
 app.UseCors("AllowWebApp");
+
 
 app.UseAuthentication();
 app.UseMiddleware<TokenValidation>();

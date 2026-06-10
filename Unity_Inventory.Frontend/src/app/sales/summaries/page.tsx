@@ -5,6 +5,7 @@ import { useTheme } from 'next-themes';
 import api from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { useAIChat } from '@/context/AIChatContext';
+import { useSignalR } from '@/context/SignalRContext';
 import { cn } from '@/lib/utils';
 import {
   TrendingUp,
@@ -862,6 +863,17 @@ export default function SalesSummariesPage() {
   useEffect(() => {
     loadSchedulerStatus();
   }, [loadSchedulerStatus]);
+
+  // Real-time updates via SignalR: when a sale is created, the server pushes
+  // a recalculated MONTHLY summary. Only apply it if the user is viewing MONTHLY.
+  const { lastSummaryUpdate, isConnected } = useSignalR();
+
+  useEffect(() => {
+    if (lastSummaryUpdate?.updatedSummary && summaryTypeFilter === 'MONTHLY') {
+      setActiveSummary(lastSummaryUpdate.updatedSummary as SalesSummary);
+      toast.success('New sale recorded — summary updated');
+    }
+  }, [lastSummaryUpdate, summaryTypeFilter]);
 
   // Check if User is allowed to generate summaries (Owner or Admin roles)
   const isCreateAllowed = React.useMemo(() => {
