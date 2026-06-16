@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Unity_Inventory.Domain.Features.Summary;
 using Unity_Inventory.Domain.Hubs;
+using Unity_Inventory.Domain.Features.Dashboard;
 
 namespace Unity_Inventory.Domain.Features.Sales
 {
@@ -18,13 +19,17 @@ namespace Unity_Inventory.Domain.Features.Sales
     {
         private readonly IMSDbContext _db;
         private readonly IHubContext<SaleSummaryHub> _hub;
+        private readonly IHubContext<DashboardHub> _dashboardHub;
         private readonly ISummaryService _summaryService;
+        private readonly IDashboardService _dashboardService;
 
-        public SalesService(IMSDbContext db, IHubContext<SaleSummaryHub> hub, ISummaryService summaryService)
+        public SalesService(IMSDbContext db, IHubContext<SaleSummaryHub> hub, IHubContext<DashboardHub> dashboardHub, ISummaryService summaryService, IDashboardService dashboardService)
         {
             _db = db;
             _hub = hub;
+            _dashboardHub = dashboardHub;
             _summaryService = summaryService;
+            _dashboardService = dashboardService;
         }
 
         public async Task<PagedResult<ReportDTO>> GetReportsByBusinessIdAsync(PaginationRequest paginationRequest, int businessId, DateTime? startDate = null, DateTime? endDate = null)
@@ -218,7 +223,7 @@ namespace Unity_Inventory.Domain.Features.Sales
 
                 try
                 {
-                    // Trigger real-time summary update for the business group packaged with Daily, Monthly, and Yearly
+                    // Trigger real-time summary update for the business group packaged with Daily, Weekly, Monthly, and Yearly
                     var today = DateOnly.FromDateTime(DateTime.Now);
                     var firstDayOfMonth = new DateOnly(today.Year, today.Month, 1);
                     var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
@@ -244,11 +249,17 @@ namespace Unity_Inventory.Domain.Features.Sales
                     };
 
                     await _hub.Clients.Group($"Business_{request.BusinessId}").SendAsync("ReceiveSummaryUpdate", packagedData);
+                    // Trigger real-time dashboard update
+                    var dashboardResult = await _dashboardService.GetDashboardDataAsync(request.BusinessId);
+                    if (dashboardResult.IsSuccess)
+                    {
+                        await _dashboardHub.Clients.Group($"Business_{request.BusinessId}").SendAsync("ReceiveDashboardUpdate", dashboardResult.Data);
+                    }
                 }
                 catch (Exception ex)
                 {
                     // Log error if needed, but don't fail the sale transaction
-                    Console.WriteLine($"Failed to broadcast summary update: {ex.Message}");
+                    Console.WriteLine($"Failed to broadcast summary/dashboard update: {ex.Message}");
                 }
 
                 return await GetReportByIdAsync(report.ReportId);
