@@ -34,18 +34,7 @@ namespace Unity_Inventory.Shared.Middlewares
                 return;
             }
 
-            // SignalR WebSocket connections pass the token via query string (access_token)
-            // because WebSocket connections cannot set custom HTTP headers.
-            string? token = null;
-            if (path != null && path.StartsWith("/hubs/"))
-            {
-                token = context.Request.Query["access_token"].FirstOrDefault();
-            }
-            else
-            {
-                token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            }
-
+            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
             bool isTokenValid = false;
             if (!string.IsNullOrEmpty(token))
             {

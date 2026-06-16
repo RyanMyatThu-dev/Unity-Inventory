@@ -28,16 +28,6 @@ namespace Unity_Inventory.Domain.Features.Authentication.Users
             return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
         }
 
-        [AllowAnonymous]
-        [HttpGet("test-exception")]
-        public IActionResult TestException([FromQuery] string type)
-        {
-            if (type == "notfound") throw new KeyNotFoundException("Item not found test.");
-            if (type == "unauthorized") throw new UnauthorizedAccessException("Unauthorized test.");
-            if (type == "argument") throw new ArgumentException("Argument test.");
-            throw new Exception("Generic unexpected test error.");
-        }
-
         // POST : api/users/register
         [AllowAnonymous]
         [HttpPost("register")]

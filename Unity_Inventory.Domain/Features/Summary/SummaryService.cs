@@ -52,14 +52,14 @@ namespace Unity_Inventory.Domain.Features.Summary
                         AverageOrderValue = archivedSummary.AverageOrderValue,
                         TotalOrders = archivedSummary.TotalOrders,
                         TotalItemsSold = archivedSummary.TotalItemsSold,
-                        UniqueCustomers = 0, 
+                        UniqueCustomers = 0, // This would need to be calculated or stored separately
                         TopCustomerId = archivedSummary.TopCustomerId,
                         TopCustomerName = archivedSummary.TopCustomerName,
                         TopCustomerTotal = archivedSummary.TopCustomerTotal,
-                        TopProductId = archivedSummary.TopInventoryId,
+                        TopProductId = archivedSummary.TopInventoryId, // Assuming TopInventoryId maps to TopProductId
                         TopProductName = archivedSummary.TopInventoryName,
                         TopProductQuantitySold = archivedSummary.TopInventoryQuantitySold,
-                        TopProductRevenue = 0,
+                        TopProductRevenue = 0, // This would need to be calculated or stored separately
                         GeneratedAt = archivedSummary.GeneratedAt,
                         Source = archivedSummary.Source ?? "Unknown"
                     };

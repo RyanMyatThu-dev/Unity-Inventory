@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { AIChatProvider } from "@/context/AIChatContext";
-import { SignalRProvider } from "@/context/SignalRContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
@@ -43,13 +42,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <SignalRProvider>
-              <AIChatProvider>
-                <MainLayout>
-                  {children}
-                </MainLayout>
-              </AIChatProvider>
-            </SignalRProvider>
+            <AIChatProvider>
+              <MainLayout>
+                {children}
+              </MainLayout>
+            </AIChatProvider>
           </AuthProvider>
           <Toaster 
             position="bottom-right" 

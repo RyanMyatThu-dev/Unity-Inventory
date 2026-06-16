@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useCallback, memo } from 'react';
 import api from '@/services/api';
 import { cn } from '@/lib/utils';
-import { useSignalR } from '@/context/SignalRContext';
 import { 
   Search, 
   Plus, 
@@ -620,7 +619,6 @@ const NewSaleModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
 
 // --- Main Page Component ---
 export default function SalesPage() {
-  const { lastSummaryUpdate } = useSignalR();
   const [reports, setReports] = useState<SaleReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -702,32 +700,6 @@ export default function SalesPage() {
     const timer = setTimeout(() => { fetchReports(); }, 300);
     return () => clearTimeout(timer);
   }, [fetchReports]);
-
-  // Real-time updates via SignalR: prepend new sale reports to the list
-  useEffect(() => {
-    if (lastSummaryUpdate?.saleReport) {
-      const newReport: SaleReport = {
-        id: lastSummaryUpdate.saleReport.id,
-        reportDate: lastSummaryUpdate.saleReport.reportDate,
-        totalAmount: lastSummaryUpdate.saleReport.totalAmount,
-        customerName: lastSummaryUpdate.saleReport.customerName,
-        status: 'Completed',
-        vouchers: lastSummaryUpdate.saleReport.vouchers.map(v => ({
-          id: v.id,
-          inventoryName: v.inventoryName,
-          quantity: v.quantity,
-          sellPrice: v.sellPrice,
-          totalPrice: v.subTotal
-        }))
-      };
-
-      setReports(prev => {
-        // Avoid duplicates by checking ID
-        if (prev.some(r => r.id === newReport.id)) return prev;
-        return [newReport, ...prev];
-      });
-    }
-  }, [lastSummaryUpdate]);
 
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-300">

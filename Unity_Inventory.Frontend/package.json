@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@microsoft/signalr": "^10.0.0",
     "axios": "^1.16.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.14.0",
