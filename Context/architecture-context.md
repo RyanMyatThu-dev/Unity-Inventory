@@ -133,6 +133,14 @@ Creating a sales report (`CreateReportAsync`) executes in an isolated transactio
 3. It **decrements stock balances** in `Tbl_InventorySummary` for each item.
 4. It **increments customer lifetime spending and transaction logs** in `Tbl_CustomerSummary`.
 5. It commits only when all updates succeed, preventing orphaned vouchers or stock counts.
+6. **Real-Time Broadcast**: After commit, it extracts the latest analytical snapshots (Daily, Weekly, Monthly, Yearly summaries and live Dashboard KPI data) and pushes them simultaneously via `SaleSummaryHub` and `DashboardHub` to active WebSocket clients grouped by `BusinessId`.
+
+### E. Real-Time Broadcasting (SignalR)
+WebSockets are integrated for immediate UI hydration without polling:
+1. **Connection Negotiation**: Frontend (Next.js) requests `/hubs/salesummary/negotiate`. Since standard token interceptors can't attach auth headers to raw WebSockets easily, the frontend passes `access_token` query parameters which `JwtBearer` intercepts and attaches to the Hub context.
+2. **Strict Mode Safety**: Next.js 16/React 18's strict mode rapid remounts are managed using persistent connections wrapped in `useRef` hooks to bypass `stop() was called during negotiate` exceptions.
+3. **Multi-Tenant Hub Groups**: `OnConnectedAsync` reads the `BusinessId` claim and strictly maps connections to a named group (`Business_X`).
+4. **Push Triggers**: Core business workflows (like generating a sales report) use DI to fetch the generic `IHubContext<T>` and issue non-blocking broadcasts to these target groups securely.
 
 ---
 

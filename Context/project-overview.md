@@ -197,6 +197,12 @@ The system utilizes a modern dual-frontend approach: the **Next.js SPA Portal** 
 | POST | `/api/customer-prices` | Upsert customer-specific price overrides | Yes | `customerprices:edit` |
 | DELETE | `/api/customer-prices` | Remove customer price overrides | Yes | `customerprices:delete` |
 
+### SignalR Hubs (`/hubs`)
+| Method | Endpoint | Description | Auth | Permission |
+|--------|----------|-------------|------|------------|
+| WS | `/hubs/salesummary` | Real-time broadcasting of sales summaries (Daily/Weekly/Monthly/Yearly) grouped by BusinessId | Yes | Owner role |
+| WS | `/hubs/dashboard` | Real-time broadcasting of dashboard KPIs grouped by BusinessId | Yes | Owner, Admin role |
+
 ---
 
 ## Project Structure

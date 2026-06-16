@@ -53,6 +53,9 @@ The system is currently fully scaffolded with a rich multi-tenant backend and du
 - [x] **Gemini AI Synthesis Integration**: Implemented `AiService` invoking the Google Gemini 2.5 Flash API to compile custom summaries, featuring micro-interactive UI loading states and robust simulated local fallbacks.
 - [x] **Permission System Update**: Added `summary` module to RBAC system with appropriate permissions for Owner, Admin, and Staff roles via seeder updates.
 - [x] **Frontend Integration**: Removed mock seed data from sales summaries page and updated to rely solely on live API data for summary generation and display.
+- [x] **SignalR Real-Time Broadcasting**: Designed and implemented `SaleSummaryHub` and `DashboardHub` to push live data events to connected frontend clients when a transaction occurs in the workspace.
+- [x] **Secure Multi-Tenant WebSockets**: Hardened SignalR Hubs with `Authorize` attributes, token query parameters (`access_token`), and explicit BusinessId group isolation (`$"Business_{businessId}"`) via JWT claims extraction.
+- [x] **React 18 Strict Mode Fixes**: Refactored the Next.js `HubConnectionBuilder` integrations in the frontend to utilize persistent React `useRef` connections, bypassing classic unmount-remount race conditions and preventing 401 Negotiation drops when switching UI filter tabs.
 
 ---
 
