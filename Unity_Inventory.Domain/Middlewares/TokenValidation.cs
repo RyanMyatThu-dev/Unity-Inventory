@@ -34,12 +34,26 @@ namespace Unity_Inventory.Shared.Middlewares
                 return;
             }
 
-            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            bool isTokenValid = false;
-            if (!string.IsNullOrEmpty(token))
+            // SignalR token refresh is handled by the frontend before connecting.
+            // We skip custom token validation/refresh for SignalR hubs and rely on the built-in Authentication middleware.
+            if (path != null && path.StartsWith("/hubs"))
             {
-                isTokenValid = ValidateToken(token, context);
+                await _next(context);
+                return;
             }
+
+            // Check if the user is already authenticated by the built-in ASP.NET Core JWT handler
+            bool isTokenValid = context.User?.Identity?.IsAuthenticated == true;
+
+            if (!isTokenValid)
+            {
+                var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                if (!string.IsNullOrEmpty(token))
+                {
+                    isTokenValid = ValidateToken(token, context);
+                }
+            }
+
             if (!isTokenValid)
             {
                 var refreshToken = context.Request.Cookies["refreshToken"];

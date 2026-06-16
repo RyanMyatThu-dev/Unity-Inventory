@@ -9,6 +9,7 @@ using Scalar.AspNetCore;
 using System.Text;
 using Serilog;
 using Serilog.Events;
+using Unity_Inventory.Domain.Hubs;
 
 // Must be set before any Npgsql connections are created (including Hangfire.PostgreSql)
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -21,6 +22,7 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.AddDomain();
+builder.Services.AddSignalR();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers()
@@ -92,6 +94,21 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
         ClockSkew = TimeSpan.Zero
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            // If the request is for SignalR hub and has an access token in the query string, use it for authentication
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Host.UseSerilog();
@@ -108,6 +125,7 @@ if (app.Environment.IsDevelopment())
     app.MapSwagger("/openapi/{documentName}.json");
     app.MapScalarApiReference();
 }
+
 
 app.UseHttpsRedirection();
 
@@ -136,8 +154,9 @@ recurringJobManager.AddOrUpdate<ISummaryService>(
     "yearly-sales-summary",
     service => service.GenerateYearlySummariesAsync(),
     Cron.Yearly(12, 31, 23, 59)); // 23:59 on Dec 31st
-
 app.MapControllers();
+app.MapHub<DashboardHub>("/hubs/dashboard");
+app.MapHub<SaleSummaryHub>("/hubs/salesummary");
 
 try
 {

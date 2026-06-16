@@ -8,16 +8,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
+using Unity_Inventory.Domain.Features.Summary;
+using Unity_Inventory.Domain.Hubs;
 
 namespace Unity_Inventory.Domain.Features.Sales
 {
     public class SalesService : ISalesService
     {
         private readonly IMSDbContext _db;
+        private readonly IHubContext<SaleSummaryHub> _hub;
+        private readonly ISummaryService _summaryService;
 
-        public SalesService(IMSDbContext db)
+        public SalesService(IMSDbContext db, IHubContext<SaleSummaryHub> hub, ISummaryService summaryService)
         {
             _db = db;
+            _hub = hub;
+            _summaryService = summaryService;
         }
 
         public async Task<PagedResult<ReportDTO>> GetReportsByBusinessIdAsync(PaginationRequest paginationRequest, int businessId, DateTime? startDate = null, DateTime? endDate = null)
@@ -208,6 +215,41 @@ namespace Unity_Inventory.Domain.Features.Sales
 
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                try
+                {
+                    // Trigger real-time summary update for the business group packaged with Daily, Monthly, and Yearly
+                    var today = DateOnly.FromDateTime(DateTime.Now);
+                    var firstDayOfMonth = new DateOnly(today.Year, today.Month, 1);
+                    var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+                    var firstDayOfYear = new DateOnly(today.Year, 1, 1);
+                    var lastDayOfYear = new DateOnly(today.Year, 12, 31);
+                    
+                    var daysToSubtract = (int)today.DayOfWeek == 0 ? 6 : (int)today.DayOfWeek - 1;
+                    var firstDayOfWeek = today.AddDays(-daysToSubtract);
+                    var lastDayOfWeek = firstDayOfWeek.AddDays(6);
+
+                    // Await sequentially to avoid EF Core DbContext concurrent usage errors
+                    var dailyResult = await _summaryService.GetSalesSummaryAsync(request.BusinessId, "DAILY", today, today);
+                    var weeklyResult = await _summaryService.GetSalesSummaryAsync(request.BusinessId, "WEEKLY", firstDayOfWeek, lastDayOfWeek);
+                    var monthlyResult = await _summaryService.GetSalesSummaryAsync(request.BusinessId, "MONTHLY", firstDayOfMonth, lastDayOfMonth);
+                    var yearlyResult = await _summaryService.GetSalesSummaryAsync(request.BusinessId, "YEARLY", firstDayOfYear, lastDayOfYear);
+
+                    var packagedData = new
+                    {
+                        Daily = dailyResult.IsSuccess ? dailyResult.Data : null,
+                        Weekly = weeklyResult.IsSuccess ? weeklyResult.Data : null,
+                        Monthly = monthlyResult.IsSuccess ? monthlyResult.Data : null,
+                        Yearly = yearlyResult.IsSuccess ? yearlyResult.Data : null
+                    };
+
+                    await _hub.Clients.Group($"Business_{request.BusinessId}").SendAsync("ReceiveSummaryUpdate", packagedData);
+                }
+                catch (Exception ex)
+                {
+                    // Log error if needed, but don't fail the sale transaction
+                    Console.WriteLine($"Failed to broadcast summary update: {ex.Message}");
+                }
 
                 return await GetReportByIdAsync(report.ReportId);
             }

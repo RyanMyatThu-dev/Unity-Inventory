@@ -42,6 +42,7 @@ import {
 import { toast } from 'sonner';
 import { MyanmarDateInput } from '@/components/ui/MyanmarDateInput';
 import { canProvisionNewBusiness } from '@/lib/accountType';
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 
 // --- Types ---
 interface SalesSummary {
@@ -925,6 +926,70 @@ export default function SalesSummariesPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadActiveSummary();
   }, [loadActiveSummary]);
+
+  // Track the latest filter for SignalR without triggering an effect restart
+  const summaryTypeFilterRef = React.useRef(summaryTypeFilter);
+  useEffect(() => {
+    summaryTypeFilterRef.current = summaryTypeFilter;
+  }, [summaryTypeFilter]);
+
+  // --- SignalR Real-Time Hook ---
+  useEffect(() => {
+    // Wait for initial data load to ensure any expired token is refreshed by the API interceptor
+    if (!isOwner || typeof window === 'undefined' || isInitialLoading) return;
+
+    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7217/api').replace('/api', '');
+
+    const connection = new HubConnectionBuilder()
+      .withUrl(`${baseUrl}/hubs/salesummary`, {
+        accessTokenFactory: () => localStorage.getItem('accessToken') || ''
+      })
+      .configureLogging(LogLevel.Information)
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on('ReceiveSummaryUpdate', (packagedData: any) => {
+      console.log('Received Real-Time Summary Update:', packagedData);
+      
+      let newSummaryData = null;
+      const currentFilter = summaryTypeFilterRef.current;
+      
+      // Handle either lowercase or PascalCase properties from the backend
+      if (currentFilter === 'DAILY') newSummaryData = packagedData.daily || packagedData.Daily;
+      else if (currentFilter === 'WEEKLY') newSummaryData = packagedData.weekly || packagedData.Weekly;
+      else if (currentFilter === 'MONTHLY') newSummaryData = packagedData.monthly || packagedData.Monthly;
+      else if (currentFilter === 'YEARLY') newSummaryData = packagedData.yearly || packagedData.Yearly;
+
+      if (newSummaryData) {
+        setActiveSummary(newSummaryData);
+        toast.success('Live Update Received', { description: 'Sales summary metrics refreshed in real-time.' });
+      }
+    });
+
+    let isMounted = true;
+
+    async function startSignalR() {
+      try {
+        await connection.start();
+        if (isMounted) {
+          console.log('Connected to SaleSummaryHub');
+        } else {
+          await connection.stop();
+        }
+      } catch (err: any) {
+        if (err.message !== 'Failed to start the HttpConnection before stop() was called.') {
+          console.error('SignalR Connection Error:', err);
+        }
+      }
+    }
+
+    startSignalR();
+
+    return () => {
+      isMounted = false;
+      connection.stop();
+    };
+  }, [isOwner, isInitialLoading]);
 
 
 
