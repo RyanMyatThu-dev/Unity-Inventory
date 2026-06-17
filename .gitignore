@@ -63,3 +63,5 @@ nunit-*.xml
 
 #vs 
 .vs/*
+
+.agents/*
