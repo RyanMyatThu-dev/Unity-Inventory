@@ -36,8 +36,7 @@ ScaffoldingReadMe.txt
 # NuGet Symbol Packages
 *.snupkg
 
-# dotenv environment variables file
-.env
+
 
 # Others
 ~$*
@@ -55,11 +54,5 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
-/Unity_Inventory.Api/.vs
-/Context/Features/*
 
-#sonarqube
-.sonarqube/*   
-
-#vs 
-.vs/*
+.agents/*
