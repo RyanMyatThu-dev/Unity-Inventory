@@ -1,19 +1,27 @@
-# CLAUDE.md — Agent Workspace Reference
+# AGENTS.md — Agent Workspace Reference
 
 This document provides building, running, and diagnostic workflows for the **Unity Inventory Management System (IMS)**, along with the required cognitive entry protocol for agentic developers.
 
 ---
 
-## 1. Agent Entry Protocol (Mandatory Context Reading Order)
+## 1. Agent Entry Protocol & Spec-Driven Workflow
 
-When initializing a new session or task, AI agents **must** read the documentation context in the following industry-standard order to establish progressive system awareness:
+This project strictly follows a **Spec-Driven and Review-Driven** workflow powered by an Obsidian vault located at `UnityInventory-Notes`. **Do not write "vibe code"**.
 
-1. **`PROJECT_OVERVIEW.md`** (Root or Context folder): The unified "Source of Truth" for system boundaries, tech stacks, databases, and endpoint mapping.
-2. **`Context/architecture-context.md`**: Layer boundaries, authorization precedence engines, dynamic customer pricing models, and transactional lifecycles.
-3. **`Context/code-standards.md`**: Syntax, formatting, dependency injection, React hooks optimization, and async/TAP conventions.
-4. **`Context/ui-context.md`**: Tailwind CSS v4 variables, light/dark toggles, and layout shells.
-5. **`Context/progress-tracker.md`**: Active feature registries, roadmap initiatives, and technical debt.
-6. **`Context/ai-workflow-rules.md`**: Safety boundaries, command explanations, and self-verification mandates.
+### A. Global Context Initialization
+When starting a session, you **must** familiarize yourself with the global configuration in the following order:
+1. `UnityInventory-Notes/_Global/project-overview.md`
+2. `UnityInventory-Notes/_Global/architecture-context.md`
+3. `UnityInventory-Notes/_Global/code-standards.md`
+4. `UnityInventory-Notes/_Global/ui-context.md`
+5. `UnityInventory-Notes/_Global/ai-workflow-rules.md`
+
+### B. The Spec-Driven AI Implementation Loop
+When you are tasked with implementing a feature, you must strictly follow this loop:
+1. **Read Spec**: Locate the spec for your task within the relevant domain folder (e.g., `UnityInventory-Notes/Inventory/MyFeature.md`).
+2. **Check Status**: Read the YAML frontmatter. If the status is `draft`, **do not implement**. Request that the user reviews and approves the spec first. If the status is `approved` or `ready-for-implementation`, you may proceed.
+3. **Implement**: Write the code per the architectural guidelines and the spec.
+4. **Update Status**: Once finished and verified, update the spec's frontmatter status to `implemented` and check off items in the Review Checklist.
 
 ---
 
