@@ -1,7 +1,6 @@
 using Unity_Inventory.Database.IMSDbContextModels;
 using Unity_Inventory.Domain.Features.Sales.Models;
 using Unity_Inventory.Shared;
-using Unity_Inventory.Shared;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
