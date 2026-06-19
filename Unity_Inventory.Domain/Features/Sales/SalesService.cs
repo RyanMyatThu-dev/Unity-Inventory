@@ -251,9 +251,10 @@ namespace Unity_Inventory.Domain.Features.Sales
                     await _hub.Clients.Group($"Business_{request.BusinessId}").SendAsync("ReceiveSummaryUpdate", packagedData);
                     // Trigger real-time dashboard update
                     var dashboardResult = await _dashboardService.GetDashboardDataAsync(request.BusinessId);
+                    var targetGroups = new List<string> { $"Owner_{request.BusinessId}", $"Admins_{request.BusinessId}" };
                     if (dashboardResult.IsSuccess)
                     {
-                        await _dashboardHub.Clients.Group($"Business_{request.BusinessId}").SendAsync("ReceiveDashboardUpdate", dashboardResult.Data);
+                        await _dashboardHub.Clients.Groups(targetGroups).SendAsync("ReceiveDashboardUpdate", dashboardResult.Data);
                     }
                 }
                 catch (Exception ex)

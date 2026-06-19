@@ -16,17 +16,18 @@ namespace Unity_Inventory.Domain.Hubs
             var businessId = Context.User?.FindFirst("BusinessId")?.Value;
             if (!string.IsNullOrEmpty(businessId))
             {
+                if(Context.User?.IsInRole("Owner") == true)
+                {
+                    await Groups.AddToGroupAsync(Context.ConnectionId, $"Owner_{businessId}");
+                }
+                if(Context.User?.IsInRole("Admin") == true)
+                {
+                    await Groups.AddToGroupAsync(Context.ConnectionId, $"Admins_{businessId}");
+                } 
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"Business_{businessId}");
+                
             }
 
-            if (Context.User!.IsInRole("Admin"))
-            {
-                await Groups.AddToGroupAsync(Context.ConnectionId, "Admins");
-            }
-            if(Context.User!.IsInRole("Owner"))
-            {
-                await Groups.AddToGroupAsync(Context.ConnectionId, "Owners");
-            }
             await base.OnConnectedAsync();
         }
 

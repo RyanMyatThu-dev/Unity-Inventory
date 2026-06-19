@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import api from '@/services/api';
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
   Users,
@@ -113,7 +115,7 @@ export default function DashboardPage() {
         if (response.data.isSuccess) {
           setData(response.data.data);
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       } finally {
         setLoading(false);
@@ -122,6 +124,55 @@ export default function DashboardPage() {
 
     fetchDashboardData();
   }, []);
+
+  // --- SignalR Real-Time Hook for Dashboard updates ---
+  useEffect(() => {
+    if (loading || typeof window === 'undefined') return;
+
+    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7217/api').replace('/api', '');
+
+    const connection = new HubConnectionBuilder()
+      .withUrl(`${baseUrl}/hubs/dashboard`, {
+        accessTokenFactory: () => localStorage.getItem('accessToken') || ''
+      })
+      .configureLogging(LogLevel.Information)
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on('ReceiveDashboardUpdate', (updatedData: DashboardData) => {
+      console.log('Received Real-Time Dashboard Update:', updatedData);
+      setData(updatedData);
+      toast.success('Live Update Received', {
+        description: 'Dashboard metrics refreshed in real-time.'
+      });
+    });
+
+    let isMounted = true;
+
+    async function startSignalR() {
+      try {
+        await connection.start();
+        if (isMounted) {
+          console.log('Connected to DashboardHub');
+        } else {
+          await connection.stop();
+        }
+      } catch (err) {
+        const error = err as Error;
+        if (error.message !== 'Failed to start the HttpConnection before stop() was called.') {
+          console.error('SignalR Connection Error:', error);
+        }
+      }
+    }
+
+    startSignalR();
+
+    return () => {
+      isMounted = false;
+      connection.off('ReceiveDashboardUpdate');
+      connection.stop();
+    };
+  }, [loading]);
 
   if (loading) {
     return (
@@ -262,7 +313,7 @@ export default function DashboardPage() {
                       color: isDark ? '#fff' : '#18181b'
                     }}
                     itemStyle={{ color: isDark ? '#fff' : '#18181b' }}
-                    formatter={(v: any) => [formatCurrency(Number(v)), 'REVENUE']}
+                    formatter={(v) => [formatCurrency(Number(v)), 'REVENUE']}
                   />
                   <Bar dataKey="revenue" fill={isDark ? "#fafafa" : "#18181b"} radius={[4, 4, 0, 0]} barSize={32} />
                 </BarChart>

@@ -65,3 +65,12 @@ nunit-*.xml
 .vs/*
 
 .agents/*
+
+# Agentic teaching and learning workspace files
+MISSION.md
+RESOURCES.md
+NOTES.md
+/lessons/
+/reference/
+/learning-records/
+/assets/

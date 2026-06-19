@@ -67,7 +67,6 @@ internal static class RolePermissionSeedData
 
     private static readonly (string Menu, string Action)[] StaffPermissions =
     [
-        ("dashboard", "view"),
         ("inventory", "view"),
         ("customers", "view"),
         ("sales", "view"),

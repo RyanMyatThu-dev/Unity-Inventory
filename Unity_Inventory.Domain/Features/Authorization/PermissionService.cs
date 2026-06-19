@@ -13,7 +13,6 @@ namespace Unity_Inventory.Domain.Features.Authorization
 
         private static readonly (string Menu, string Action)[] StaffPermissions =
         [
-            ("dashboard", "view"),
             ("inventory", "view"),
             ("customers", "view"),
             ("sales", "view"),

@@ -64,6 +64,7 @@ The system is currently fully scaffolded with a rich multi-tenant backend and du
 The following tasks represent the active roadmap and architectural improvements prioritized for the next phase of development:
 
 ### Phase 1: Security & Alignment (High Priority)
+- [ ] **Re-evaluate Role Permissions**: Re-evaluate permissions for `Owner`, `Admin`, and `Staff` roles according to business logic and workflow. Address corresponding frontend handling (e.g., unauthorized pages, and a Staff-specific shortcuts page instead of a dashboard).
 - [ ] **JWT Claim Name Alignment**: Standardize JWT claim types emitted by `TokenService` with the lowercase claim naming conventions expected by `PermissionFilter` to ensure robust authorization.
 - [ ] **Permission Resolve Alignment**: Replicate the user-over-role precedence order of `PermissionService.HasPermissionAsync` inside `TokenService.GetUserPermissionsAsync` during JWT compilation.
 - [ ] **Stale dbscript.sql Regeneration**: Update `dbscript.sql` to match the active EF Core models, including `Tbl_RolePermissions`, `TblCategory`, and profile image schema columns.
